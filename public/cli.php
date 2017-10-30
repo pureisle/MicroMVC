@@ -13,4 +13,4 @@ define('FRAMEWORK_CONFIG_PATH', FRAMEWORK_PATH . DIRECTORY_SEPARATOR . CONFIG_FO
 define("FRAMEWORK_CONFIG_FILE", FRAMEWORK_CONFIG_PATH . DIRECTORY_SEPARATOR . FRAMEWORK_NAME . ".php");
 require FRAMEWORK_PATH . '/Models/Application.php';
 $app = new Framework\Models\Application($env['module']);
-$app->bootstrap()->execute('main');
+$app->bootstrap()->execute('main', $argv);

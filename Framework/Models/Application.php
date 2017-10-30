@@ -32,6 +32,11 @@ class Application {
         }
         $this->_dispatcher = new Dispatcher();
     }
+    /**
+     * 核心运行流畅
+     * @param  boolean  $is_echo
+     * @return string
+     */
     public function run($is_echo = true) {
         $dispatcher = $this->getDispatcher();
         $plugins    = $dispatcher->getPlugins();
@@ -82,9 +87,15 @@ class Application {
             return $ret_body;
         }
     }
-    public function execute($function_name) {
+    /**
+     * 命令行执行一个函数
+     * @param  string $function_name
+     * @param  array  $argv
+     * @return mix
+     */
+    public function execute($function_name, $argv) {
         if (function_exists($function_name)) {
-            return $function_name($this->getConfig());
+            return $function_name($this->getConfig(),$argv);
         }
         throw new ApplicationException(ApplicationException::ERROR_FUNCTION_NOT_EXIST);
         return false;
@@ -93,7 +104,8 @@ class Application {
      * 执行应用初始化类
      */
     public function bootstrap() {
-        if ( ! file_exists(APP_PATH . DIRECTORY_SEPARATOR . 'Bootstrap.php')) {
+        $app_path=ROOT_PATH . DIRECTORY_SEPARATOR .  $this->_app_name;
+        if ( ! file_exists($app_path . DIRECTORY_SEPARATOR . 'Bootstrap.php')) {
             return $this;
         }
         $class_name = $this->_app_name . '\\Bootstrap';

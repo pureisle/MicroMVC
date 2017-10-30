@@ -4,93 +4,39 @@
  *
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
-namespace framework;
+namespace Framework\Libraries;
+use Framework\Entities\PDOConfig;
+use \PDO;
+
 class PDOManager {
-    public $DB_CONF_STRUCT = array(
-        'master' => array(
-            'host'     => '主库地址',
-            'port'     => '主库端口号',
-            'username' => '用户名',
-            'password' => '用户密码',
-            'dbname'   => '数据库名',
-            'charset'  => 'UTF8'
-        ),
-        'slave'  => array(
-            'host'     => '从库地址',
-            'port'     => '从库端口号',
-            'username' => '用户名',
-            'password' => '用户密码',
-            'dbname'   => '数据库名',
-            'charset'  => 'UTF8'
-        )
-    );
-    private $_force_master        = false;
-    private $_last_db             = 'slave';
-    private $_last_db_slave_index = 0;
-    private $_time_out            = 1;
-    private $_db_conf             = array();
-    private $_db_arrtibute        = array();
-    //master、slave专用句柄数组下标
-    private $_db_handles = array('master' => '', 'slave' => '');
-    public function __construct($db_conf, $master_flag = false) {
-        $this->_db_conf = $db_conf;
-        $this->setMasterFlag($master_flag);
+    private $_db_conf                 = array();
+    private $_db_handle               = null;
+    private $_db_arrtibute            = array();
+    private $_last_prepare_sql        = '';
+    private $_last_prepare_sth        = null;
+    private $_is_db_arrtibute_refresh = false;
+    public function __construct(PDOConfig $pdo_config) {
+        $this->_db_conf = $pdo_config;
+        $this->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
     }
-    /**
-     * 设置是否强制使用主库
-     * @return $this
-     */
-    public function setMasterFlag($is_true) {
-        if (is_bool($is_true)) {
-            $this->_force_master = $is_true;
-        } else {
-            Debug::setErrorMessage(Debug::ERROR_ERROR_PARAMS);
+    public function setTimeout($seconds) {
+        if (is_numeric($seconds)) {
+            $this->_db_conf->time_out = $seconds;
         }
         return $this;
     }
 
-    public function getMasterFlag() {
-        return $this->_force_master;
-    }
-    /**
-     * 设置pdo超时时间,单位秒
-     * @param int $seconds
-     */
-    public function setTimeout($seconds) {
-        if (is_numeric($seconds)) {
-            $this->_time_out = $seconds;
-        }
-        return $this;
-    }
-    /**
-     * 链接一个数据库
-     * @param  string   $dsn
-     * @param  string   $username
-     * @param  string   $password
-     * @param  array    $driver_options
-     * @return object
-     */
-    public function connectDB($dsn, $username, $password, $driver_options = array()) {
-        try {
-            Debug::debugDump($dsn . " " . $username . " " . $password . " " . json_encode($driver_options));
-            $pdo = new PDO($dsn, $username, $password, $driver_options);
-            if ( ! empty($this->_db_arrtibute)) {
-                foreach ($this->_db_arrtibute as $key => $value) {
-                    $pdo->setAttribute($key, $value);
-                }
-            }
-        } catch (PDOException $e) {
-            Debug::setErrorMessage($e->getCode() . ": " . $e->getMessage());
-            return false;
-        }
-        return $pdo;
-    }
     /**
      * 执行一条 SQL 语句，并返回受影响的行数
      * 不会从一条 SELECT 语句中返回结果。需要返回结果的请使用query()
+     * @param  string $prepare_sql SELECT name, colour, calories FROM fruit WHERE calories < :calories AND colour = :colour
+     * @param  string $param_array array(':calories' => 175, ':colour' => 'yellow')
      * @return int
      */
-    public function exec($prepare_sql, $param_array = '', $driver_options = array()) {
+    public function exec($prepare_sql, $param_array = array(), $driver_options = array()) {
+        if ( ! is_string($prepare_sql) || ! is_array($param_array) || ! is_array($driver_options)) {
+            throw new PDOManagerException(PDOManagerException::ERROR_PARAM);
+        }
         $sth = $this->prepare($prepare_sql, $driver_options);
         $ret = $sth->execute($param_array);
         if ($ret) {
@@ -100,12 +46,15 @@ class PDOManager {
     }
     /**
      *  执行一条 SQL 语句，并返回结果
-     * @param  string  $prepare_sql
-     * @param  string  $param_array
+     * @param  string  $prepare_sql      SELECT name, colour, calories FROM fruit WHERE calories < :calories AND colour = :colour
+     * @param  string  $param_array      array(':calories' => 175, ':colour' => 'yellow')
      * @param  array   $driver_options
      * @return array
      */
-    public function query($prepare_sql, $param_array = '', $driver_options = array()) {
+    public function query($prepare_sql, $param_array = array(), $driver_options = array()) {
+        if ( ! is_string($prepare_sql) || ! is_array($param_array) || ! is_array($driver_options)) {
+            throw new PDOManagerException(PDOManagerException::ERROR_PARAM);
+        }
         $sth = $this->prepare($prepare_sql, $driver_options);
         $ret = $sth->execute($param_array);
         if ($ret) {
@@ -135,7 +84,7 @@ class PDOManager {
             PDO::PARAM_STMT,
             PDO::PARAM_INPUT_OUTPUT
         );
-        $db_handle = $this->_getDBHandle($this->_last_db);
+        $db_handle = $this->_getDBHandle();
         return $db_handle->quote($param, $parameter_type);
     }
     /**
@@ -146,26 +95,33 @@ class PDOManager {
      */
     public function prepare($prepare_sql, $driver_options = array()) {
         if (empty($prepare_sql)) {
-            return false;
+            throw new PDOManagerException(PDOManagerException::ERROR_PARAM);
         }
-        $db_handle = $this->_getDBHandle($this->_DBChoice($prepare_sql));
-        $sth       = $db_handle->prepare($prepare_sql, $driver_options);
-        return $sth;
+        if ($prepare_sql === $this->_last_prepare_sql) {
+            return $this->_last_prepare_sth;
+        }
+        $db_handle               = $this->_getDBHandle();
+        $sth                     = $db_handle->prepare($prepare_sql, $driver_options);
+        $this->_last_prepare_sql = $prepare_sql;
+        $this->_last_prepare_sth = $sth;
+        return $this->_last_prepare_sth;
     }
     /**
-     * 设置数据库句柄属性,针对设置后调用connectDB成员方法有效
+     * 设置数据库句柄属性
      * @param int    $attribute_key
      * @param string $value
      */
     public function setAttribute($attribute_key, $value) {
         $this->_db_arrtibute[$attribute_key] = $value;
+        $this->_is_db_arrtibute_refresh      = true;
+        return $this;
     }
     /**
      * 返回上一条入库数据id
      * @return string
      */
     public function lastInsertId() {
-        $db_handle = $this->_getDBHandle('master');
+        $db_handle = $this->_getDBHandle();
         return $db_handle->lastInsertId();
     }
     /**
@@ -174,7 +130,7 @@ class PDOManager {
      * @param  string  $db_handle_name
      * @return array
      */
-    public function getAttribute($attributes = array(), $db_handle_name = '') {
+    public function getAttribute($attributes = array()) {
         if (empty($attributes)) {
             $attributes = array(
                 "ATTR_AUTOCOMMIT", "ATTR_ERRMODE", "ATTR_CASE", "ATTR_CLIENT_VERSION", "ATTR_CONNECTION_STATUS",
@@ -182,11 +138,8 @@ class PDOManager {
                 "ATTR_TIMEOUT"
             );
         }
-        if (empty($db_handle_name)) {
-            $db_handle_name = $this->_last_db;
-        }
         $ret       = array();
-        $db_handle = $this->_getDBHandle($db_handle_name);
+        $db_handle = $this->_getDBHandle();
         foreach ($attributes as $val) {
             $ret[$val] = $db_handle->getAttribute(constant("PDO::" . $val));
         }
@@ -205,7 +158,7 @@ class PDOManager {
      * @return array
      */
     public function getErrorInfo() {
-        $info = $this->_db_handles[$this->_last_db]->errorInfo();
+        $info = $this->_getDBHandle()->errorInfo();
         return $info;
     }
     /**
@@ -213,7 +166,7 @@ class PDOManager {
      * @return boolean
      */
     public function beginTransaction() {
-        $db_handle = $this->_getDBHandle('master');
+        $db_handle = $this->_getDBHandle();
         if ($db_handle->beginTransaction()) {
             return $this;
         }
@@ -224,7 +177,7 @@ class PDOManager {
      * @return boolean
      */
     public function rollBack() {
-        $db_handle = $this->_getDBHandle('master');
+        $db_handle = $this->_getDBHandle();
         if ($db_handle->rollBack()) {
             return $this;
         }
@@ -235,7 +188,7 @@ class PDOManager {
      * @return boolean
      */
     public function inTransaction() {
-        $db_handle = $this->_getDBHandle('master');
+        $db_handle = $this->_getDBHandle();
         if ($db_handle->inTransaction()) {
             return $this;
         }
@@ -247,7 +200,7 @@ class PDOManager {
      * @return boolean
      */
     public function commit() {
-        $db_handle = $this->_getDBHandle('master');
+        $db_handle = $this->_getDBHandle();
         if ($db_handle->commit()) {
             return $this;
         }
@@ -259,60 +212,50 @@ class PDOManager {
      * @param  boolean  $reconnect 是否强制重连
      * @return object
      */
-    private function _getDBHandle($db_handle_name, $reconnect = false) {
+    private function _getDBHandle($reconnect = false) {
         $driver_options = array(
-            PDO::ATTR_TIMEOUT   => $this->_time_out,
+            PDO::ATTR_TIMEOUT   => $this->_db_conf->time_out,
             PDO::NULL_TO_STRING => true
         );
-        if ($reconnect || empty($this->_db_handles[$db_handle_name])) {
-            $conf                                         = $this->_db_conf[$db_handle_name];
-            $dsn                                          = "mysql:host=" . $conf['host'] . ";port=" . $conf['port'] . ";dbname=" . $conf['dbname'];
-            $driver_options[PDO::MYSQL_ATTR_INIT_COMMAND] = 'SET NAMES ' . $conf['charset'];
-            $this->_db_handles[$db_handle_name]           = $this->connectDB($dsn, $conf['username'], $conf['password'], $driver_options);
+        if ($reconnect || empty($this->_db_handle) || $this->_is_db_arrtibute_refresh) {
+            $dsn                                          = $this->_db_conf->buildDSN();
+            $driver_options[PDO::MYSQL_ATTR_INIT_COMMAND] = 'SET NAMES ' . $this->_db_conf->charset;
+            $this->_db_handle                             = $this->_connectDB($dsn, $this->_db_conf->username, $this->_db_conf->password, $driver_options);
         }
-        $this->_last_db = $db_handle_name;
-        return $this->_db_handles[$db_handle_name];
+        return $this->_db_handle;
     }
     /**
-     * 主辅库分离
-     * @param  string   $sql
-     * @return string
+     * 链接一个数据库
+     * @param  string   $dsn
+     * @param  string   $username
+     * @param  string   $password
+     * @param  array    $driver_options
+     * @return object
      */
-    private function _DBChoice($sql) {
-        $sql_components = explode(' ', ltrim($sql), 2);
-        $verb           = strtolower($sql_components[0]);
-        $db_type        = 'slave';
-        switch ($verb) {
-            case "select":
-            case "describe":
-            case "show":
-                $db_type = 'slave';
-                break;
-            case "delete":
-            case "update":
-            case "truncate":
-            case "replace":
-            case "rename":
-            case "alter":
-            case "drop":
-            case "create":
-            case "insert":
-                $db_type = 'master';
-                break;
-            default:
-                throw new PDOManagerException(PDOManagerException::ERROR_SQL_SYNTAX);
-                return false;
+    private function _connectDB($dsn, $username, $password, $driver_options = array()) {
+        try {
+            Debug::debugDump($dsn . " " . $username . " " . $password . " " . json_encode($driver_options));
+            $pdo = new PDO($dsn, $username, $password, $driver_options);
+            if ( ! empty($this->_db_arrtibute)) {
+                foreach ($this->_db_arrtibute as $key => $value) {
+                    $pdo->setAttribute($key, $value);
+                }
+                $this->_is_db_arrtibute_refresh = false;
+            }
+        } catch (PDOException $e) {
+            Debug::setErrorMessage($e->getCode() . ": " . $e->getMessage());
+            return false;
         }
-        return $db_type;
+        return $pdo;
     }
 }
 
 class PDOManagerException extends Exception {
-    const ERROR_SQL_SYNTAX = 1;
-    public $ERROR_SET      = array(
-        self::ERROR_SQL_SYNTAX => array(
-            'code'    => self::ERROR_SQL_SYNTAX,
-            'message' => 'Sql syntax error'
+    const ERROR_PARAM = 1;
+    public $ERROR_SET = array(
+        self::ERROR_PARAM => array(
+            'code'    => self::ERROR_PARAM,
+            'message' => 'param error'
         )
     );
     public function __construct($code = 0) {

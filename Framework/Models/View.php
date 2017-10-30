@@ -32,7 +32,7 @@ class View {
      * @param  array  $var_arr
      * @return View
      */
-    public function assign($var_arr) {
+    public function assign(array $var_arr) {
         $this->_tpl_vars = array_merge($this->_tpl_vars, $var_arr);
         return $this;
     }

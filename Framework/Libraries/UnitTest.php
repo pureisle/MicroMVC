@@ -63,6 +63,10 @@ class UnitTest {
         if (empty($path)) {
             $path = './';
         }
+        if (is_file($path)) {
+            include_once $path;
+            return true;
+        }
         if ($handle = opendir($path)) {
             while (false !== ($file = readdir($handle))) {
                 if ('.' == $file || '..' == $file) {

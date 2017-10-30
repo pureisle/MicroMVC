@@ -25,8 +25,6 @@ if ( ! empty($server_uri)) {
     $tmp    = explode('/', $server_uri);
     $module = ucfirst($tmp[1]);
 }
-define("APP_NAME", $module);
-define("APP_PATH", ROOT_PATH . DIRECTORY_SEPARATOR . APP_NAME);
 require FRAMEWORK_PATH . '/Models/Application.php';
-$app = new Framework\Models\Application(APP_NAME);
+$app = new Framework\Models\Application($module);
 $app->bootstrap()->run();

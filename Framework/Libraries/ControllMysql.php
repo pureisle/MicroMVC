@@ -51,10 +51,9 @@
  *
  * ps:使用接口限制了子类继承后覆盖一些方法的传参，暂时放弃接口继承，但是依然会保证提供接口有的所有方法
  */
-namespace framework;
+namespace Framework\Libraries;
+use Framework\Entities\PDOConfig;
 class ControllMysql/*implements ControllDB*/ {
-    const CLASS_NAME                    = 'ControllMysql';
-    const DB_CONF_FILE_NAME             = 'database.ini';
     const PARAMS_ERROR_MESSAGE          = '参数错误';
     const NULL_TABLE_ERROR_MESSAGE      = '当前操作的数据表名为空';
     const NULL_RESULT_ERROR_MESSAGE     = '查询结果为空';
@@ -76,25 +75,30 @@ class ControllMysql/*implements ControllDB*/ {
         'ASC',
         'DESC'
     );
+    private $_db_conf             = null;
+    private $_mysql               = null;
+
     protected static $_table_list = null;
     private $_table_schema        = null;
-    private $_db_conf             = null;
     private $_table_name          = null;
     private $_char_fields         = null;
     private $_key_fields          = null;
-    private $_mysql               = null;
     private $_error_message       = null;
     private $_debug               = false;
     private $_redis               = null;
-    public function __construct($db_pool_name, $table_name = null) {
-        if (empty($db_pool_name)) {
+    public function __construct(string $resource_name,string $app_name,string $table_name='') {
+        if (empty($resource_name)) {
             throw new ControllMysqlException(ControllMysqlException::ERROR_DB_POOL_EMPTY);
         }
-        $db_conf        = ParseIni::getConfig(self::DB_CONF_FILE_NAME, $db_pool_name);
-        $this->_db_conf = $db_conf;
-        var_dump($db_conf);
-        $this->_mysql   = new PDOManager($db_conf);
-        // $this->_redis   = new RedisLib();
+        $db_conf        = ConfigTool::loadByName($resource_name, $app_name);
+        $pdo_config           = new PDOConfig();
+        $pdo_config->host     = $db_conf['host'];
+        $pdo_config->port     = $db_conf['port'];
+        $pdo_config->username = $db_conf['username'];
+        $pdo_config->password = $db_conf['password'];
+        $pdo_config->dbname   = $db_conf['dbname'];
+        $this->_db_conf = $pdo_config;
+        $this->_mysql = new PDOManager($pdo_config);
         if ( ! empty($table_name)) {
             $this->setTableName($table_name);
         }
@@ -114,7 +118,7 @@ class ControllMysql/*implements ControllDB*/ {
      * @param  array     $duplicate=null
      * @return string
      */
-    protected function add($data, $duplicate = null) {
+    protected function add(array $data, array $duplicate = null) {
         if (empty($data) || ! is_array($data)) {
             $this->setErrorMessage(self::PARAMS_ERROR_MESSAGE);
             return false;

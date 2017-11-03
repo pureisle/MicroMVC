@@ -4,16 +4,9 @@
  *
  * 关于使用： 只需要提供相应数据库的配置信息和需要操作的表名即可。所有可调用的公开方法在interface里。继承者如果需要把
  *              某一方法暴露给使用者，在自己类中使用public方法覆盖父级方法即可。
- * 关于调试：构造函数第三个参数设置为true即可，或使用setDebug()方法传true参数,可开启debug调试模式，
- *              把底层关键处数据输出。
- *           ps:继承后请保持调试功能的可用和调试信息格式一致。
- * 关于错误信息：使用getErrorMessage()获取上一次“错误操作”的错误信息。
- *           ps:继承后请保持错误功能的可用和错误信息格式一致，确保每一次false都有setErrorMessage()方法的调用。
  *
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
-// ！重要！ps:2013/08/28根据数据库平台要求，缓存表结构信息入redis，如果修改表结构，切记要开启一次debug调试模式刷新redis内存储的表结构信息！！
-
 // 关于一些数组参数的格式说明：
 /**
  * 构建group by语句
@@ -43,7 +36,7 @@
  * array('field'=>'field_name1','condition'=>'value1'),
  * array('field'=>'field_name2','condition'=>'value2','operator'=>'>')
  * );
- * $a = new ControllMysql($db_conf);
+ * $a = new ControllMysql($table_name);
  * $a->getList(10,0,'*',array(array('field'=>'id','condition'=>'5','operator'=>'>')),null);
  */
 /**
@@ -53,55 +46,52 @@
  */
 namespace Framework\Libraries;
 use Framework\Entities\PDOConfig;
-class ControllMysql/*implements ControllDB*/ {
-    const PARAMS_ERROR_MESSAGE          = '参数错误';
-    const NULL_TABLE_ERROR_MESSAGE      = '当前操作的数据表名为空';
-    const NULL_RESULT_ERROR_MESSAGE     = '查询结果为空';
-    const NOT_EXIST_TABLE_ERROR_MESSAGE = '指定数据库不存在表';
-    // 字符类型太多就用数字类型的补集好了....-_-!
-    protected $char_data_types           = null;
-    protected static $numeric_data_types = array(
-        'bit'       => true,
-        'tinyint'   => true,
-        'smallint'  => true,
-        'mediumint' => true,
-        'int'       => true,
-        'bigint'    => true,
-        'float'     => true,
-        'double'    => true,
-        'decimal'   => true
-    );
-    private static $_order_by_type = array(
-        'ASC',
-        'DESC'
-    );
-    private $_db_conf             = null;
-    private $_mysql               = null;
 
-    protected static $_table_list = null;
-    private $_table_schema        = null;
-    private $_table_name          = null;
-    private $_char_fields         = null;
-    private $_key_fields          = null;
-    private $_error_message       = null;
-    private $_debug               = false;
-    private $_redis               = null;
-    public function __construct(string $resource_name,string $app_name,string $table_name='') {
+class ControllMysql {
+    private $_db_conf     = null;
+    private $_pdo         = null;
+    private $_last_sql    = null;
+    private $_is_query    = false;
+    private $_table_name  = '';
+    private $_last_params = array();
+
+    public function __construct(string $table_name) {
+        $this->setTableName($table_name);
+    }
+    /**
+     * 执行构造的sql
+     * @param  string $resource_name
+     * @param  string $module=null     //配置文件所在模块名
+     * @return mix
+     */
+    protected function exec(string $resource_name, string $module = null) {
         if (empty($resource_name)) {
             throw new ControllMysqlException(ControllMysqlException::ERROR_DB_POOL_EMPTY);
         }
-        $db_conf        = ConfigTool::loadByName($resource_name, $app_name);
+        if (empty($this->_last_sql)) {
+        }
+        if (empty($module)) {
+            $tmp                 = get_class($this);
+            list($module, $null) = explode('\\', $tmp, 2);
+        }
+        $db_conf              = ConfigTool::loadByName($resource_name, $module);
         $pdo_config           = new PDOConfig();
         $pdo_config->host     = $db_conf['host'];
         $pdo_config->port     = $db_conf['port'];
         $pdo_config->username = $db_conf['username'];
         $pdo_config->password = $db_conf['password'];
         $pdo_config->dbname   = $db_conf['dbname'];
-        $this->_db_conf = $pdo_config;
-        $this->_mysql = new PDOManager($pdo_config);
-        if ( ! empty($table_name)) {
-            $this->setTableName($table_name);
+        $this->_db_conf       = $pdo_config;
+        $this->_pdo           = new PDOManager($pdo_config);
+        if (true === $this->_is_query) {
+            $ret = $this->_pdo->query($this->_last_sql, $this->_last_params);
+        } else {
+            $ret = $this->_pdo->exec($this->_last_sql, $this->_last_params);
         }
+        $this->_is_query    = false;
+        $this->_last_sql    = '';
+        $this->_last_params = array();
+        return $ret;
     }
     /**
      * 向当前表增加数据条目
@@ -119,22 +109,21 @@ class ControllMysql/*implements ControllDB*/ {
      * @return string
      */
     protected function add(array $data, array $duplicate = null) {
-        if (empty($data) || ! is_array($data)) {
-            $this->setErrorMessage(self::PARAMS_ERROR_MESSAGE);
-            return false;
+        if (empty($data)) {
+            throw new ControllMysqlException(ControllMysqlException::PARAMS_ERROR_MESSAGE);
         }
         $fields = '';
         $values = '';
+        $params = array();
         foreach ($data as $field => $value) {
-            if ('' === $value) {
-                continue;
-            }
             $fields .= $this->_putFieldQuote($field) . ',';
-            $values .= $this->_autoQuote($field, $value) . ',';
+            $tmp = $this->_putFieldVar($field);
+            $values .= $tmp . ',';
+            $params[$tmp] = $value;
         }
         $fields = substr($fields, 0, -1);
         $values = substr($values, 0, -1);
-        $sql    = 'INSERT INTO ' . $this->getTableName(true) . ' (' . $fields . ') VALUE (' . $values . ')';
+        $sql    = 'INSERT INTO ' . $this->getTableName() . ' (' . $fields . ') VALUE (' . $values . ')';
         if ( ! empty($duplicate)) {
             if (is_array($duplicate)) {
                 $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->_buildSet($duplicate);
@@ -142,11 +131,9 @@ class ControllMysql/*implements ControllDB*/ {
                 $sql .= ' ' . $duplicate;
             }
         }
-        $ret = $this->execSql($sql);
-        if ($ret) {
-            return $this->_mysql->getLastInsertId();
-        }
-        return $ret;
+        $this->_addVar($params);
+        $this->_last_sql = $sql;
+        return $this;
     }
     /**
      * 向当前表批量增加条目
@@ -158,243 +145,114 @@ class ControllMysql/*implements ControllDB*/ {
      * @param  array   $duplicate=null
      * @return mix
      */
-    protected function multiAdd($data_arr, $duplicate = null) {
-        if (empty($data_arr) || ! is_array($data_arr)) {
-            $this->setErrorMessage(self::PARAMS_ERROR_MESSAGE);
-            return false;
+    protected function multiAdd(array $data_arr, array $duplicate = null) {
+        if (empty($data_arr)) {
+            throw new ControllMysqlException(ControllMysqlException::PARAMS_ERROR_MESSAGE);
         }
-        $sql    = 'INSERT INTO ' . $this->getTableName(true) . ' (';
+        $sql    = 'INSERT INTO ' . $this->getTableName() . ' (';
         $fields = '';
         foreach ($data_arr[0] as $field => $value) {
             $fields .= $this->_putFieldQuote($field) . ',';
         }
         $fields = substr($fields, 0, -1);
         $sql .= $fields . ') VALUES ';
+        $params = array();
+        $index  = 0;
         foreach ($data_arr as $data) {
             $one = '(';
             foreach ($data as $field => $value) {
-                $one .= $this->_autoQuote($field, $value) . ',';
+                $tmp = $this->_putFieldVar($field . $index);
+                $one .= $tmp . ',';
+                $params[$tmp] = $value;
             }
             $one = substr($one, 0, -1);
             $sql .= $one . '),';
+            $index++;
         }
         $sql = substr($sql, 0, -1);
         if ( ! empty($duplicate)) {
-            if (is_array($duplicate)) {
-                $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->_buildSet($duplicate);
-            } else {
-                $sql .= ' ' . $duplicate;
-            }
+            $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->_buildSet($duplicate);
         }
-        return $this->execSql($sql);
+        $this->_addVar($params);
+        $this->_last_sql = $sql;
+        return $this;
     }
     /**
      * 按条件获取当前操作表的指定条数
      *
-     * @param  int     $count=10
-     * @param  int     $page=1
-     * @param  mix     $fields='*'
-     * @param  array   $where_condition=null;
-     * @param  array   $order_by=null;
-     * @param  array   $group_by=null;
+     * @param  int          $count=10
+     * @param  int          $page=1
+     * @param  mix          $fields='*'
+     * @param  array|string $where_condition=null;
+     * @param  array|string $order_by=null;
+     * @param  array|string $group_by=null;
      * @return array
      */
-    protected function getList($count = 10, $page = 0, $fields = '*', $where_condition = null, $order_by = null, $group_by = null) {
-        if ( ! is_numeric($count) || ! is_numeric($page) || empty($fields)) {
-            $this->setErrorMessage(self::PARAMS_ERROR_MESSAGE);
-            return false;
+    protected function getList(int $count = 10, int $page = 0, array $fields = array(), $where_condition = null, $order_by = null, $group_by = null) {
+        if (empty($fields)) {
+            $fields = '*';
+        } else {
+            $fields = '`' . implode('`,`', $fields) . '`';
         }
-        if (is_array($fields)) {
-            $fields = implode(',', $fields);
-        }
-        if (is_numeric($count) && $count > 0) {
+        if ($count > 0) {
             $limit = ' LIMIT ' . $page * $count . ',' . $count;
         }
-        $sql = 'SELECT ' . $fields . ' FROM ' . $this->getTableName(true) . $this->_buildWhereCondition($where_condition) . $this->_buildGroupBy($group_by) . $this->_buildOrderBy($order_by) . $limit;
-        return $this->execSql($sql);
-    }
-    /**
-     * 通过主键id获取一条数据
-     * 如果主键是联合主键需要使用key=>value的数组传参，单独一个主键则只传key_id的值即可
-     *
-     *            array or string $data
-     *            array or string $fields='*'
-     * @param
-     * @param
-     * @return  mix
-     */
-    protected function getByKey($key_id, $fields = '*') {
-        $keys = $this->getTablePrimary();
-        if (is_array($fields)) {
-            $fields = implode(',', $fields);
-        }
-        $sql = 'SELECT ' . $fields . ' FROM ' . $this->getTableName(true);
-
-        if (count($keys) == 1) {
-            $sql .= ' WHERE ' . $keys[0] . ' = ' . $this->_autoQuote($keys[0], $key_id);
-        } else {
-            $where_arr = null;
-            foreach ($key_id as $key => $value) {
-                $where_arr[] = array(
-                    'field'     => $key,
-                    'condition' => $value
-                );
-            }
-            $sql .= $this->_buildWhereCondition($where_arr);
-        }
-        $result = $this->execSql($sql);
-        if (empty($result)) {
-            return '';
-        }
-        return $result[0];
+        $sql             = 'SELECT ' . $fields . ' FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition) . $this->_buildGroupBy($group_by) . $this->_buildOrderBy($order_by) . $limit;
+        $this->_last_sql = $sql;
+        $this->_is_query = true;
+        return $this;
     }
     /**
      * 按条件移除当前操作表的指定条目
      *
-     * @param  array $where_condition
-     * @param  int   $count=-1
-     * @param  array $order_by=null
+     * @param  array|string $where_condition
+     * @param  int          $count=-1
+     * @param  array|string $order_by=null
      * @return int
      */
-    protected function remove($where_condition, $count = -1, $order_by = null) {
+    protected function remove($where_condition, int $count = -1, $order_by = null) {
         if (empty($where_condition)) {
-            $this->setErrorMessage(self::PARAMS_ERROR_MESSAGE);
-            return false;
+            throw new ControllMysqlException(ControllMysqlException::WHERE_EMPTY);
         }
         $limit = '';
         if (is_numeric($count) && $count > 0) {
             $limit = ' LIMIT ' . $count;
         }
-        $sql = 'DELETE FROM ' . $this->getTableName(true) . $this->_buildWhereCondition($where_condition) . $this->_buildOrderBy($order_by) . $limit;
-        return $this->execSql($sql);
-    }
-    /**
-     * 按主键删除一条信息
-     * 单独一个主键则只传key_id的值即可
-     * 如果主键是联合主键需要使用key=>value的数组传参
-     *
-     * @param  mix   $key_id
-     * @return int
-     */
-    protected function removeByKey($key_id) {
-        $keys = $this->getTablePrimary();
-        $sql  = 'DELETE FROM ' . $this->getTableName(true);
-        if (count($keys) == 1) {
-            $sql .= ' WHERE ' . $keys[0] . ' = ' . $this->_autoQuote($keys[0], $key_id);
-        } else {
-            $where_arr = null;
-            foreach ($key_id as $key => $value) {
-                $where_arr[] = array(
-                    'field'     => $key,
-                    'condition' => $value
-                );
-            }
-            $sql .= $this->_buildWhereCondition($where_arr);
-        }
-        return $this->execSql($sql);
+        $sql             = 'DELETE FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition) . $this->_buildOrderBy($order_by) . $limit;
+        $this->_last_sql = $sql;
+        return $this;
     }
     /**
      * 按条件更新当前操作表的指定条目
      *
-     * @param  array $set_arr
-     * @param  array $where_condition=null
-     * @param  int   $count=-1
-     * @param  array $order_by=null
+     * @param  array        $set_arr
+     * @param  array|string $where_condition=null
+     * @param  int          $count=-1
+     * @param  array|string $order_by=null
      * @return int
      */
-    protected function update($set_arr, $where_condition = null, $count = -1, $order_by = null) {
-        if (empty($set_arr) || ! is_array($set_arr)) {
-            $this->setErrorMessage(self::PARAMS_ERROR_MESSAGE);
-            return false;
+    protected function update(array $set_arr, $where_condition = null, int $count = -1, $order_by = null) {
+        if (empty($set_arr)) {
+            throw new ControllMysqlException(ControllMysqlException::PARAMS_ERROR_MESSAGE);
         }
         $limit = '';
         if (is_numeric($count) && $count > 0) {
             $limit = ' LIMIT ' . $count;
         }
-        $sql = 'UPDATE ' . $this->getTableName(true) . ' SET ' . $this->_buildSet($set_arr) . $this->_buildWhereCondition($where_condition) . $this->_buildOrderBy($order_by) . $limit;
-        return $this->execSql($sql);
+        $sql             = 'UPDATE ' . $this->getTableName() . ' SET ' . $this->_buildSet($set_arr) . $this->_buildWhereCondition($where_condition) . $this->_buildOrderBy($order_by) . $limit;
+        $this->_last_sql = $sql;
+        return $this;
     }
     /**
      * 根据条件统计条目数
      *
-     *            =null
-     * @param  string $where_condition
+     * @param  string|string $where_condition
      * @return int
      */
     protected function count($where_condition = null) {
-        $sql    = 'SELECT COUNT(*) FROM ' . $this->getTableName(true) . $this->_buildWhereCondition($where_condition);
-        $result = $this->execSql($sql);
-        return $result[0]['COUNT(*)'];
-    }
-    /**
-     * 查询是否存在某表
-     *
-     * @param  string    $table_name
-     * @return boolean
-     */
-    protected function isExistTable($table_name) {
-        // 这部分安全性验证就省略掉了~直接返回true 。。。2013/08/28 by zhiyuan12
-        return true;
-        if (empty($table_name)) {
-            $this->setErrorMessage(self::PARAMS_ERROR_MESSAGE);
-            return false;
-        }
-        if ( ! empty(self::$_table_list[$this->_db_conf][$table_name])) {
-            return true;
-        }
-        $this->getTableList();
-        if (empty(self::$_table_list[$this->_db_conf][$table_name])) {
-            $this->setErrorMessage(self::NOT_EXIST_TABLE_ERROR_MESSAGE . $table_name);
-            return false;
-        }
-        return true;
-    }
-    /**
-     * 列出所连库的表
-     * 可根据正则进行匹配显示
-     *
-     * @param  string    $pattern=null
-     * @return boolean
-     */
-    protected function getTableList($pattern = null) {
-        if ( ! empty(self::$_table_list[$this->_db_conf]) && empty($pattern)) {
-            return self::$_table_list[$this->_db_conf];
-        }
-        $sql = 'SHOW TABLES ';
-        if ( ! empty($pattern)) {
-            $sql .= ' LIKE "' . $pattern . '"';
-        }
-        $tmp_result = $this->execSql($sql);
-        if (empty($tmp_result)) {
-            return array();
-        }
-        foreach ($tmp_result as $one) {
-            $tmp      = array_values($one);
-            $result[] = $tmp[0];
-            if (empty($pattern)) {
-                self::$_table_list[$this->_db_conf][$tmp[0]] = true;
-            }
-        }
-        return $result;
-    }
-    /**
-     * 获取当前操作表索引信息
-     *
-     * @return array
-     */
-    protected function getTableIndex() {
-        $sql = 'SHOW INDEX FROM ' . $this->getTableName(true);
-        return $this->execSql($sql);
-    }
-    /**
-     * 设置mysql的编码
-     *
-     * @param  string    $charecter=utf8
-     * @return boolean
-     */
-    protected function setCharecter($charecter = 'utf8') {
-        $sql = 'SET NAMES ' . $charecter;
-        return $this->execSql($sql);
+        $sql             = 'SELECT COUNT(*) FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition);
+        $this->_last_sql = $sql;
+        return $this;
     }
     /**
      * 启用mysql事务
@@ -434,26 +292,33 @@ class ControllMysql/*implements ControllDB*/ {
      */
     protected function stopTransaction($work_name = 'default') {}
     /**
-     * 执行一条sql语句
-     *
-     * @param  string $sql
-     * @return mix
+     * 构造条件语句
+     * @param  string  $field
+     * @param  mix     $condition
+     * @param  string  $operator
+     * @param  string  $logic
+     * @return array
      */
-    protected function execSql($sql) {
-        if ($this->getDebug()) {
-            RunTime::start("ControllMysql" . $sql);
-            $result = $this->_mysql->performQuery($sql);
-            RunTime::stop("ControllMysql" . $sql);
-            Debug::debugDump($sql . "; sql执行耗时：" . implode('', RunTime::spent("ControllMysql")) . ' ms');
-        } else {
-            $result = $this->_mysql->performQuery($sql);
+    public static function buildWhereCondition(string $field, $condition, string $operator = '=', string $logic = 'AND') {
+        return array('field' => $field, 'condition' => $condition, 'operator' => $operator, 'logic' => $logic);
+    }
+    /**
+     * 获取操作表名
+     * @return string
+     */
+    protected function getTableName() {
+        if (empty($this->_table_name)) {
+            throw new ControllMysqlException(ControllMysqlException::TABLE_NAME_EMPTY);
         }
-        if (false === $result) {
-            $tmp = $this->_mysql->getError();
-            $this->setErrorMessage($tmp[2]);
-            return false;
-        }
-        return $result;
+        return $this->_table_name;
+    }
+    /**
+     * 设置操作表名
+     * @param string $table_name
+     */
+    protected function setTableName(string $table_name) {
+        $this->_table_name = $table_name;
+        return $this;
     }
     /**
      * 构建where条件语句
@@ -469,21 +334,15 @@ class ControllMysql/*implements ControllDB*/ {
             return ' ' . $set_arr;
         }
         $set_str = '';
+        $params  = array();
         foreach ($set_arr as $field => $value) {
-            if (is_null($value)) {
-                $value = 0;
-            }
-            $set_str .= $this->_putFieldQuote($field) . '=' . $this->_autoQuote($field, $value) . ',';
+            $tmp_key = $this->_putFieldVar($field . '_SET');
+            $set_str .= $this->_putFieldQuote($field) . '=' . $tmp_key . ',';
+            $params[$tmp_key] = $value;
         }
         $set_str = substr($set_str, 0, -1);
+        $this->_addVar($params);
         return $set_str;
-    }
-    /**
-     * 构建where条件数组
-     * @return [type] [description]
-     */
-    public function buildWhere($xx) {
-        return $this;
     }
     /**
      * 构建where条件语句
@@ -499,6 +358,8 @@ class ControllMysql/*implements ControllDB*/ {
             return ' ' . $where_arr;
         }
         $result = ' WHERE 1';
+        $params = array();
+
         foreach ($where_arr as $condition) {
             if (empty($condition['logic'])) {
                 $condition['logic'] = 'AND';
@@ -506,28 +367,31 @@ class ControllMysql/*implements ControllDB*/ {
             if (empty($condition['operator'])) {
                 $condition['operator'] = '=';
             }
-            $result .= ' ' . $condition['logic'] . ' ' . $this->_putFieldQuote($condition['field']) . ' ';
+            $result .= ' ' . $condition['logic'] . ' ' . $this->_putFieldQuote($condition['field']) . ' ' . $condition['operator'];
+            //where 条件有同名field，值后缀不能删
+            $tmp_field             = $this->_putFieldVar($condition['field'] . '_WHERE_' . $condition['condition']);
             $condition['operator'] = strtoupper($condition['operator']);
-            if ('LIKE' == $condition['operator'] || 'NOT LIKE' == $condition['operator']) {
-                $result .= $condition['operator'] . ' "%' . mysql_escape_string($condition['condition']) . '%"';
-                //$result .= $condition ['operator'] . ' "%' . addcslashes ( $condition ['condition'],"\x00\n\r\\'\"\x1a" ) . '%"';
-            } else if ('IN' == $condition['operator'] || 'NOT IN' == $condition['operator']) {
-                $tmp          = explode(',', $condition['condition']);
-                $in_condition = '';
-                foreach ($tmp as $one) {
-                    $in_condition .= $this->_autoQuote($condition['field'], $one) . ',';
-                }
-                $in_condition = substr($in_condition, 0, -1);
-                $result .= $condition['operator'] . ' (' . $in_condition . ')';
-            } else if ('BETWEEN' == $condition['operator'] || 'NOT BETWEEN' == $condition['operator']) {
-                $result .= $condition['operator'] . ' ' . $condition['condition'];
-            } else {
-                $result .= $condition['operator'] . ' ' . $this->_autoQuote($condition['field'], $condition['condition']);
+            switch ($condition['operator']) {
+                case 'LIKE':
+                case 'NOT LIKE':
+                    $result .= ' "%' . $tmp_field . '%"';
+                    break;
+                case 'IN':
+                case 'NOT IN':
+                    $result .= ' (' . $tmp_field . ')';
+                    break;
+                case 'BETWEEN':
+                case 'NOT BETWEEN':
+                default:
+                    $result .= ' ' . $tmp_field;
+                    break;
             }
+            $params[$tmp_field] = $condition['condition'];
         }
+        $this->_addVar($params);
         return $result;
     }
-    private function _buildHavingBy() {}
+    private function _buildHavingBy($set_arr) {}
     /**
      * 构建order by语句
      *
@@ -543,7 +407,7 @@ class ControllMysql/*implements ControllDB*/ {
         }
         $order_by = ' ORDER BY ';
         foreach ($order_by_arr as $field => $value) {
-            $order_by .= $field . ' ' . $value . ',';
+            $order_by .= $this->_putFieldQuote($field) . ' ' . $value . ',';
         }
         $order_by = substr($order_by, 0, -1);
         return $order_by;
@@ -563,7 +427,7 @@ class ControllMysql/*implements ControllDB*/ {
         }
         $group_by = ' GROUP BY ';
         foreach ($group_by_arr as $field => $value) {
-            $group_by .= $field . ' ' . $value . ',';
+            $group_by .= $this->_putFieldQuote($field) . ' ' . $value . ',';
         }
         $group_by = substr($group_by, 0, -1);
         if ( ! empty($group_by_arr['with_rollup'])) {
@@ -572,23 +436,12 @@ class ControllMysql/*implements ControllDB*/ {
         return $group_by;
     }
     /**
-     * 监测字段是否需要添加双引号
-     *
+     * 构造占位符
      * @param  string   $field
-     * @param  string&  $value
      * @return string
      */
-    private function _autoQuote($field, $value) {
-        if (empty($this->_char_fields)) {
-            $this->getCharFields();
-        }
-        $value = mysql_escape_string($value);
-        if ( ! empty($this->_char_fields[$field])) {
-            return '"' . $value . '"';
-        }
-        // 应该判断 value 值是否为 is_numeric，但是添加这个判断影响add和multiAdd方法的on
-        // duplicate的使用，后续待优化
-        return $value;
+    private function _putFieldVar($field) {
+        return ':' . $field;
     }
     /**
      * 给字段加上斜瞥号
@@ -597,121 +450,41 @@ class ControllMysql/*implements ControllDB*/ {
      * @return string
      */
     private function _putFieldQuote($field) {
-        return '`' . mysql_escape_string($field) . '`';
+        return '`' . $field . '`';
     }
     /**
-     * 获取当前操作表的字符字段
-     *
-     * @return array
+     * 增加变量
+     * @param array $var
      */
-    protected function getCharFields() {
-        if ( ! empty($this->_char_fields)) {
-            return $this->_char_fields;
+    private function _addVar(array $var) {
+        if ( ! empty($var)) {
+            $this->_last_params = array_merge($this->_last_params, $var);
         }
-        $table_name = $this->getTableName(true);
-        $fields     = $this->getTableSchema($table_name);
-        $result     = null;
-        foreach ($fields as $field) {
-            $type = explode('(', $field['Type']);
-            if (empty(self::$numeric_data_types[$type[0]])) {
-                $result[$field['Field']] = true;
-            }
-        }
-        $this->_char_fields = $result;
-        return $result;
-    }
-    /**
-     * 获取当前操作表的主键
-     *
-     * @return array
-     */
-    protected function getTablePrimary() {
-        if ( ! empty($this->_key_fields)) {
-            return $this->_key_fields;
-        }
-        $table_name = $this->getTableName(true);
-        $fields     = $this->getTableSchema($table_name);
-        $result     = null;
-        foreach ($fields as $field) {
-            if ('PRI' == $field['Key']) {
-                $result[] = $field['Field'];
-            }
-        }
-        $this->_key_fields = $result;
-        return $result;
-    }
-    /**
-     * 获取指定或当前操作表的表结构
-     *
-     * @return array
-     */
-    protected function getTableSchema($is_cache = true) {
-        if (empty($this->_table_schema) || $this->getDebug()) {
-            $table_name = $this->getTableName(true);
-            $sql        = 'SHOW COLUMNS FROM ' . $table_name;
-            $redis_key  = 'TING_WEIBO_COM:' . $sql;
-            if ($is_cache && ! $this->getDebug()) {
-                $this->_table_schema = unserialize($this->_redis->get($redis_key));
-            }
-            if (empty($this->_table_schema)) {
-                $this->_table_schema = $this->execSql($sql);
-                $this->_redis->set($redis_key, serialize($this->_table_schema));
-            }
-        }
-        return $this->_table_schema;
-    }
-    /**
-     * 获取当前类操作表名
-     *
-     * @param  boolean  $isExit=false
-     * @return string
-     */
-    protected function getTableName($isExit = false) {
-        if ( ! empty($this->_table_name)) {
-            return $this->_table_name;
-        }
-        if ($isExit) {
-            $this->echoErrorMessage(self::NULL_TABLE_ERROR_MESSAGE);
-        }
-        $this->setErrorMessage(self::NULL_TABLE_ERROR_MESSAGE);
-        return false;
-    }
-    /**
-     * 设置当前类操作表
-     */
-    protected function setTableName($table_name) {
-        if ($this->isExistTable($table_name)) {
-            $this->_table_name  = $table_name;
-            $this->_char_fields = null;
-            $this->getCharFields();
-            $this->_key_fields   = null;
-            $this->_table_schema = null;
-            return true;
-        } else {
-            return false;
-        }
-    }
-    /**
-     * 强制使用主库
-     * 在这里设置强制读取主库
-     * 设置以后，所有请求将发给主库
-     *
-     *     true 强制使用主库
-     *     false 恢复正常
-     * @param  @flag
-     * @return array
-     */
-    public function forceMaster($flag = true) {
-        return $this->_mysql->forceMaster($flag);
+        return $this;
     }
 }
 
 class ControllMysqlException extends Exception {
-    const ERROR_DB_POOL_EMPTY = 1;
-    public $ERROR_SET         = array(
-        self::ERROR_DB_POOL_EMPTY => array(
-            'code'    => self::ERROR_DB_POOL_EMPTY,
+    const DB_POOL_EMPTY        = 1;
+    const PARAMS_ERROR_MESSAGE = 2;
+    const WHERE_EMPTY          = 3;
+    const TABLE_NAME_EMPTY     = 4;
+    public $ERROR_SET          = array(
+        self::DB_POOL_EMPTY        => array(
+            'code'    => self::DB_POOL_EMPTY,
             'message' => 'db_pool name empty'
+        ),
+        self::PARAMS_ERROR_MESSAGE => array(
+            'code'    => self::PARAMS_ERROR_MESSAGE,
+            'message' => 'param error'
+        ),
+        self::WHERE_EMPTY          => array(
+            'code'    => self::WHERE_EMPTY,
+            'message' => 'function param $where can not be empty'
+        ),
+        self::TABLE_NAME_EMPTY     => array(
+            'code'    => self::TABLE_NAME_EMPTY,
+            'message' => 'table_name can not be empty'
         )
     );
     public function __construct($code = 0) {

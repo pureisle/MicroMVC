@@ -41,36 +41,3 @@ function main($config, $argv) {
     }
     UnitTest::run();
 }
-
-    /**
-     * 主辅库分离
-     * @param  string   $sql
-     * @return string
-     */
-    // private function _DBChoice($sql) {
-    //     $sql_components = explode(' ', ltrim($sql), 2);
-    //     $verb           = strtolower($sql_components[0]);
-    //     $db_type        = 'slave';
-    //     switch ($verb) {
-    //         case "select":
-    //         case "describe":
-    //         case "show":
-    //             $db_type = 'slave';
-    //             break;
-    //         case "delete":
-    //         case "update":
-    //         case "truncate":
-    //         case "replace":
-    //         case "rename":
-    //         case "alter":
-    //         case "drop":
-    //         case "create":
-    //         case "insert":
-    //             $db_type = 'master';
-    //             break;
-    //         default:
-    //             throw new PDOManagerException(PDOManagerException::ERROR_SQL_SYNTAX);
-    //             return false;
-    //     }
-    //     return $db_type;
-    // }

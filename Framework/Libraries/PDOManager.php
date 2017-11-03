@@ -7,6 +7,7 @@
 namespace Framework\Libraries;
 use Framework\Entities\PDOConfig;
 use \PDO;
+use \PDOException;
 
 class PDOManager {
     private $_db_conf                 = array();
@@ -15,6 +16,7 @@ class PDOManager {
     private $_last_prepare_sql        = '';
     private $_last_prepare_sth        = null;
     private $_is_db_arrtibute_refresh = false;
+    private $_reconnect               = false;
     public function __construct(PDOConfig $pdo_config) {
         $this->_db_conf = $pdo_config;
         $this->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
@@ -25,7 +27,6 @@ class PDOManager {
         }
         return $this;
     }
-
     /**
      * 执行一条 SQL 语句，并返回受影响的行数
      * 不会从一条 SELECT 语句中返回结果。需要返回结果的请使用query()
@@ -33,15 +34,9 @@ class PDOManager {
      * @param  string $param_array array(':calories' => 175, ':colour' => 'yellow')
      * @return int
      */
-    public function exec($prepare_sql, $param_array = array(), $driver_options = array()) {
-        if ( ! is_string($prepare_sql) || ! is_array($param_array) || ! is_array($driver_options)) {
-            throw new PDOManagerException(PDOManagerException::ERROR_PARAM);
-        }
-        $sth = $this->prepare($prepare_sql, $driver_options);
-        $ret = $sth->execute($param_array);
-        if ($ret) {
-            $ret = $sth->rowCount();
-        }
+    public function exec(string $prepare_sql, array $param_array = array(), array $driver_options = array()) {
+        $sth = $this->_execute($prepare_sql, $param_array, $driver_options);
+        $ret = $sth->rowCount();
         return $ret;
     }
     /**
@@ -51,19 +46,28 @@ class PDOManager {
      * @param  array   $driver_options
      * @return array
      */
-    public function query($prepare_sql, $param_array = array(), $driver_options = array()) {
+    public function query(string $prepare_sql, array $param_array = array(), array $driver_options = array()) {
+        $sth = $this->_execute($prepare_sql, $param_array, $driver_options);
+        //fetch 类型比较多，后续有需求再做扩展
+        $ret = $sth->fetchAll(PDO::FETCH_ASSOC);
+        return $ret;
+    }
+    private function _execute(string $prepare_sql, array $param_array = array(), array $driver_options = array()) {
         if ( ! is_string($prepare_sql) || ! is_array($param_array) || ! is_array($driver_options)) {
             throw new PDOManagerException(PDOManagerException::ERROR_PARAM);
         }
         $sth = $this->prepare($prepare_sql, $driver_options);
         $ret = $sth->execute($param_array);
-        if ($ret) {
-            $ret = $sth->fetchAll();
+        if (false === $ret) {
+            $error = $sth->errorInfo();
+            throw new PDOManagerException(PDOManagerException::PDO_ERROR_MSG, implode(' ', $error));
         }
-        return $ret;
+        return $sth;
     }
     /**
      *  Quotes a string for use in a query.
+     *
+     *  强烈不推荐使用
      *
      * PDO::PARAM_BOOL (integer) 表示布尔数据类型。
      * PDO::PARAM_NULL (integer) 表示 SQL 中的 NULL 数据类型。
@@ -74,7 +78,7 @@ class PDOManager {
      * PDO::PARAM_INPUT_OUTPUT (integer) 指定参数为一个存储过程的 INOUT 参数。必须用一个明确的
      * PDO::PARAM_* 数据类型跟此值进行按位或。
      */
-    public function quote($param, $parameter_type = PDO::PARAM_STR) {
+    public function quote(array $param, int $parameter_type = PDO::PARAM_STR) {
         $parameter_type_array = array(
             PDO::PARAM_BOOL,
             PDO::PARAM_NULL,
@@ -93,22 +97,26 @@ class PDOManager {
      * @param  array          $driver_options
      * @return PDOStatement
      */
-    public function prepare($prepare_sql, $driver_options = array()) {
+    public function prepare(string $prepare_sql, array $driver_options = array()) {
         if (empty($prepare_sql)) {
             throw new PDOManagerException(PDOManagerException::ERROR_PARAM);
         }
         if ($prepare_sql === $this->_last_prepare_sql) {
             return $this->_last_prepare_sth;
         }
-        $db_handle               = $this->_getDBHandle();
-        $sth                     = $db_handle->prepare($prepare_sql, $driver_options);
+        $db_handle = $this->_getDBHandle();
+        $sth       = $db_handle->prepare($prepare_sql, $driver_options);
+        if (false === $sth) {
+            $error = $db_handle->errorInfo();
+            throw new PDOManagerException(PDOManagerException::PDO_ERROR_MSG, implode(' ', $error));
+        }
         $this->_last_prepare_sql = $prepare_sql;
         $this->_last_prepare_sth = $sth;
         return $this->_last_prepare_sth;
     }
     /**
      * 设置数据库句柄属性
-     * @param int    $attribute_key
+     * @param int    $attribute_key 参见getAttribute
      * @param string $value
      */
     public function setAttribute($attribute_key, $value) {
@@ -130,7 +138,7 @@ class PDOManager {
      * @param  string  $db_handle_name
      * @return array
      */
-    public function getAttribute($attributes = array()) {
+    public function getAttribute(array $attributes = array()) {
         if (empty($attributes)) {
             $attributes = array(
                 "ATTR_AUTOCOMMIT", "ATTR_ERRMODE", "ATTR_CASE", "ATTR_CLIENT_VERSION", "ATTR_CONNECTION_STATUS",
@@ -151,15 +159,6 @@ class PDOManager {
      */
     public function getAvailableDrivers() {
         return PDO::getAvailableDrivers();
-    }
-    /**
-     * 获取pdo上一次操作的错误信息
-     * 不会获取到 PDOStatement 的错误信息
-     * @return array
-     */
-    public function getErrorInfo() {
-        $info = $this->_getDBHandle()->errorInfo();
-        return $info;
     }
     /**
      * 启动事务
@@ -207,20 +206,30 @@ class PDOManager {
         return false;
     }
     /**
+     * 设置强制重连数据库
+     * 注意：一次重连后失效，如需重连需再次调用
+     * @return $this
+     */
+    public function forceReconnect() {
+        $this->_reconnect = true;
+        return $this;
+    }
+    /**
      * 获取db的句柄
      * @param  boolean  $is_master 是否使用master
      * @param  boolean  $reconnect 是否强制重连
      * @return object
      */
-    private function _getDBHandle($reconnect = false) {
+    private function _getDBHandle() {
         $driver_options = array(
             PDO::ATTR_TIMEOUT   => $this->_db_conf->time_out,
             PDO::NULL_TO_STRING => true
         );
-        if ($reconnect || empty($this->_db_handle) || $this->_is_db_arrtibute_refresh) {
+        if ($this->_reconnect || empty($this->_db_handle) || $this->_is_db_arrtibute_refresh) {
             $dsn                                          = $this->_db_conf->buildDSN();
             $driver_options[PDO::MYSQL_ATTR_INIT_COMMAND] = 'SET NAMES ' . $this->_db_conf->charset;
             $this->_db_handle                             = $this->_connectDB($dsn, $this->_db_conf->username, $this->_db_conf->password, $driver_options);
+            $this->_reconnect                             = false;
         }
         return $this->_db_handle;
     }
@@ -234,7 +243,6 @@ class PDOManager {
      */
     private function _connectDB($dsn, $username, $password, $driver_options = array()) {
         try {
-            Debug::debugDump($dsn . " " . $username . " " . $password . " " . json_encode($driver_options));
             $pdo = new PDO($dsn, $username, $password, $driver_options);
             if ( ! empty($this->_db_arrtibute)) {
                 foreach ($this->_db_arrtibute as $key => $value) {
@@ -243,22 +251,29 @@ class PDOManager {
                 $this->_is_db_arrtibute_refresh = false;
             }
         } catch (PDOException $e) {
-            Debug::setErrorMessage($e->getCode() . ": " . $e->getMessage());
-            return false;
+            throw new PDOManagerException(PDOManagerException::PDO_ERROR_MSG, $e->getCode() . ": " . $e->getMessage());
         }
         return $pdo;
     }
 }
 
 class PDOManagerException extends Exception {
-    const ERROR_PARAM = 1;
-    public $ERROR_SET = array(
-        self::ERROR_PARAM => array(
+    const ERROR_PARAM   = 1;
+    const PDO_ERROR_MSG = 2;
+    public $ERROR_SET   = array(
+        self::ERROR_PARAM   => array(
             'code'    => self::ERROR_PARAM,
             'message' => 'param error'
+        ),
+        self::PDO_ERROR_MSG => array(
+            'code'    => self::PDO_ERROR_MSG,
+            'message' => ''
         )
     );
-    public function __construct($code = 0) {
+    public function __construct($code = 0, $ext_msg = '') {
+        if ( ! empty($ext_msg)) {
+            $this->ERROR_SET[$code]['message'] = json_encode($ext_msg);
+        }
         parent::__construct($code);
     }
 }

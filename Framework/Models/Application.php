@@ -24,7 +24,7 @@ class Application {
     public function __construct($app_name) {
         $this->_app_name = $app_name;
         //每次app实例单独加在AutoLoad，以便隔离不同module的底层加载
-        $this->_iniAutoLoad();
+        $this->_iniAutoLoad($app_name);
         //框架只加载一次
         if ( ! self::$_is_load_framework) {
             $this->_loadFramework();
@@ -95,7 +95,7 @@ class Application {
      */
     public function execute($function_name, $argv) {
         if (function_exists($function_name)) {
-            return $function_name($this->getConfig(),$argv);
+            return $function_name($this->getConfig(), $argv);
         }
         throw new ApplicationException(ApplicationException::ERROR_FUNCTION_NOT_EXIST);
         return false;
@@ -104,7 +104,7 @@ class Application {
      * 执行应用初始化类
      */
     public function bootstrap() {
-        $app_path=ROOT_PATH . DIRECTORY_SEPARATOR .  $this->_app_name;
+        $app_path = ROOT_PATH . DIRECTORY_SEPARATOR . $this->_app_name;
         if ( ! file_exists($app_path . DIRECTORY_SEPARATOR . 'Bootstrap.php')) {
             return $this;
         }
@@ -164,9 +164,9 @@ class Application {
      * 注册自动加载类
      * @return
      */
-    private function _iniAutoLoad() {
+    private function _iniAutoLoad($module_name) {
         require_once 'AutoLoad.php';
-        $autoload = new AutoLoad($this->_app_name);
+        $autoload = new AutoLoad($module_name);
         $autoload->register();
         return $this;
     }

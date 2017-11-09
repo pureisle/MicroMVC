@@ -100,8 +100,8 @@ class TestControllMysql extends TestSuite {
 }
 
 class TestData extends ControllMysql {
-    const READ_DB_RESOURCE  = 'database_firehose_read';
-    const WRITE_DB_RESOURCE = 'database_firehose';
+    const READ_DB_RESOURCE  = 'database:firehose_read';
+    const WRITE_DB_RESOURCE = 'database:firehose';
     const TABLE_NAME        = 'firehose_info';
     const MODULE_NAME       = 'Demo';
     public function __construct() {

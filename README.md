@@ -5,7 +5,8 @@
 * 提供简单好用的单元测试框架
 * 提供便捷的接口参数合法性验证服务
 * 提供简单好用的 Mysql 控制服务
-* 所有开发基于 PHP7 环境，未做低版本运行验证
+* 提供PSR-3规范的日志类，额外提供 log buffer 功能（性能提升） 和 全局日志标记码（一个进程一个标记码，方便定位问题）的功能
+* 所有开发基于 PHP7 环境，未做低版本运行验证和兼容
 
 ### 文件目录
 ```
@@ -34,6 +35,8 @@
 ```
 
 ### 开始使用
+
+#### MVC框架
 1. 配置 Web Server 服务器重定向到入口文件。Nginx 样例如下：
 ```
 if ( !-f $request_filename ) { 
@@ -85,3 +88,14 @@ http://service.movie.weibo.com:8183/demo/demo/a/index?a=test&b=12
 Controller 文件路径： MODULE_ROOT\Controllers\Demo\A.php
 View 文件路径：MODULE_ROOT\Views\Demo\A\index.phtml
 ```
+
+#### 如何方便迁移 Module
+1. 在框架层做了 Module 之间的资源隔离，不同 Module 之间无法通过 new 关键字来进行数据交换；
+1. 框架提供了 LocalCurl 类，可以模拟 HTTP 网络调用，其实是在内存中完成了不同 Module 之间的数据交互；
+1. 迁移的时候，执行 全局替换 LocalCurl 为 Curl 即可完成框架部分的迁移，当然业务里域名修改的地方还需要业务技术另行修改；
+
+#### 如何进行自动化测试（单元测试）
+1. 在各自 Module 下的 Tests 文件夹内创建单元测试文件，需要继承框架 Framework\Libraries\TestSuite 类；
+1. 命令行下执行 php public/run_test.php 即可完成全部单元测试文件的执行。也可指定要执行的单元测试文件或 Module。如： php public/run_test.php Framework TestPDOManager.php
+
+#### 

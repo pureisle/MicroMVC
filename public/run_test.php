@@ -5,12 +5,13 @@
  */
 $env = array(
     'main'   => 'main',
-    'module' => 'Demo'
+    'module' => 'Framework'
 );
 require "cli.php";
 
 //入口函数
 use Framework\Libraries\UnitTest;
+use Framework\Models\AutoLoad;
 /**
  * 入口执行函数
  *
@@ -33,6 +34,9 @@ function main($config, $argv) {
         $modules = $config['modules'];
     }
     UnitTest::includeTestFile(FRAMEWORK_PATH . '/Tests');
+    //注册多module的自动加载
+    $autoload = new AutoLoad('');
+    $autoload->register();
     foreach ($modules as $module => $is_ok) {
         if ( ! $is_ok) {
             continue;

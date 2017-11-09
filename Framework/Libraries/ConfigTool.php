@@ -41,14 +41,27 @@ class ConfigTool {
     }
     /**
      * 根据配置名加载配置
-     *  如：database_firehose,将获取app_name下的database配置文件内的firehose配置项
+     *
+     *  如：log.file_name:firehose,将获取$app_name下config内的log文件夹内的配置文件file_name内的firehose配置项
+     *
      * @param  string  $config_name 字符串解析规则：配置文件名_配置名
      * @return array
      */
     public static function loadByName(string $config_name, string $app_name) {
-        list($file_name, $var_name) = explode('_', $config_name, 2);
-        $file_name                  = $file_name;
-        $config_array               = self::getConfig($file_name, $app_name);
-        return $config_array[$var_name];
+        if (empty($config_name)) {
+            return array();
+        }
+        $tmp       = explode('.', $config_name);
+        $path      = '.';
+        $file_name = array_pop($tmp);
+        if (strpos($file_name, ':') !== false) {
+            list($file_name, $resource_name) = explode(':', $file_name);
+        }
+        $path         = implode(DIRECTORY_SEPARATOR, $tmp);
+        $config_array = self::getConfig($path . DIRECTORY_SEPARATOR . $file_name, $app_name);
+        if (empty($resource_name) || ! isset($config_array[$resource_name])) {
+            return $config_array;
+        }
+        return $config_array[$resource_name];
     }
 }

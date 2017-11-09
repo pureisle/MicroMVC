@@ -27,7 +27,7 @@ EOT;
      * @param string $object_type
      * @param string $prefix
      */
-    public function add(string $name, string $firehose_type, string $object_type, string $prefix) {
+    public function addInfo(string $name, string $firehose_type, string $object_type, string $prefix) {
         $data = array(
             'name'          => $name,
             'firehose_type' => $firehose_type,
@@ -43,7 +43,7 @@ EOT;
      * @param  int     $id
      * @return array
      */
-    public function getList(int $count = 10, int $page = 0, int $id = null) {
+    public function getListInfo(int $count = 10, int $page = 0, int $id = null) {
         $where = array();
         if (isset($id)) {
             $where[] = $this->buildWhereCondition('id', $id, '=', 'AND');
@@ -60,7 +60,7 @@ EOT;
      * @param  [type]      $order_by        [description]
      * @return [type]      [description]
      */
-    public function update(int $id, string $name, string $firehose_type, string $object_type, string $prefix) {
+    public function updateById(int $id, string $name, string $firehose_type, string $object_type, string $prefix) {
         $set_arr = array(
             'name'          => $name,
             'firehose_type' => $firehose_type,
@@ -75,7 +75,7 @@ EOT;
      * @param  int   $order_by
      * @return int
      */
-    public function remove($id) {
+    public function removeById($id) {
         $where[] = $this->buildWhereCondition('id', $id, '=', 'AND');
         return parent::remove($where)->exec(self::WRITE_DB_RESOURCE);
     }

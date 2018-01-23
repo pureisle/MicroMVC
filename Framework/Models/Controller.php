@@ -7,9 +7,9 @@
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
 namespace Framework\Models;
-use Framework\Models\Request;
 use Framework\Libraries\Exception;
 use Framework\Libraries\Validator;
+use Framework\Models\Request;
 
 abstract class Controller {
     private $_view;
@@ -45,38 +45,41 @@ abstract class Controller {
      * @return array
      */
     public function getPostParams() {
-        $params = $this->_request->getPostParams();
-        $this->_checkParams($params);
-        return $params;
+        $params     = $this->_request->getPostParams();
+        $ret_params = $this->_checkParams($params);
+        return $ret_params;
     }
     /**
      * 获取get参数，并进行参数校验
      * @return array
      */
     public function getGetParams() {
-        $params = $this->_request->getGetParams();
-        $this->_checkParams($params);
-        return $params;
+        $params     = $this->_request->getGetParams();
+        $ret_params = $this->_checkParams($params);
+        return $ret_params;
     }
     /**
      * 参数校验
      * @param  array  $params
      * @return bool
      */
-    private function _checkParams($params) {
-        $action_name = $this->_request->getAction();
-        $var_name    = strtoupper($action_name) . '_PARAM_RULES';
-        $class_name  = get_class($this);
-        if (isset($class_name::$$var_name)) {
-            $rule_set = $class_name::$$var_name;
-            $v        = new Validator();
-            $ret      = $v->check($params, $rule_set);
-            if ( ! $ret) {
-                throw new ControllerException(ControllerException::ERROR_PARAM_CHECK, $v->getErrorMsg());
-                return false;
-            }
+    private function _checkParams(array $params) {
+        $action_name    = $this->_request->getAction();
+        $var_name       = strtoupper($action_name) . '_PARAM_RULES';
+        $class_name     = get_class($this);
+        $check_key_list = array();
+        if ( ! isset($class_name::$$var_name)) {
+            return array();
         }
-        return true;
+        $rule_set = $class_name::$$var_name;
+        $v        = new Validator();
+        $ret      = $v->check($params, $rule_set);
+        if ( ! $ret) {
+            throw new ControllerException(ControllerException::ERROR_PARAM_CHECK, $v->getErrorMsg());
+            return false;
+        }
+        $result = array_intersect_key($params, $rule_set);
+        return $result;
     }
 }
 

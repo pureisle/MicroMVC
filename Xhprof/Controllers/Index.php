@@ -4,7 +4,19 @@ use Framework\Models\Controller;
 use Xhprof\Libraries\XHProfRuns;
 
 class Index extends Controller {
+    public static $INDEX_PARAM_RULES = array(
+        'run'    => '',
+        'wts'    => '',
+        'symbol' => '',
+        'sort'   => '',
+        'run1'   => '',
+        'run2'   => '',
+        'source' => '',
+        'all'    => ''
+    );
     public function indexAction() {
+        $_GET  = $this->getGetParams();
+        $_POST = $this->getPostParams();
         //  Copyright (c) 2009 Facebook
         //
         //  Licensed under the Apache License, Version 2.0 (the "License");
@@ -94,7 +106,7 @@ class Index extends Controller {
         $vrbar  = ' class="vrbar"';
         $vgbar  = ' class="vgbar"';
 
-        $xhprof_runs_impl = new XHProfRuns();
+        $xhprof_runs_impl = new XHProfRuns('/tmp/xhprof');
         var_dump($run);
         displayXHProfReport($xhprof_runs_impl, $params, $source, $run, $wts,
             $symbol, $sort, $run1, $run2);

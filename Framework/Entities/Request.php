@@ -13,9 +13,11 @@ class Request {
     protected $_post_params    = null;
     protected $_request_params = array();
     public function __construct() {
-        $this->_request_uri            = $this->getEnvUri();
-        $this->_request_params['GET']  = $_GET;
+        $this->_request_uri           = $this->getEnvUri();
+        $this->_request_params['GET'] = $_GET;
+        unset($_GET);
         $this->_request_params['POST'] = $_POST;
+        unset($_POST);
     }
     /**
      * 获取实体uri，优先使用设置的uri，若无设置则使用request_uri

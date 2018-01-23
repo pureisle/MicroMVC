@@ -48,7 +48,6 @@ class Logger {
         'b_name'    => true,
         'log_text'  => true
     );
-    private static $_DEAL_HANDLE              = array();
     private $_config                          = null;
     private static $_is_register_flush_buffer = false;
     public function __construct(string $config_name, string $module) {

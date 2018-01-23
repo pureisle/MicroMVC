@@ -47,16 +47,22 @@
 namespace Framework\Libraries;
 use Framework\Entities\PDOConfig;
 
-class ControllMysql {
+abstract class ControllMysql {
     private $_db_conf     = null;
     private $_pdo         = null;
     private $_last_sql    = null;
+    private $_module      = null;
     private $_is_query    = false;
     private $_table_name  = '';
     private $_last_params = array();
 
-    public function __construct(string $table_name) {
+    public function __construct(string $table_name, string $module = null) {
         $this->setTableName($table_name);
+        if (empty($module)) {
+            $tmp                 = get_class($this);
+            list($module, $null) = explode('\\', $tmp, 2);
+        }
+        $this->_module = $module;
     }
     /**
      * 执行构造的sql
@@ -64,25 +70,24 @@ class ControllMysql {
      * @param  string $module=null     //配置文件所在模块名
      * @return mix
      */
-    protected function exec(string $resource_name, string $module = null) {
+    protected function exec(string $resource_name) {
         if (empty($resource_name)) {
             throw new ControllMysqlException(ControllMysqlException::ERROR_DB_POOL_EMPTY);
         }
         if (empty($this->_last_sql)) {
+            throw new ControllMysqlException(ControllMysqlException::NO_SQL_TO_EXEC);
         }
-        if (empty($module)) {
-            $tmp                 = get_class($this);
-            list($module, $null) = explode('\\', $tmp, 2);
+        if ( ! isset($this->_pdo)) {
+            $db_conf              = ConfigTool::loadByName($resource_name, $this->_module);
+            $pdo_config           = new PDOConfig();
+            $pdo_config->host     = $db_conf['host'];
+            $pdo_config->port     = $db_conf['port'];
+            $pdo_config->username = $db_conf['username'];
+            $pdo_config->password = $db_conf['password'];
+            $pdo_config->dbname   = $db_conf['dbname'];
+            $this->_db_conf       = $pdo_config;
+            $this->_pdo           = new PDOManager($pdo_config);
         }
-        $db_conf              = ConfigTool::loadByName($resource_name, $module);
-        $pdo_config           = new PDOConfig();
-        $pdo_config->host     = $db_conf['host'];
-        $pdo_config->port     = $db_conf['port'];
-        $pdo_config->username = $db_conf['username'];
-        $pdo_config->password = $db_conf['password'];
-        $pdo_config->dbname   = $db_conf['dbname'];
-        $this->_db_conf       = $pdo_config;
-        $this->_pdo           = new PDOManager($pdo_config);
         if (true === $this->_is_query) {
             $ret = $this->_pdo->query($this->_last_sql, $this->_last_params);
         } else {
@@ -469,6 +474,7 @@ class ControllMysqlException extends Exception {
     const PARAMS_ERROR_MESSAGE = 2;
     const WHERE_EMPTY          = 3;
     const TABLE_NAME_EMPTY     = 4;
+    const NO_SQL_TO_EXEC       = 5;
     public $ERROR_SET          = array(
         self::DB_POOL_EMPTY        => array(
             'code'    => self::DB_POOL_EMPTY,
@@ -485,6 +491,10 @@ class ControllMysqlException extends Exception {
         self::TABLE_NAME_EMPTY     => array(
             'code'    => self::TABLE_NAME_EMPTY,
             'message' => 'table_name can not be empty'
+        ),
+        self::NO_SQL_TO_EXEC       => array(
+            'code'    => self::NO_SQL_TO_EXEC,
+            'message' => 'no sql to exec'
         )
     );
     public function __construct($code = 0) {

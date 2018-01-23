@@ -99,7 +99,8 @@ class Validator {
                 $ret = is_bool($data);
                 break;
             case 'integer':
-                $ret = is_int($data);
+                //is_int 在32、64位操作系统表现不同，这里integer意思整数即可
+                $ret = is_int($data) || (is_float($data + 0.1) && ! strpos($data, '.'));
                 break;
             case 'float':
                 $ret = is_float($data);
@@ -117,7 +118,7 @@ class Validator {
                 $ret = $data instanceof $valid;
                 break;
             case 'bool':
-                $ret = $this->_runRuleCheck('boolean', $data) || $this->_runRuleCheck('enum:0,1,true,false', $data);
+                $ret = $this->_runRuleCheck('boolean', $valid, $data) || $this->_runRuleCheck('enum', '0,1,true,false', $data);
                 break;
             case 'number':
                 $ret = is_numeric($data);
@@ -131,13 +132,13 @@ class Validator {
                 $ret = 0 === $tmp ? false : true;
                 break;
             case 'timestamp':
-                $ret = $this->_runRuleCheck('integer', $data) || date("Y-m-d H:i:s", $data) !== false;
+                $ret = $this->_runRuleCheck('integer', $valid, $data) && date("Y-m-d H:i:s", $data) !== false;
                 break;
             case 'date':
-                $ret = $this->_runRuleCheck('date_format:Y-m-d H:i:s', $data);
+                $ret = $this->_runRuleCheck('date_format', 'Y-m-d H:i:s', $data);
                 break;
             case 'date_format':
-                $timestamp = strtotime($value);
+                $timestamp = strtotime($data);
                 if (false !== $timestamp) {
                     $date = date($valid, $timestamp);
                     $ret  = false === $data ? false : true;

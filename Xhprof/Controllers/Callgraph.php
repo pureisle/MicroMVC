@@ -4,7 +4,19 @@ use Framework\Models\Controller;
 use Xhprof\Libraries\XHProfRuns;
 
 class Callgraph extends Controller {
+    public static $INDEX_PARAM_RULES = array(
+        'run'       => '',
+        'source'    => '',
+        'func'      => '',
+        'type'      => '',
+        'threshold' => '',
+        'critical'  => '',
+        'run1'      => '',
+        'run2'      => ''
+    );
     public function indexAction() {
+        $_GET  = $this->getGetParams();
+        $_POST = $this->getPostParams();
         //  Copyright (c) 2009 Facebook
         //
         //  Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,7 +101,7 @@ class Callgraph extends Controller {
             $type = $params['type'][1]; // default image type.
         }
 
-        $xhprof_runs_impl = new XHProfRuns();
+        $xhprof_runs_impl = new XHProfRuns('/tmp/xhprof');
 
         if ( ! empty($run)) {
             // single run call graph image generation

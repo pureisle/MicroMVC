@@ -3,15 +3,19 @@
  * 执行测试方法
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
+if ( ! empty($argv[1])) {
+    $module = $argv[1];
+} else {
+    $module = 'Framework';
+}
+
 $env = array(
-    'main'   => 'main',
-    'module' => 'Framework'
+    'module' => $module
 );
 require "cli.php";
 
 //入口函数
 use Framework\Libraries\UnitTest;
-use Framework\Models\AutoLoad;
 /**
  * 入口执行函数
  *
@@ -32,15 +36,16 @@ function main($config, $argv) {
         }
     } else {
         $modules = $config['modules'];
+        //默认配置module增加框架测试
+        UnitTest::includeTestFile(FRAMEWORK_PATH . '/Tests');
     }
-    UnitTest::includeTestFile(FRAMEWORK_PATH . '/Tests');
-    //注册多module的自动加载
-    $autoload = new AutoLoad('');
-    $autoload->register();
     foreach ($modules as $module => $is_ok) {
         if ( ! $is_ok) {
             continue;
         }
+        //注册多module的自动加载
+        $autoload = new Framework\Models\AutoLoad($module);
+        $autoload->register();
         UnitTest::includeTestFile(ROOT_PATH . '/' . $module . '/Tests');
     }
     UnitTest::run();

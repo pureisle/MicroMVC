@@ -13,4 +13,5 @@ class Demo {
     public function getList() {
         return $this->_test_data->getList();
     }
+    public function getInfo($id) {}
 }

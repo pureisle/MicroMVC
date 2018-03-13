@@ -10,6 +10,11 @@ use Framework\Libraries\TestSuite;
 
 class TestRedis extends TestSuite {
     public function beginTest() {
-        $redis = new Redis('redis.resource:business','Demo');
+    	try {
+    		$redis = new Redis('redis.resource:business','Demo');
+    	} catch (\Exception $e) {
+    		var_dump($e->getMessage());
+    	}
+        
     }
 }

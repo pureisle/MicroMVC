@@ -10,10 +10,10 @@
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
 namespace Framework\Libraries;
-abstract class ControllCache {
+abstract class ControllCache extends KeyBuilder {
     private $_instance = '';
     public $key_sets   = array(
-        'demo' => array('rule' => 'Framework\ControllCache->demo_id:%s', 'expire' => 2) //这是个样例
+        'demo' => array('rule' => 'Framework\ControllCache->demo_id:{id}:{name}', 'expire' => 2) //这是个样例
     );
     /**
      * 构造函数
@@ -28,22 +28,6 @@ abstract class ControllCache {
         $this->_instance = new Memcached($config_name, $module);
     }
     /**
-     * 构造key
-     * @param  string   $text
-     * @param  array    $param
-     * @return string
-     */
-    public function buildKey(string $text, array $param) {
-        if (empty($text)) {
-            throw new ControllCacheException(ControllCacheException::KEY_RULE_STRING_EMPTY);
-        }
-        if (empty($param)) {
-            return $text;
-        }
-        $ret = vsprintf($text, $param);
-        return $ret;
-    }
-    /**
      * 获取缓存
      * @param  string        $key_sets_index_key
      * @param  array         $params
@@ -52,7 +36,8 @@ abstract class ControllCache {
      * @return mix
      */
     protected function get(string $key_sets_index_key, array $params, $cache_cb = null, float &$cas_token = null) {
-        $key = $this->buildKey($this->key_sets[$key_sets_index_key]['rule'], $params);
+        $key = $this->buildKey($key_sets_index_key, $params);
+        var_dump($key, $params);
         return $this->_instance->get($key, $cache_cb, $cas_token);
     }
     /**
@@ -62,8 +47,8 @@ abstract class ControllCache {
      * @param int    $expire  单位秒，0为永不过期，不能超过30天的秒数
      */
     protected function set(string $key_sets_index_key, array $params, $value) {
-        $key = $this->buildKey($this->key_sets[$key_sets_index_key]['rule'], $params);
-        return $this->_instance->set($key, $value, $this->key_sets[$key_sets_index_key]['expire']);
+        $key = $this->buildKey($key_sets_index_key, $params);
+        return $this->_instance->set($key, $value, $this->key_sets['expire']);
     }
     /**
      * 获取多个key值
@@ -74,7 +59,7 @@ abstract class ControllCache {
     protected function getMulti(array $key_array, array &$cas_tokens = null) {
         $keys = array();
         foreach ($key_array as $key_index => $params) {
-            $keys[] = $this->buildKey($this->key_sets[$key_index]['rule'], $params);
+            $keys[] = $this->buildKey($this->key_sets[$key_index], $params);
         }
         return $this->_instance->getMulti($keys, $cas_tokens);
     }
@@ -91,7 +76,7 @@ abstract class ControllCache {
      * @return
      */
     protected function append(string $key_sets_index_key, array $params, string $value) {
-        $key = $this->buildKey($this->key_sets[$key_sets_index_key]['rule'], $params);
+        $key = $this->buildKey($key_sets_index_key, $params);
         return $this->_instance->append($key, $value);
     }
     /**
@@ -101,7 +86,7 @@ abstract class ControllCache {
      * @return
      */
     protected function prepend(string $key_sets_index_key, array $params, string $value) {
-        $key = $this->buildKey($this->key_sets[$key_sets_index_key]['rule'], $params);
+        $key = $this->buildKey($key_sets_index_key, $params);
         return $this->_instance->prepend($key, $value);
     }
     /**
@@ -111,7 +96,7 @@ abstract class ControllCache {
      * @return
      */
     protected function decrement(string $key_sets_index_key, array $params, int $offset = 1) {
-        $key = $this->buildKey($this->key_sets[$key_sets_index_key]['rule'], $params);
+        $key = $this->buildKey($key_sets_index_key, $params);
         return $this->_instance->decrement($key, $offset);
     }
 }

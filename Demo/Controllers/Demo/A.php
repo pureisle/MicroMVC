@@ -7,8 +7,9 @@ class A extends Controller {
     public static $INDEX_PARAM_RULES = array(
         'a' => 'requirement',
         'b' => 'number&max:15&min:10',
-        'c' => 'timestamp',
-        'd' => 'enum:a,1,3,5,b,12345'
+        'c' => 'integer',
+        'd' => 'enum:a,1,3,5,b,12345',
+        'e' => ''
     );
     public function indexAction() {
         $lc = new LocalCurl();
@@ -16,7 +17,7 @@ class A extends Controller {
         // $lc->get('test');
         // var_dump($lc->body());
         $params = $this->getGetParams();
-        var_dump('Demo_AController');
+        var_dump('Demo_AController', $params, $_GET);
         // new test();
         $test = 'haha';
 

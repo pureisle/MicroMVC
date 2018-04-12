@@ -16,13 +16,15 @@ use Framework\Models\Request;
 use Framework\Models\Response;
 
 class Application {
+    const BOOTSTRAP_NAME               = 'Bootstrap';
+    const CONFIG_FILE_NAME             = 'framework';
     private static $_config            = array();
     private static $_is_load_framework = false;
     private $_app_name                 = '';
     private $_dispatcher               = null;
     private $_request                  = null;
+    private $_autoload                 = null;
     public function __construct($app_name) {
-        $this->_app_name = $app_name;
         //每次app实例单独加在AutoLoad，以便隔离不同module的底层加载
         $this->_iniAutoLoad($app_name);
         //框架只加载一次
@@ -30,10 +32,17 @@ class Application {
             $this->_loadFramework();
             self::$_is_load_framework = true;
         }
-        $this->_dispatcher = new Dispatcher();
+        if (empty($app_name)) {
+            $f_config        = $this->getConfig();
+            $this->_app_name = $f_config['default_module'];
+            $this->_autoload->setPathPrefix($this->_app_name);
+        } else {
+            $this->_app_name = $app_name;
+        }
+        $this->_dispatcher = new Dispatcher($this->getConfig());
     }
     /**
-     * 核心运行流畅
+     * 核心运行流程
      * @param  boolean  $is_echo
      * @return string
      */
@@ -48,6 +57,7 @@ class Application {
             $plugin->routerStartup($request, $response);
         }
         $router = new Router();
+        $router->setModule($this->_app_name); //先增加默认module
         $router->route($request);
 
         $dispatcher->setRouter($router);
@@ -70,7 +80,7 @@ class Application {
         }
         $dispatcher->setResponse($response);
         //分发处理
-        $dispatcher->dispatch($config);
+        $dispatcher->dispatch();
 
         //分发结束
         foreach ($plugins as $plugin) {
@@ -105,10 +115,10 @@ class Application {
      */
     public function bootstrap() {
         $app_path = ROOT_PATH . DIRECTORY_SEPARATOR . $this->_app_name;
-        if ( ! file_exists($app_path . DIRECTORY_SEPARATOR . 'Bootstrap.php')) {
+        if ( ! file_exists($app_path . DIRECTORY_SEPARATOR . self::BOOTSTRAP_NAME . '.php')) {
             return $this;
         }
-        $class_name = $this->_app_name . '\\Bootstrap';
+        $class_name = $this->_app_name . '\\' . self::BOOTSTRAP_NAME;
         new $class_name($this->_dispatcher);
         return $this;
     }
@@ -141,14 +151,14 @@ class Application {
      * @return array
      */
     public function getModules() {
-        $f_config = $this->getFrameworkConfig();
+        $f_config = $this->getConfig();
         return $f_config['modules'];
     }
     /**
      * 加载框架配置文件和自动加载类
      */
     private function _loadFramework() {
-        $this->_iniConfig(FRAMEWORK_NAME);
+        $this->_iniConfig();
         return $this;
     }
     /**
@@ -157,7 +167,7 @@ class Application {
      * @return
      */
     private function _iniConfig() {
-        self::$_config = ConfigTool::getConfig(FRAMEWORK_NAME, FRAMEWORK_NAME);
+        self::$_config = ConfigTool::getConfig(self::CONFIG_FILE_NAME, FRAMEWORK_NAME);
         return $this;
     }
     /**
@@ -166,8 +176,8 @@ class Application {
      */
     private function _iniAutoLoad($module_name) {
         require_once 'AutoLoad.php';
-        $autoload = new AutoLoad($module_name);
-        $autoload->register();
+        $this->_autoload = new AutoLoad($module_name);
+        $this->_autoload->register();
         return $this;
     }
 }

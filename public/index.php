@@ -18,10 +18,9 @@ if (isset($_SERVER['PATH_INFO'])) {
 } else {
     $server_uri = '';
 }
-//默认module名
-$module = 'Demo';
+$module = '';
 //解析module名
-if ( ! empty($server_uri)) {
+if ( ! empty(trim($server_uri, '/'))) {
     $tmp    = explode('/', $server_uri);
     $module = ucfirst($tmp[1]);
 }

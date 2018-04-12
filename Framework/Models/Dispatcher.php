@@ -12,13 +12,17 @@ use Framework\Models\Request;
 use Framework\Models\Response;
 
 class Dispatcher {
+    const ACTION_SUFFIX  = 'Action';
     private $_plugin_set = array();
     private $_request    = null;
     private $_response   = null;
     private $_router     = null;
     private $_view       = null;
     private $_app        = null;
-    public function __construct() {}
+    private $_config     = null;
+    public function __construct($config) {
+        $this->_config = $config;
+    }
     /**
      * 注册框架插件
      * @param  Plugin       $plugin
@@ -95,7 +99,7 @@ class Dispatcher {
      * @param  array        $config
      * @return Dispatcher
      */
-    public function dispatch($config = array()) {
+    public function dispatch() {
         if (empty($this->_request)) {
             throw new DispatcherException(DispatcherException::ERROR_REQUEST_NULL);
         }
@@ -103,19 +107,19 @@ class Dispatcher {
         $module     = $request->getModule();
         $controller = $request->getController();
         $action     = $request->getAction();
-        $class_name = $module . '\\' . $config['path']['controller'] . '\\' . $controller;
+        $class_name = $module . '\\' . $this->_config['path']['controller'] . '\\' . $controller;
         $class      = new $class_name($request);
         if ($class instanceof Controller === false) {
             throw new DispatcherException(DispatcherException::ERROR_OBJECT_TYPE);
         }
         $class->setView($this->_view);
-        $action_name = $action . "Action";
+        $action_name = $action . self::ACTION_SUFFIX;
         ob_start();
         $action_ret = $class->$action_name();
         $body       = ob_get_contents();
         ob_end_clean();
         if (false !== $action_ret) {
-            $tpl_file_path = ROOT_PATH . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . $config['path']['view'] . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $controller) . DIRECTORY_SEPARATOR . $action . '.' . $config['template']['suffix'];
+            $tpl_file_path = ROOT_PATH . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . $this->_config['path']['view'] . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $controller) . DIRECTORY_SEPARATOR . $action . '.' . $this->_config['template']['suffix'];
             $body .= $this->_view->render($tpl_file_path);
         }
         if (empty($this->_response)) {

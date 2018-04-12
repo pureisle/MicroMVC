@@ -29,7 +29,8 @@ class Validator {
 
         'object_of'     => 'The "%s" must be an object_of',    //指定对象或指定对象的继承对象通过检测
         'bool'          => 'The "%s" must be a bool',          //true、false、"true"、"false"、1或0通过检测
-        'number'        => 'The "%s" must be a number',        //数字或数字字符串通过检测
+        'number'        => 'The "%s" must be a number',        //合法数学计数值或相应字符串通过检测
+        'digit'         => 'The "%s" must be a digit',         //纯十进制数字通过检测
         'alpha'         => 'The "%s" must be an alpha',        //只含有a-zA-Z的字符串通过检测
         'alpha_number'  => 'The "%s" must be an alpha_number', //只含有a-zA-Z0-9的字符串通过检测
 
@@ -95,12 +96,12 @@ class Validator {
             case 'requirement':
                 $ret = isset($data);
                 break;
+            /*强类型检查*/
             case 'boolean':
                 $ret = is_bool($data);
                 break;
             case 'integer':
-                //is_int 在32、64位操作系统表现不同，这里integer意思整数即可
-                $ret = is_int($data) || (is_float($data + 0.1) && ! strpos($data, '.'));
+                $ret = is_int($data);
                 break;
             case 'float':
                 $ret = is_float($data);
@@ -117,6 +118,10 @@ class Validator {
             case 'object_of':
                 $ret = $data instanceof $valid;
                 break;
+            /*泛类型检查*/
+            case 'digit':
+                $ret = ctype_digit((string) $data);
+                break;
             case 'bool':
                 $ret = $this->_runRuleCheck('boolean', $valid, $data) || $this->_runRuleCheck('enum', '0,1,true,false', $data);
                 break;
@@ -124,12 +129,10 @@ class Validator {
                 $ret = is_numeric($data);
                 break;
             case 'alpha':
-                $tmp = preg_match("/^[a-zA-Z]+$/", strval($data));
-                $ret = 0 === $tmp ? false : true;
+                $ret = ctype_alpha($data);
                 break;
             case 'alpha_number':
-                $tmp = preg_match("/^[a-zA-Z0-9]+$/", strval($data));
-                $ret = 0 === $tmp ? false : true;
+                $ret = ctype_alnum($data);
                 break;
             case 'timestamp':
                 $ret = $this->_runRuleCheck('integer', $valid, $data) && date("Y-m-d H:i:s", $data) !== false;

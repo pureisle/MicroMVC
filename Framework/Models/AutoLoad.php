@@ -7,10 +7,8 @@
 namespace Framework\Models;
 class AutoLoad {
     private $_load_path_prefix = '';
-    private $_config           = array();
-    public function __construct($load_path_prefix = '', $config = array()) {
+    public function __construct($load_path_prefix = '') {
         $this->_load_path_prefix = $load_path_prefix;
-        $this->_config           = $config;
     }
     /**
      * 注册自动加载方法
@@ -18,6 +16,13 @@ class AutoLoad {
      */
     public function register() {
         spl_autoload_register(array($this, 'loadClass'));
+    }
+    /**
+     * 设置加载路径前缀
+     * @param striing $path_prefix
+     */
+    public function setPathPrefix($path_prefix) {
+        $this->_load_path_prefix = $path_prefix;
     }
     /**
      * 类加载函数
@@ -30,7 +35,7 @@ class AutoLoad {
             $namespace = substr($class_name, 0, $last_ns_pos);
             $tmp_ns    = explode('\\', $namespace);
             //只加在框架类或者指定app的类库,隔离app间model相互调用
-            if ('Framework' != $tmp_ns[0] && ! empty($this->_load_path_prefix) && $tmp_ns[0] != $this->_load_path_prefix) {
+            if (FRAMEWORK_NAME != $tmp_ns[0] && ! empty($this->_load_path_prefix) && $tmp_ns[0] != $this->_load_path_prefix) {
                 return false;
             }
             $class_name = substr($class_name, $last_ns_pos + 1);

@@ -52,13 +52,16 @@ class ConfigTool {
             return array();
         }
         $tmp       = explode('.', $config_name);
-        $path      = '.';
         $file_name = array_pop($tmp);
         if (strpos($file_name, ':') !== false) {
             list($file_name, $resource_name) = explode(':', $file_name);
         }
-        $path         = implode(DIRECTORY_SEPARATOR, $tmp);
-        $config_array = self::getConfig($path . DIRECTORY_SEPARATOR . $file_name, $module_name);
+        if ( ! empty($tmp)) {
+            $file_path = implode(DIRECTORY_SEPARATOR, $tmp) . DIRECTORY_SEPARATOR . $file_name;
+        } else {
+            $file_path = $file_name;
+        }
+        $config_array = self::getConfig($file_path, $module_name);
         if (empty($resource_name) || ! isset($config_array[$resource_name])) {
             return $config_array;
         }

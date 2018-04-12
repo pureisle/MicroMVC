@@ -8,9 +8,9 @@ namespace Framework\Models;
 use Framework\Models\Request;
 
 class Router {
-    private $_module     = '';
-    private $_controller = '';
-    private $_action     = '';
+    private $_module     = 'Index';
+    private $_controller = 'Index';
+    private $_action     = 'index';
     public function __construct() {}
     /**
      * 获取路由module
@@ -66,7 +66,7 @@ class Router {
      */
     public function route(Request $request) {
         $uri       = $request->getUri();
-        $route_ret = self::routeRule($uri);
+        $route_ret = $this->routeRule($uri);
         $this->setModule($route_ret['module'])
              ->setController($route_ret['controller'])
              ->setAction($route_ret['action']);
@@ -77,25 +77,30 @@ class Router {
      * @param  string  $uri
      * @return array
      */
-    public static function routeRule($uri) {
+    public function routeRule($uri) {
         $ret         = array();
-        $uri_array   = explode('/', trim($uri, '/'));
-        $field_count = count($uri_array);
+        $uri_array   = array();
+        $field_count = 0;
+        $uri         = trim($uri, '/');
+        if ( ! empty($uri)) {
+            $uri_array   = explode('/', $uri);
+            $field_count = count($uri_array);
+        }
         switch ($field_count) {
             case 0:
-                $ret['module']     = 'Index';
-                $ret['controller'] = 'Index';
-                $ret['action']     = 'index';
+                $ret['module']     = $this->getModule();
+                $ret['controller'] = $this->getController();
+                $ret['action']     = $this->getAction();
                 break;
             case 1:
                 $ret['module']     = ucfirst($uri_array[0]);
-                $ret['controller'] = 'Index';
-                $ret['action']     = 'index';
+                $ret['controller'] = $this->getController();
+                $ret['action']     = $this->getAction();
                 break;
             case 2:
                 $ret['module']     = ucfirst($uri_array[0]);
                 $ret['controller'] = ucfirst($uri_array[1]);
-                $ret['action']     = 'index';
+                $ret['action']     = $this->getAction();
                 break;
             case 3:
                 $ret['module']     = ucfirst($uri_array[0]);

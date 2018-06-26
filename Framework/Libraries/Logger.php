@@ -34,9 +34,6 @@ class Logger {
     const LEVEL_DEBUG             = 'debug';
     const DEFAULT_BUSINESS        = 'default'; //业务日志默认名
     const LOG_SEPARATOR           = "#_#";     //日志分隔符
-    const LOCK_WAIT               = 0.3;       //文件写锁等待时间，单位秒
-    const BUFFER_LINE_NUM         = 20;        //内存缓冲行数。进程异常退出会丢失数据
-    private $_is_use_buffer       = true;
     private static $_buffer_cache = array();
     private static $_UNIQUE_ID    = null;
     private static $_LOG_FIELD    = array(
@@ -53,10 +50,10 @@ class Logger {
     public function __construct(string $config_name, string $module) {
         $conf          = ConfigTool::loadByName($config_name, $module);
         $this->_config = new LogConfig($conf);
-        if (empty(self::$_UNIQUE_ID)) {
+        if (empty(self::$_UNIQUE_ID) && self::$_LOG_FIELD['uniqid']) {
             self::$_UNIQUE_ID = uniqid('', true);
         }
-        if ($this->_is_use_buffer && ! self::$_is_register_flush_buffer) {
+        if ($this->_config->is_use_buffer && ! self::$_is_register_flush_buffer) {
             register_shutdown_function(array($this, 'flushBuffer'));
             self::$_is_register_flush_buffer = true;
         }
@@ -69,7 +66,7 @@ class Logger {
      * @return void
      */
     public function emergency(string $message, array $context = array(), string $business_name = self::DEFAULT_BUSINESS) {
-        $this->log(self::LEVEL_EMERGENCY, $message, $context, $module);
+        $this->log(self::LEVEL_EMERGENCY, $message, $context, $business_name);
     }
 
     /**
@@ -83,7 +80,7 @@ class Logger {
      * @return void
      */
     public function alert(string $message, array $context = array(), string $business_name = self::DEFAULT_BUSINESS) {
-        $this->log(self::LEVEL_ALERT, $message, $context, $module);
+        $this->log(self::LEVEL_ALERT, $message, $context, $business_name);
     }
 
     /**
@@ -96,7 +93,7 @@ class Logger {
      * @return void
      */
     public function critical(string $message, array $context = array(), string $business_name = self::DEFAULT_BUSINESS) {
-        $this->log(self::LEVEL_CRITICAL, $message, $context, $module);
+        $this->log(self::LEVEL_CRITICAL, $message, $context, $business_name);
     }
 
     /**
@@ -108,7 +105,7 @@ class Logger {
      * @return void
      */
     public function error(string $message, array $context = array(), string $business_name = self::DEFAULT_BUSINESS) {
-        $this->log(self::LEVEL_ERROR, $message, $context, $module);
+        $this->log(self::LEVEL_ERROR, $message, $context, $business_name);
     }
 
     /**
@@ -122,7 +119,7 @@ class Logger {
      * @return void
      */
     public function warning(string $message, array $context = array(), string $business_name = self::DEFAULT_BUSINESS) {
-        $this->log(self::LEVEL_WARNING, $message, $context, $module);
+        $this->log(self::LEVEL_WARNING, $message, $context, $business_name);
     }
 
     /**
@@ -133,7 +130,7 @@ class Logger {
      * @return void
      */
     public function notice(string $message, array $context = array(), string $business_name = self::DEFAULT_BUSINESS) {
-        $this->log(self::LEVEL_NOTICE, $message, $context, $module);
+        $this->log(self::LEVEL_NOTICE, $message, $context, $business_name);
     }
 
     /**
@@ -146,7 +143,7 @@ class Logger {
      * @return void
      */
     public function info(string $message, array $context = array(), string $business_name = self::DEFAULT_BUSINESS) {
-        $this->log(self::LEVEL_INFO, $message, $context, $module);
+        $this->log(self::LEVEL_INFO, $message, $context, $business_name);
     }
 
     /**
@@ -157,7 +154,7 @@ class Logger {
      * @return void
      */
     public function debug(string $message, array $context = array(), string $business_name = self::DEFAULT_BUSINESS) {
-        $this->log(self::LEVEL_DEBUG, $message, $context, $module);
+        $this->log(self::LEVEL_DEBUG, $message, $context, $business_name);
     }
 
     /**
@@ -173,12 +170,12 @@ class Logger {
         $params = array(
             'level'    => $level,
             'b_name'   => $business_name,
-            'log_text' => $msg
+            'log_text' => str_replace(PHP_EOL, '#\n#', $msg) //换行符转换
         );
         $log_str = $this->_buildLogText($params);
-        if ($this->_is_use_buffer) {
+        if ($this->_config->is_use_buffer) {
             self::$_buffer_cache[] = $log_str;
-            if (count(self::$_buffer_cache) >= self::BUFFER_LINE_NUM) {
+            if (count(self::$_buffer_cache) >= $this->_config->buffer_line_num) {
                 $this->flushBuffer();
             }
         } else {
@@ -203,7 +200,10 @@ class Logger {
      * @return
      */
     public function useBuffer(bool $is_use) {
-        $this->_is_use_buffer = $is_use;
+        $this->_config->is_use_buffer = $is_use;
+        if ( ! $is_use) {
+            $this->flushBuffer();
+        }
         return $this;
     }
     /**
@@ -251,11 +251,12 @@ class Logger {
                 $is_get_lock = flock($fp, LOCK_EX); //加锁
                 if ($is_get_lock) {
                     $ret = fwrite($fp, $msg);
+                    fflush($fp);
                     flock($fp, LOCK_UN); //释放锁
                     break;
                 }
                 $now_time = microtime(true);
-                if ($now_time - $begin_time > self::LOCK_WAIT) {
+                if ($now_time - $begin_time > $this->_config->lock_wait) {
                     return false;
                 }
             }
@@ -279,28 +280,29 @@ class Logger {
                 case 'time':
                     list($ms, $null) = explode(' ', microtime());
                     $ms              = round($ms, 3) * 1000;
-                    $tmp .= date('Y-m-d H:i:s.') . $ms . "#_#";
+                    $tmp .= date('Y-m-d H:i:s.') . $ms . self::LOG_SEPARATOR;
                     break;
                 case 'server_id':
-                    $tmp .= self::getServerIp() . "#_#";
+                    $tmp .= self::getServerIp() . self::LOG_SEPARATOR;
                     break;
                 case 'host_name':
-                    $tmp .= self::getHostName() . "#_#";
+                    $tmp .= self::getHostName() . self::LOG_SEPARATOR;
                     break;
                 case 'uniqid':
-                    $tmp .= self::$_UNIQUE_ID . "#_#";
+                    $tmp .= self::$_UNIQUE_ID . self::LOG_SEPARATOR;
                     break;
                 case 'level':
                 case 'b_name':
                 case 'log_text':
-                    $tmp .= $params[$key] . "#_#";
+                    $tmp .= $params[$key] . self::LOG_SEPARATOR;
                     break;
                 default:
                     # code...
                     break;
             }
         }
-        return substr($tmp, 0, -3) . "\n";
+        $separator_len = strlen(self::LOG_SEPARATOR);
+        return substr($tmp, 0, 0 - $separator_len) . "\n";
     }
     /**
      * Interpolates context values into the message placeholders.

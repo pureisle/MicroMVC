@@ -12,6 +12,8 @@ class Request extends \Framework\Entities\Request {
     private $_router = null;
     public function __construct() {
         parent::__construct();
+        unset($_GET);
+        unset($_POST);
     }
     /**
      * 设置路由实例

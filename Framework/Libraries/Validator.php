@@ -44,7 +44,8 @@ class Validator {
         'length_max'    => 'The "%s" string length must less then %s', //字符串长度不大于指定个数的通过检测
         'length_min'    => 'The "%s" string length must more then %s', //字符串长度不小于指定个数的通过检测
         'length_not_in' => true,                                       //字符串长度不在指定个数的通过检测
-        'enum'          => 'The "%s" must in %s'                      //符合枚举的字符串通过检测 enum:1,2,3,a,b
+        'enum'          => 'The "%s" must in %s',                      //符合枚举的字符串通过检测 enum:1,2,3,a,b
+        'not_empty'     => 'The "%s" can not be empty'                //参数不能为空,'',0,false等均为空
     );
     private $_err_msg = '';
     public function __construct() {}
@@ -173,6 +174,9 @@ class Validator {
                 break;
             case 'enum':
                 $ret = strpos(',' . $valid . ',', ',' . $data . ',') === false ? false : true;
+                break;
+            case 'not_empty':
+                $ret = ! empty($data);
                 break;
             default:
                 break;

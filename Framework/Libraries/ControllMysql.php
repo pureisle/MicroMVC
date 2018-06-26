@@ -48,13 +48,14 @@ namespace Framework\Libraries;
 use Framework\Entities\PDOConfig;
 
 abstract class ControllMysql {
-    private $_db_conf     = null;
-    private $_pdo         = null;
-    private $_last_sql    = null;
-    private $_module      = null;
-    private $_is_query    = false;
-    private $_table_name  = '';
-    private $_last_params = array();
+    private $_db_conf        = null;
+    private $_pdo            = null;
+    private $_last_sql       = null;
+    private $_module         = null;
+    private $_is_query       = false;
+    private $_table_name     = '';
+    private $_last_params    = array();
+    private $_placeholder_id = 0;
 
     public function __construct(string $table_name, string $module = null) {
         $this->setTableName($table_name);
@@ -88,14 +89,16 @@ abstract class ControllMysql {
             $this->_db_conf       = $pdo_config;
             $this->_pdo           = new PDOManager($pdo_config);
         }
-        if (true === $this->_is_query) {
-            $ret = $this->_pdo->query($this->_last_sql, $this->_last_params);
-        } else {
-            $ret = $this->_pdo->exec($this->_last_sql, $this->_last_params);
-        }
-        $this->_is_query    = false;
+        $sql                = $this->_last_sql;
         $this->_last_sql    = '';
+        $var                = $this->_last_params;
         $this->_last_params = array();
+        if (true === $this->_is_query) {
+            $ret = $this->_pdo->query($sql, $var);
+        } else {
+            $ret = $this->_pdo->exec($sql, $var);
+        }
+        $this->_is_query = false;
         return $ret;
     }
     /**
@@ -122,7 +125,7 @@ abstract class ControllMysql {
         $params = array();
         foreach ($data as $field => $value) {
             $fields .= $this->_putFieldQuote($field) . ',';
-            $tmp = $this->_putFieldVar($field);
+            $tmp = $this->_getFieldId();
             $values .= $tmp . ',';
             $params[$tmp] = $value;
         }
@@ -162,17 +165,15 @@ abstract class ControllMysql {
         $fields = substr($fields, 0, -1);
         $sql .= $fields . ') VALUES ';
         $params = array();
-        $index  = 0;
         foreach ($data_arr as $data) {
             $one = '(';
             foreach ($data as $field => $value) {
-                $tmp = $this->_putFieldVar($field . $index);
+                $tmp = $this->_getFieldId();
                 $one .= $tmp . ',';
                 $params[$tmp] = $value;
             }
             $one = substr($one, 0, -1);
             $sql .= $one . '),';
-            $index++;
         }
         $sql = substr($sql, 0, -1);
         if ( ! empty($duplicate)) {
@@ -260,6 +261,13 @@ abstract class ControllMysql {
         return $this;
     }
     /**
+     * 获取最后一句sql
+     * @return string
+     */
+    protected function getLastSql() {
+        return array('sql' => $this->_last_sql, 'params' => $this->_last_params);
+    }
+    /**
      * 启用mysql事务
      *
      * @param  string    $work_name=null
@@ -341,7 +349,7 @@ abstract class ControllMysql {
         $set_str = '';
         $params  = array();
         foreach ($set_arr as $field => $value) {
-            $tmp_key = $this->_putFieldVar($field . '_SET');
+            $tmp_key = $this->_getFieldId();
             $set_str .= $this->_putFieldQuote($field) . '=' . $tmp_key . ',';
             $params[$tmp_key] = $value;
         }
@@ -373,8 +381,7 @@ abstract class ControllMysql {
                 $condition['operator'] = '=';
             }
             $result .= ' ' . $condition['logic'] . ' ' . $this->_putFieldQuote($condition['field']) . ' ' . $condition['operator'];
-            //where 条件有同名field，值后缀不能删
-            $tmp_field             = $this->_putFieldVar($condition['field'] . '_WHERE_' . $condition['condition']);
+            $tmp_field             = $this->_getFieldId();
             $condition['operator'] = strtoupper($condition['operator']);
             switch ($condition['operator']) {
                 case 'LIKE':
@@ -441,12 +448,13 @@ abstract class ControllMysql {
         return $group_by;
     }
     /**
-     * 构造占位符
+     * 获取占位符
      * @param  string   $field
      * @return string
      */
-    private function _putFieldVar($field) {
-        return ':' . $field;
+    private function _getFieldId() {
+        $tmp = $this->_placeholder_id++;
+        return ':' . $tmp;
     }
     /**
      * 给字段加上斜瞥号

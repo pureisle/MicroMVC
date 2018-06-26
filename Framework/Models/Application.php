@@ -159,6 +159,7 @@ class Application {
      */
     private function _loadFramework() {
         $this->_iniConfig();
+        $this->_iniException();
         return $this;
     }
     /**
@@ -169,6 +170,55 @@ class Application {
     private function _iniConfig() {
         self::$_config = ConfigTool::getConfig(self::CONFIG_FILE_NAME, FRAMEWORK_NAME);
         return $this;
+    }
+    /**
+     * 设置未捕获异常处理函数
+     * @return
+     */
+    private function _iniException() {
+        set_exception_handler(array($this, '_exceptionHandler'));
+    }
+    public function _exceptionHandler($exception) {
+        // these are our templates
+        $traceline = "#%s %s(%s): %s(%s)";
+        $msg       = "PHP Fatal error:  Uncaught exception '%s' with message '%s' in %s:%s\nStack trace:\n%s\n  thrown in %s on line %s";
+
+        // alter your trace as you please, here
+        $trace = $exception->getTrace();
+        foreach ($trace as $key => $stackPoint) {
+            // I'm converting arguments to their type
+            // (prevents passwords from ever getting logged as anything other than 'string')
+            $trace[$key]['args'] = array_map('gettype', $trace[$key]['args']);
+        }
+
+        // build your tracelines
+        $result = array();
+        foreach ($trace as $key => $stackPoint) {
+            $result[] = sprintf(
+                $traceline,
+                $key,
+                $stackPoint['file'],
+                $stackPoint['line'],
+                $stackPoint['function'],
+                implode(', ', $stackPoint['args'])
+            );
+        }
+        // trace always ends with {main}
+        $result[] = '#' . ++$key . ' {main}';
+
+        // write tracelines into main template
+        $msg = sprintf(
+            $msg,
+            get_class($exception),
+            $exception->getMessage(),
+            $exception->getFile(),
+            $exception->getLine(),
+            implode("\n", $result),
+            $exception->getFile(),
+            $exception->getLine()
+        );
+        // echo $msg;
+        throw $exception;
     }
     /**
      * 注册自动加载类

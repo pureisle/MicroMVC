@@ -17,9 +17,29 @@ class LogConfig {
     private $_last_date         = '';
     private $_last_fp           = null;
     private $_last_file         = null;
+    const LOCK_WAIT             = 0.3;  //文件写锁获取等待时间，单位秒
+    const BUFFER_LINE_NUM       = 20;   //内存缓冲行数。进程异常退出会丢失数据
+    const IS_USE_BUFFER         = true; // 是否启用缓冲模式
     public function __construct(array $config = array()) {
         foreach ($config as $key => $value) {
             $this->$key = $value;
+        }
+        //检查并设置关键默认值
+        if ( ! isset($this->lock_wait)) {
+            $this->lock_wait = self::LOCK_WAIT;
+        }
+        if ( ! isset($this->is_use_buffer)) {
+            $this->is_use_buffer = self::IS_USE_BUFFER;
+        }
+        if ( ! isset($this->buffer_line_num)) {
+            $this->buffer_line_num = self::BUFFER_LINE_NUM;
+        }
+        if ( ! is_dir($this->root_path)) {
+            $tmp = mkdir($this->root_path, 0777, true);
+            if (false === $tmp) {
+                //很多时候日志记录并不造成致命错误，所以不再抛出异常
+                return false;
+            }
         }
     }
     public function __set($var_name, $value) {
@@ -53,14 +73,7 @@ class LogConfig {
     public function getHandle($mode = 'w+') {
         $file_name = $this->getLogFileName();
         if ($this->_last_date !== $this->_new_date) {
-            if ( ! is_dir($this->root_path)) {
-                $tmp = mkdir($this->root_path, 0777, true);
-                if (false === $tmp) {
-                    //很多时候日志记录并不造成致命错误，所以不再抛出异常
-                    return false;
-                }
-            }
-            $file_path = $this->root_path . "/" . $this->getLogFileName();
+            $file_path        = $this->getFilePath();
             $fp               = fopen($file_path, $mode);
             $this->_last_fp   = $fp;
             $this->_last_date = $this->_new_date;

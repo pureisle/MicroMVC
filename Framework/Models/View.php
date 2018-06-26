@@ -18,7 +18,7 @@ class View {
      */
     public function render(string $view_path, array $tpl_vars = array()) {
         if ( ! empty($tpl_vars)) {
-            array_merge($this->_tpl_vars, $tpl_vars);
+            $this->assign($tpl_vars);
         }
         extract($this->_tpl_vars);
         ob_start();

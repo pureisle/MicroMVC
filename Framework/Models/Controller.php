@@ -12,6 +12,7 @@ use Framework\Libraries\Validator;
 use Framework\Models\Request;
 
 abstract class Controller {
+    const PARAM_SUFFIX = '_PARAM_RULES';
     private $_view;
     private $_request;
     public function __construct(Request $request) {
@@ -65,7 +66,7 @@ abstract class Controller {
      */
     private function _checkParams(array $params) {
         $action_name    = $this->_request->getAction();
-        $var_name       = strtoupper($action_name) . '_PARAM_RULES';
+        $var_name       = strtoupper($action_name) . self::PARAM_SUFFIX;
         $class_name     = get_class($this);
         $check_key_list = array();
         if ( ! isset($class_name::$$var_name)) {

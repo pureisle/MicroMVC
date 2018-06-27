@@ -6,6 +6,7 @@
  */
 namespace Sso\Data;
 use Framework\Libraries\ControllMysql;
+use Sso\Models\Log;
 
 class User extends ControllMysql {
     const READ_DB_RESOURCE  = 'database:sso_read';
@@ -20,6 +21,7 @@ CREATE TABLE `sso_user` (
   `p_v` tinyint(4) NOT NULL DEFAULT '0',
   `email` varchar(128) NOT NULL DEFAULT '',
   `tel` varchar(64) NOT NULL DEFAULT '0',
+  `status` tinyint(4) NOT NULL DEFAULT '0',
   `extend` text,
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -27,7 +29,7 @@ CREATE TABLE `sso_user` (
   UNIQUE KEY `tel_key` (`tel`),
   UNIQUE KEY `email_key` (`email`),
   UNIQUE KEY `name_key` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4;
 EOT;
     public function __construct() {
         parent::__construct(self::TABLE_NAME);
@@ -55,7 +57,7 @@ EOT;
             'tel'    => $tel,
             'extend' => $this->_extendEncode($extend)
         );
-        return parent::add($data)->exec(self::WRITE_DB_RESOURCE);
+        return parent::add($data)->_exec(self::WRITE_DB_RESOURCE);
     }
     /**
      * 分页获取id倒序数据 或获取指定id数据
@@ -70,7 +72,8 @@ EOT;
         } else {
             $order_by = array('uid' => 'ASC');
         }
-        $ret = parent::getList($count, $page, array(), $where, $order_by)->exec(self::READ_DB_RESOURCE);
+        parent::getList($count, $page, array(), $where, $order_by);
+        $ret = $this->_exec(self::READ_DB_RESOURCE);
         foreach ($ret as $key => $value) {
             $this->_formatData($value);
             $ret[$key] = $value;
@@ -84,7 +87,8 @@ EOT;
      */
     public function getInfoByUid(int $uid) {
         $where[] = parent::buildWhereCondition('uid', $uid);
-        $tmp     = parent::getList(-1, -1, array(), $where)->exec(self::READ_DB_RESOURCE);
+        parent::getList(-1, -1, array(), $where);
+        $tmp = $this->_exec(self::READ_DB_RESOURCE);
         if (empty($tmp)) {
             return array();
         }
@@ -99,7 +103,7 @@ EOT;
      */
     public function getInfoByName(string $name) {
         $where[] = parent::buildWhereCondition('name', $name);
-        $tmp     = parent::getList(-1, -1, array(), $where)->exec(self::READ_DB_RESOURCE);
+        $tmp     = parent::getList(-1, -1, array(), $where)->_exec(self::READ_DB_RESOURCE);
         if (empty($tmp)) {
             return array();
         }
@@ -126,9 +130,6 @@ EOT;
             return true;
         }
         extract($data);
-        if (empty($name) && empty($email) && empty($tel) && empty($extend)) {
-            return false;
-        }
         $set_arr = array();
         $this->_updateVarCheck($name, $uid, 'name', $set_arr);
         $this->_updateVarCheck($email, $uid, 'email', $set_arr);
@@ -142,11 +143,14 @@ EOT;
         if ( ! empty($p_v)) {
             $set_arr['p_v'] = $p_v;
         }
+        if (isset($status)) {
+            $set_arr['status'] = $status;
+        }
         if (null !== $extend) {
             $set_arr['extend'] = $this->_extendEncode($extend);
         }
         $where[] = $this->buildWhereCondition('uid', $uid, '=', 'AND');
-        return parent::update($set_arr, $where)->exec(self::WRITE_DB_RESOURCE);
+        return parent::update($set_arr, $where)->_exec(self::WRITE_DB_RESOURCE);
     }
     private function _updateVarCheck($var, int $uid, string $name, array &$set_arr) {
         if (null !== $var) {
@@ -163,7 +167,7 @@ EOT;
      */
     public function removeByUid(int $uid) {
         $where[] = $this->buildWhereCondition('uid', $uid, '=', 'AND');
-        return parent::remove($where)->exec(self::WRITE_DB_RESOURCE);
+        return parent::remove($where)->_exec(self::WRITE_DB_RESOURCE);
     }
     private function _extendEncode(array $extend) {
         return json_encode($extend);
@@ -181,5 +185,12 @@ EOT;
         } else {
             return $str;
         }
+    }
+    private function _exec(string $db_config_name) {
+        //记录sql日志
+        $tmp = parent::getLastSql();
+        Log::SqlLog($tmp['sql'], $tmp['params']);
+        $ret = parent::exec($db_config_name);
+        return $ret;
     }
 }

@@ -11,6 +11,18 @@ class User {
     private static $NEW_USER_P_V        = 0;
     private static $NEW_USER_P_SALT_LEN = 32;
     private static $_user_info_cache    = array();
+    const ONLINE_STATUS                 = 0;
+    const OFFLINE_STATUS                = 1;
+    private static $USER_STATUS         = array(
+        self::ONLINE_STATUS  => array(
+            'code' => self::ONLINE_STATUS,
+            'name' => '在线'
+        ),
+        self::OFFLINE_STATUS => array(
+            'code' => self::ONLINE_STATUS,
+            'name' => '下线'
+        )
+    );
     public function __construct() {}
     /**
      * 查询用户信息
@@ -88,7 +100,7 @@ class User {
      * @param    array       $extend
      * @return
      */
-    public function updateInfo(int $uid, string $email = null, string $tel = null, array $extend = array()) {
+    public function updateInfo(int $uid, string $email = null, string $tel = null, int $status = null, array $extend = array()) {
         $du_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\User');
         $data   = array();
         if ( ! empty($email)) {
@@ -99,6 +111,9 @@ class User {
         }
         if ( ! empty($extend)) {
             $data['extend'] = $extend;
+        }
+        if (in_array($status, array_keys(self::$USER_STATUS))) {
+            $data['status'] = $status;
         }
         if (empty($data)) {
             return true;

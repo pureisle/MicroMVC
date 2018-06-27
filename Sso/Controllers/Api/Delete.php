@@ -1,0 +1,33 @@
+<?php
+/**
+ * 删除用户
+ *
+ * @author zhiyuan <zhiyuan12@staff.weibo.com>
+ */
+namespace Sso\Controllers\Api;
+use Framework\Models\Controller;
+use Sso\Models\ApiDisplay;
+use Sso\Models\User;
+
+class Delete extends Controller {
+    public static $INDEX_PARAM_RULES = array(
+        'uid' => 'requirement&not_empty'
+    );
+    public function indexAction() {
+        try {
+            $params = $this->getGetParams();
+        } catch (\Exception $e) {
+            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
+            return false;
+        }
+        $user = new User();
+        try {
+            $ret = $user->updateInfo($params['uid'], null, null, User::OFFLINE_STATUS);
+        } catch (\Exception $e) {
+            ApiDisplay::display(ApiDisplay::FAIL_CODE, array($e->getMessage()));
+            return false;
+        }
+        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('data' => $ret));
+        return false;
+    }
+}

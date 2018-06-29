@@ -8,7 +8,6 @@ namespace Framework\Libraries;
 class Redis extends \Redis {
     private $_persistent_id = '';
     private $_time_out      = 0.5;
-
     public function __construct(string $resource_name, string $module) {
         $config = ConfigTool::loadByName($resource_name, $module);
         if ( ! isset($config['host']) || ! isset($config['port'])) {
@@ -16,7 +15,7 @@ class Redis extends \Redis {
         }
         $this->_persistent_id = $module . $resource_name;
         $this->setConnectTimeOut($config['timeout']);
-        $ret = $this->pconnect($config['host'], $config['port'] . '123', $this->_time_out, $this->_persistent_id);
+        $ret = $this->pconnect($config['host'], $config['port'], $this->_time_out, $this->_persistent_id);
         if (false === $ret) {
             throw new RedisException(RedisException::SERVERS_CONNECT_ERROR);
         }

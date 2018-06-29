@@ -11,6 +11,7 @@ class ApiDisplay {
     const FAIL_CODE              = 1;
     const PARAM_ERROR_CODE       = 2;
     const PASSWD_CHECK_FAIL      = 3;
+    const UNKNOWN_CODE           = 99999;
     public static $RETURN_STRUCT = array(
         self::SUCCESS_CODE      => array(
             'code' => self::SUCCESS_CODE,
@@ -27,12 +28,16 @@ class ApiDisplay {
         self::PASSWD_CHECK_FAIL => array(
             'code' => self::PASSWD_CHECK_FAIL,
             'msg'  => 'name or passwd error'
+        ),
+        self::UNKNOWN_CODE      => array(
+            'code' => self::UNKNOWN_CODE,
+            'msg'  => 'unknown error'
         )
     );
     public function __construct() {}
     public static function display(int $code, array $result = array()) {
         if ( ! isset(self::$RETURN_STRUCT[$code])) {
-            return false;
+            $code = self::UNKNOWN_CODE;
         }
         $ret         = self::$RETURN_STRUCT[$code];
         $ret['data'] = $result;

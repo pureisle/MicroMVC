@@ -130,7 +130,7 @@ class User {
      */
     public function updatePasswd(int $uid, string $passwd) {
         if ($uid <= 0 || empty($passwd)) {
-            return false;
+            return 0;
         }
         $du_obj         = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\User');
         $p_v            = '';
@@ -141,6 +141,18 @@ class User {
         $data['p_v']    = $p_v;
         $ret            = $du_obj->updateByUid($uid, $data);
         return $ret;
+    }
+    /**
+     * 物理删除用户
+     * @param    int $uid
+     * @return
+     */
+    public function removeByUid(int $uid) {
+        if ($uid <= 0) {
+            return 0;
+        }
+        $du_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\User');
+        return $du_obj->removeByUid($uid);
     }
     /**
      * 获取加密后的密码

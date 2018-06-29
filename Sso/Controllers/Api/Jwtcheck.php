@@ -1,17 +1,17 @@
 <?php
 /**
- * 物理删除用户,尽量不要使用
+ * Json Web Token 验证接口
  *
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
 namespace Sso\Controllers\Api;
 use Framework\Models\Controller;
 use Sso\Models\ApiDisplay;
-use Sso\Models\User;
+use Sso\Models\JsonWebToken;
 
-class Delete extends Controller {
+class Jwtcheck extends Controller {
     public static $INDEX_PARAM_RULES = array(
-        'uid' => 'requirement&not_empty'
+        'access_token' => 'requirement&not_empty'
     );
     public function indexAction() {
         try {
@@ -20,14 +20,13 @@ class Delete extends Controller {
             ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
             return false;
         }
-        $user = new User();
-        try {
-            $ret = $user->removeByUid($params['uid']);
-        } catch (\Exception $e) {
-            ApiDisplay::display(ApiDisplay::FAIL_CODE, array($e->getMessage()));
+        $access_token = $params['access_token'];
+        $user_info    = JsonWebToken::verify($access_token);
+        if (false == $user_info) {
+            ApiDisplay::display(ApiDisplay::FAIL_CODE, array('check fail'));
             return false;
         }
-        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('data' => $ret));
+        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array($user_info));
         return false;
     }
 }

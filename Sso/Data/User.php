@@ -127,7 +127,7 @@ EOT;
      */
     public function updateByUid(int $uid, array $data) {
         if (empty($data)) {
-            return true;
+            return 0;
         }
         extract($data);
         $set_arr = array();

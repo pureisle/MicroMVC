@@ -21,11 +21,11 @@ class KeyBuilder {
      * @return string
      */
     public function buildKey(string $key_sets_index, array $param) {
-        if (empty($key_sets_index) || empty($this->key_sets[$key_sets_index])) {
+        if ( ! isset($key_sets_index) || empty($this->key_sets[$key_sets_index])) {
             throw new KeyBuilderException(KeyBuilderException::KEY_RULE_STRING_EMPTY);
         }
         if (empty($param)) {
-            $ret = $text;
+            $ret = $this->key_sets[$key_sets_index]['rule'];
         } else {
             $ret = $this->_interpolate($this->key_sets[$key_sets_index]['rule'], $param);
         }

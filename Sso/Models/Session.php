@@ -29,32 +29,41 @@ class Session {
     }
 
     public function read($session_id) {
-        $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
-        $ret   = $s_obj->getById($session_id);
-        if ( ! empty($ret['data'])) {
-            return $ret['data'];
-        }
-        return '';
+        $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
+        return $cache->get($session_id);
+
+        // $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
+        // $ret   = $s_obj->getById($session_id);
+        // if ( ! empty($ret['data'])) {
+        //     return $ret['data'];
+        // }
+        // return '';
     }
 
     public function write($session_id, $data) {
         if (empty($data)) {
             return false;
         }
-        $s_obj  = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
-        $expire = date('Y-m-d H:i:s', time() + $this->_expire);
-        return $s_obj->addSession($session_id, $data, $expire) === false ? false : true;
+        $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
+        return $cache->set($session_id, $data);
+
+        // $s_obj  = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
+        // $expire = date('Y-m-d H:i:s', time() + $this->_expire);
+        // return $s_obj->addSession($session_id, $data, $expire) === false ? false : true;
     }
 
     public function destroy($id) {
-        $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
-        $tmp   = $s_obj->removeById($id);
+        $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
+        $ret   = $cache->remoive($session_id);
+
+        // $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
+        // $tmp   = $s_obj->removeById($id);
         return true;
     }
 
     public function gc($max_life_time) {
-        $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
-        $tmp   = $s_obj->removeExpire();
+        // $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
+        // $tmp   = $s_obj->removeExpire();
         return true;
     }
 }

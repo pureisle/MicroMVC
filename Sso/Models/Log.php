@@ -18,7 +18,7 @@ class Log {
         self::writeLog(self::SQL_LOG_INDEX, array('sql' => $sql, 'params' => json_encode($params)), 'sql_log', 'sql_log');
     }
     public static function LoginUser(string $name, string $type = 'web') {
-        self::writeLog(self::LOGIN_COUNT_INDEX, array('name' => $name, 'type' => $type), 'login_log');
+        self::writeLog(self::LOGIN_COUNT_INDEX, array('name' => $name, 'type' => $type), 'login_log','login_log');
     }
     public static function writeLog(int $index, array $params, string $msg_name, string $config_name = 'login_log') {
         $logger = SingletonManager::$SINGLETON_POOL->getInstance('\Framework\Libraries\Logger', $config_name, 'Sso');

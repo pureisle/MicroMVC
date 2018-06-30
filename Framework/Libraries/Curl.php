@@ -93,6 +93,15 @@ class Curl {
         return $this;
     }
     /**
+     * 设置毫秒超时时间
+     */
+    public function timeOut($ms) {
+        $this->_options['exec_timeout_ms'] = $ms;
+        curl_setopt($this->_ch, CURLOPT_NOSIGNAL, 1);     //注意，毫秒超时一定要设置这个.cURL 7.16.2中被加入。从PHP 5.2.3起可使用
+        curl_setopt($this->_ch, CURLOPT_TIMEOUT_MS, $ms); //单位为毫秒
+        return $this;
+    }
+    /**
      * 设置请求信息
      *
      * @param  string   $action

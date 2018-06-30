@@ -81,7 +81,7 @@ class Router {
         $ret         = array();
         $uri_array   = array();
         $field_count = 0;
-        $uri         = trim($uri, '/');
+        $uri         = ltrim($uri, '/');
         if ( ! empty($uri)) {
             $uri_array   = explode('/', $uri);
             $field_count = count($uri_array);
@@ -99,17 +99,20 @@ class Router {
                 break;
             case 2:
                 $ret['module']     = ucfirst($uri_array[0]);
-                $ret['controller'] = ucfirst($uri_array[1]);
+                $ret['controller'] = empty($uri_array[1]) ? $this->getController() : ucfirst($uri_array[1]);
                 $ret['action']     = $this->getAction();
                 break;
             case 3:
                 $ret['module']     = ucfirst($uri_array[0]);
                 $ret['controller'] = ucfirst($uri_array[1]);
-                $ret['action']     = $uri_array[2];
+                $ret['action']     = empty($uri_array[2]) ? $this->getAction() : $uri_array[2];
                 break;
             default:
-                $ret['module']     = ucfirst(array_shift($uri_array));
-                $ret['action']     = array_pop($uri_array);
+                $ret['module'] = ucfirst(array_shift($uri_array));
+                $ret['action'] = array_pop($uri_array);
+                if (empty($ret['action'])) {
+                    $ret['action'] = 'index';
+                }
                 $ret['controller'] = '';
                 foreach ($uri_array as $value) {
                     $ret['controller'] .= ucfirst($value) . "\\";

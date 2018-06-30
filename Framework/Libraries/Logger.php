@@ -24,19 +24,19 @@ namespace Framework\Libraries;
 use Framework\Entities\LogConfig;
 
 class Logger {
-    const LEVEL_EMERGENCY         = 'emergency';
-    const LEVEL_ALERT             = 'alert';
-    const LEVEL_CRITICAL          = 'critical';
-    const LEVEL_ERROR             = 'error';
-    const LEVEL_WARNING           = 'warning';
-    const LEVEL_NOTICE            = 'notice';
-    const LEVEL_INFO              = 'info';
-    const LEVEL_DEBUG             = 'debug';
-    const DEFAULT_BUSINESS        = 'default'; //业务日志默认名
-    const LOG_SEPARATOR           = "#_#";     //日志分隔符
-    private static $_buffer_cache = array();
-    private static $_UNIQUE_ID    = null;
-    private static $_LOG_FIELD    = array(
+    const LEVEL_EMERGENCY      = 'emergency';
+    const LEVEL_ALERT          = 'alert';
+    const LEVEL_CRITICAL       = 'critical';
+    const LEVEL_ERROR          = 'error';
+    const LEVEL_WARNING        = 'warning';
+    const LEVEL_NOTICE         = 'notice';
+    const LEVEL_INFO           = 'info';
+    const LEVEL_DEBUG          = 'debug';
+    const DEFAULT_BUSINESS     = 'default'; //业务日志默认名
+    const LOG_SEPARATOR        = "#_#";     //日志分隔符
+    private $_buffer_cache     = array();
+    private static $_UNIQUE_ID = null;
+    private static $_LOG_FIELD = array(
         'time'      => true,
         'server_id' => true,
         'host_name' => true,
@@ -45,18 +45,15 @@ class Logger {
         'b_name'    => true,
         'log_text'  => true
     );
-    private $_config                          = null;
-    private static $_is_register_flush_buffer = false;
+    private $_config            = null;
+    private $_is_register_flush = false;
     public function __construct(string $config_name, string $module) {
         $conf          = ConfigTool::loadByName($config_name, $module);
         $this->_config = new LogConfig($conf);
         if (empty(self::$_UNIQUE_ID) && self::$_LOG_FIELD['uniqid']) {
             self::$_UNIQUE_ID = uniqid('', true);
         }
-        if ($this->_config->is_use_buffer && ! self::$_is_register_flush_buffer) {
-            register_shutdown_function(array($this, 'flushBuffer'));
-            self::$_is_register_flush_buffer = true;
-        }
+        $this->useBuffer($this->_config->is_use_buffer);
     }
     /**
      * System is unusable.
@@ -174,14 +171,13 @@ class Logger {
         );
         $log_str = $this->_buildLogText($params);
         if ($this->_config->is_use_buffer) {
-            self::$_buffer_cache[] = $log_str;
-            if (count(self::$_buffer_cache) >= $this->_config->buffer_line_num) {
+            $this->_buffer_cache[] = $log_str;
+            if (count($this->_buffer_cache) >= $this->_config->buffer_line_num) {
                 $this->flushBuffer();
             }
         } else {
-            $ret = $this->_write($tmp);
+            $ret = $this->_write($log_str);
         }
-
         return $ret;
     }
     /**
@@ -189,8 +185,8 @@ class Logger {
      * @return int
      */
     public function flushBuffer() {
-        $tmp                 = implode('', self::$_buffer_cache);
-        self::$_buffer_cache = array();
+        $tmp                 = implode('', $this->_buffer_cache);
+        $this->_buffer_cache = array();
         $ret                 = $this->_write($tmp);
         return $ret;
     }
@@ -203,6 +199,9 @@ class Logger {
         $this->_config->is_use_buffer = $is_use;
         if ( ! $is_use) {
             $this->flushBuffer();
+        } else if (false === $this->_is_register_flush) {
+            register_shutdown_function(array($this, 'flushBuffer'));
+            $this->_is_register_flush = true;
         }
         return $this;
     }

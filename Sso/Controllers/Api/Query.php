@@ -18,6 +18,7 @@ class Query extends Controller {
     );
     public function indexAction() {
         try {
+            $this->useAuth('api_auth');
             $params = $this->getGetParams();
         } catch (\Exception $e) {
             ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));

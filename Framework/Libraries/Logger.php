@@ -205,43 +205,6 @@ class Logger {
         }
         return $this;
     }
-    /**
-     * 获取本机的内网IP
-     * @return string
-     */
-    public static function getServerIp() {
-        static $ip = null;
-        if ( ! is_null($ip)) {
-            return $ip;
-        }
-        //server变量设置本机IP
-        if (isset($_SERVER['SINASRV_INTIP'])) {
-            $ip = $_SERVER['SINASRV_INTIP'];
-        } else if ( ! empty($_SERVER['SERVER_ADDR'])) {
-            $ip = $_SERVER['SERVER_ADDR'];
-        } else {
-            $result = shell_exec("/sbin/ifconfig eth0");
-            if (preg_match_all("/addr:(\d+\.\d+\.\d+\.\d+)/", $result, $match) !== 0) {
-                $ip = $match[1][0];
-            }
-        }
-        return $ip;
-    }
-    /**
-     * 获取本机hostname
-     * @return string
-     */
-    public static function getHostName() {
-        static $hostname = null;
-        if (is_null($hostname)) {
-            $tmpstr   = '';
-            $fp       = popen("hostname -s", 'r');
-            $tmpstr   = trim(fread($fp, 1024));
-            $hostname = trim($tmpstr);
-            pclose($fp);
-        }
-        return $hostname;
-    }
     private function _write($msg) {
         if (PHP_SAPI === 'cli') {
             $fp         = $this->_config->getHandle('a'); //追加打开
@@ -282,10 +245,10 @@ class Logger {
                     $tmp .= date('Y-m-d H:i:s.') . $ms . self::LOG_SEPARATOR;
                     break;
                 case 'server_id':
-                    $tmp .= self::getServerIp() . self::LOG_SEPARATOR;
+                    $tmp .= Tools::getServerIp() . self::LOG_SEPARATOR;
                     break;
                 case 'host_name':
-                    $tmp .= self::getHostName() . self::LOG_SEPARATOR;
+                    $tmp .= Tools::getHostName() . self::LOG_SEPARATOR;
                     break;
                 case 'uniqid':
                     $tmp .= self::$_UNIQUE_ID . self::LOG_SEPARATOR;

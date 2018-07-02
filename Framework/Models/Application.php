@@ -218,6 +218,7 @@ class Application {
             $exception->getLine()
         );
         // echo $msg;
+        Log::exception($msg);
         throw $exception;
     }
     /**

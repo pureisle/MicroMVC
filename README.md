@@ -1,12 +1,12 @@
 ### 为什么用
-* 不过度设计，简单粗暴好用。学习像数学之美里提到过的 Google 的杰出工程师阿米特.辛格博士那样的前辈们的编码。
-* 提供最简单基础的 MVC 框架，将性能损耗降到最低
-* 按 Module 进行资源分离，以便对业务进行微服务化隔离和后期的服务便捷迁移
-* 提供简单好用的单元测试框架
-* 提供便捷的接口参数合法性验证服务
-* 提供简单好用的 Mysql 控制服务
-* 提供PSR-3规范的日志类，额外提供 log buffer 功能（性能提升） 和 全局日志标记码（一个进程一个标记码，方便定位问题）的功能
-* 所有开发基于 PHP7 环境，未做低版本运行验证和兼容
+* 不过度设计，简单、清晰、好用；
+* 提供最简单基础的 MVC 框架，将性能损耗降到最低；
+* 按 Module 进行资源分离，以便对业务进行微服务化隔离或后期的服务便捷迁移；
+* 提供简单好用的单元测试框架；
+* 提供便捷的接口参数合法性验证服务；
+* 提供简单好用工具类，如 Mysql 、Curl 等资源的封装，Xhprof 性能优化工具等；
+* 提供PSR-3规范的日志类，额外提供 log buffer 功能（性能提升） 和 全局日志标记码（一个进程一个标记码，方便定位问题）的功能；
+* 所有开发基于 PHP7 环境，未做低版本运行验证和兼容；
 
 ### 文件目录
 ```
@@ -20,7 +20,7 @@
 	|- index.php 	入口文件
 	|- cli.php 	命令行入口
 	|- run_test.php 	单元测试入口
-|- Demo	样例应用
+|- Sso	样例应用,一个简单的Sso用户单点登录系统
 	|- Cache	缓存管理文件
 	|- config	应用配置文件（mysql、redis等资源配置；api接口配置等;不能变动）
 	|- Controllers	控制器（不能变动）
@@ -33,12 +33,21 @@
 	|- Tests	单元测试文件（不能变动）
 	|- Bootstrap.php 	应用启动初始化文件（不能变动,可以没有）
 ```
+文件结构也体现了 "DMVC" 的分层思想。  
+* "D" 层为数据层，对应的文件夹为"Data"。该层主要解决数据结构的封装，对上层屏蔽底层的数据结构、存储工具等细节；  
+* "M" 层为逻辑层，对应的文件夹为"Models"。该层主要解决业务逻辑的封装，对上层屏蔽业务逻辑的细节;  
+* "C" 层为控制层，对应的文件夹为"Controllers"。该层主要控制相应URL提供哪些服务，根据自身提供的服务引用Model层提供的服务。该层主要负责：安全检验、登录检验、根据接口的目的调用相应Model、日志记录等;  
+* "V" 层为视图层，对应文件夹为"Views"。该层主要提供前端页面渲染的代码，主要为HTML代码，夹杂少量JS、CSS等，或作为目前流行的前后端分离设计的前端入口文件等;  
+* "public" 文件夹主要存放静态资源，如图片、JS代码库、CSS表等；  
+
+详细的情况可以参见 Sso Module，有更多的使用样例，包括Cache、config、Bootstrap.php等
 
 ### 开始使用
 
 #### MVC框架
 1. 配置 Web Server 服务器重定向到入口文件。Nginx 样例如下：
 ```
+root /data1/www/htdocs/service.movie.weibo.com/public/;
 if ( !-f $request_filename ) { 
 	#这里 /index.php/$1 路径要不要带 public 主要依赖配置的 root 路径是什么
     rewrite "^/(.*)" /index.php/$1 last;
@@ -60,6 +69,7 @@ Controller： Demo\Controllers\Demo\A
 Action: index  
 参数: a 和 b
 ```
+这里要注意，url结尾有没有"/"很关键，结尾有"/"意味着 Action 的值会解析成 index 。
 1. 每个 module 可以有自己的 Bootstrap.php 在自己的根目录里，在框架初始化时会顺序执行'_init'开头的成员方法。
 1. 每个 module 有自己的路由插件在 Plugins 文件夹内，可以在 Bootstrap 类中调用 Dispatcher 类的 registerPlugin 方法进行插件注册。
 插件包含routerStartup、routerShutdown、dispatchStartup、dispatchShutdown、preResponse几个部分。分别为:
@@ -98,4 +108,10 @@ View 文件路径：MODULE_ROOT\Views\Demo\A\index.phtml
 1. 在各自 Module 下的 Tests 文件夹内创建单元测试文件，需要继承框架 Framework\Libraries\TestSuite 类；
 1. 命令行下执行 php public/run_test.php 即可完成全部单元测试文件的执行。也可指定要执行的单元测试文件或 Module。如： php public/run_test.php Framework TestPDOManager.php
 
-#### 
+#### 如果进行性能优化
+1. 在想进行代码优化的开始位置执行以下代码：
+``` 
+$lc = new LocalCurl();
+$lc->setAction('test', 'http://127.0.0.1/xhprof/xhprof/run');
+```
+1. 随后在进程结束后会给出查看程序执行细节profile的链接，点击查看即可。

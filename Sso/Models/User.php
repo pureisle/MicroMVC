@@ -24,6 +24,17 @@ class User {
         )
     );
     public function __construct() {}
+     /**
+     * 用户数
+     * @param  $where
+     * @return array
+     */
+    public function countUser($where = null){
+        $du_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\User');
+        $ret    = $du_obj->countUser($where); 
+        return $ret[0]['count'];
+    }
+
     /**
      * 查询用户信息
      * @param  int     $uid
@@ -71,6 +82,20 @@ class User {
     public function getUserList(int $count = 10, int $page = 0) {
         $du_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\User');
         $ret    = $du_obj->getListInfo($count, $page, 'DESC');
+        return $ret;
+    }
+    /**
+     * 批量获取用户信息
+     */
+    public function multiGetUser($uids){
+        if (empty($uids)) {
+            return false;
+        }
+        if (is_array($uids)) {
+            $uids = implode(',', $uids);
+        }
+        $du_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\User');
+        $ret    = $du_obj->multiGetUser($uids);
         return $ret;
     }
     /**

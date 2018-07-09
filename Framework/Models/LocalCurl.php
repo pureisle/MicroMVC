@@ -14,9 +14,10 @@
  */
 namespace Framework\Models;
 class LocalCurl {
-    private $_url  = array();
-    private $_apps = array();
-    private $_body = '';
+    const LOCAL_CURL_CLIENT_IP = '127.0.0.1';
+    private $_url              = array();
+    private $_apps             = array();
+    private $_body             = '';
     public function __construct() {}
     /**
      * 设置请求信息
@@ -78,7 +79,9 @@ class LocalCurl {
             $request->setPostParams($query);
         }
         $request->setUri($uri);
-        $body = $app->bootstrap()->run(false);
+        $_SERVER['FRAMEWORK_LOCAL_CURL'] = self::LOCAL_CURL_CLIENT_IP;
+        $body                            = $app->bootstrap()->run(false);
+        unset($_SERVER['FRAMEWORK_LOCAL_CURL']);
         return $body;
     }
     /**
@@ -98,7 +101,8 @@ class LocalCurl {
      * @return string
      */
     private function _getModule($uri) {
-        $router_ret = Router::routeRule($uri);
+        $router_obj = new Router();
+        $router_ret = $router_obj ->  routeRule($uri);
         return $router_ret['module'];
     }
 }

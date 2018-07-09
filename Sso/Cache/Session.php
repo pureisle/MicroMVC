@@ -10,7 +10,7 @@ class Session extends ControllCache {
     const WRITE_CONFIG_NAME = 'redis:session';
     const SESSION_KEY_INDEX = 0;
     public $key_sets        = array(
-        self::SESSION_KEY_INDEX => array('rule' => 'Sso\Cache->Session_id:{id}', 'expire' => 60)
+        self::SESSION_KEY_INDEX => array('rule' => 'Sso\Cache->Session_id:{id}', 'expire' => 72000)
     );
     public function __construct() {
         parent::__construct();

@@ -5,6 +5,15 @@
  */
 namespace Framework\Libraries;
 class Tools {
+    /**
+     * 生产指定长度随机串，伪随机
+     * @param  int|integer $lenth
+     * @return string
+     */
+    public static function uniqid(int $lenth = 6) {
+        $tmp = random_bytes(($lenth + 1) >> 1);
+        return substr(bin2hex($tmp), 0, $lenth);
+    }
     /**************** 网络相关 *****************/
     /**
      * ip cidr 匹配
@@ -69,12 +78,15 @@ class Tools {
      * @return ip string or false
      */
     public static function getClientIp() {
-        if (getenv("HTTP_CLIENT_IP") && strcasecmp(getenv("HTTP_CLIENT_IP"), "unknown")) {
-            $origin_ip = getenv("HTTP_CLIENT_IP");
-        } else if (getenv("HTTP_X_FORWARDED_FOR") && strcasecmp(getenv("HTTP_X_FORWARDED_FOR"), "unknown")) {
-            $origin_ip = getenv("HTTP_X_FORWARDED_FOR");
-        } else if (getenv("REMOTE_ADDR") && strcasecmp(getenv("REMOTE_ADDR"), "unknown")) {
-            $origin_ip = getenv("REMOTE_ADDR");
+        if ($_SERVER['FRAMEWORK_LOCAL_CURL']) {
+            //为了兼容LocalCurl工具
+            $origin_ip = $_SERVER['FRAMEWORK_LOCAL_CURL'];
+        } else if ($_SERVER["HTTP_CLIENT_IP"] && strcasecmp($_SERVER["HTTP_CLIENT_IP"], "unknown")) {
+            $origin_ip = $_SERVER["HTTP_CLIENT_IP"];
+        } else if ($_SERVER["HTTP_X_FORWARDED_FOR"] && strcasecmp($_SERVER["HTTP_X_FORWARDED_FOR"], "unknown")) {
+            $origin_ip = $_SERVER["HTTP_X_FORWARDED_FOR"];
+        } else if ($_SERVER["REMOTE_ADDR"] && strcasecmp($_SERVER["REMOTE_ADDR"], "unknown")) {
+            $origin_ip = $_SERVER["REMOTE_ADDR"];
         } else if (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] && strcasecmp($_SERVER['REMOTE_ADDR'], "unknown")) {
             $origin_ip = $_SERVER['REMOTE_ADDR'];
         } else {
@@ -88,16 +100,16 @@ class Tools {
      * @return string
      */
     public static function getServerIp() {
-        static $ip = null;
-        if ( ! is_null($ip)) {
-            return $ip;
-        }
         //server变量设置本机IP
         if (isset($_SERVER['SINASRV_INTIP'])) {
             $ip = $_SERVER['SINASRV_INTIP'];
         } else if ( ! empty($_SERVER['SERVER_ADDR'])) {
             $ip = $_SERVER['SERVER_ADDR'];
         } else {
+            static $ip = null;
+            if ( ! is_null($ip)) {
+                return $ip;
+            }
             $result = shell_exec("/sbin/ifconfig eth0");
             if (preg_match_all("/addr:(\d+\.\d+\.\d+\.\d+)/", $result, $match) !== 0) {
                 $ip = $match[1][0];

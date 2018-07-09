@@ -8,9 +8,10 @@ namespace Framework\Models;
 use Framework\Models\Request;
 
 class Router {
-    private $_module     = 'Index';
-    private $_controller = 'Index';
-    private $_action     = 'index';
+    private $_module          = 'Index';
+    private $_controller      = 'Index';
+    private $_action          = 'index';
+    private $_is_force_module = false;
     public function __construct() {}
     /**
      * 获取路由module
@@ -24,8 +25,9 @@ class Router {
      * @param  string   $name
      * @return Router
      */
-    public function setModule($name) {
-        $this->_module = $name;
+    public function setModule($name, $is_force = false) {
+        $this->_module          = $name;
+        $this->_is_force_module = $is_force;
         return $this;
     }
     /**
@@ -77,38 +79,32 @@ class Router {
      * @param  string  $uri
      * @return array
      */
-    public function routeRule($uri) {
-        $ret         = array();
+    public function routeRule(string $uri) {
+        $ret         = array('module' => $this->getModule());
         $uri_array   = array();
         $field_count = 0;
         $uri         = ltrim($uri, '/');
         if ( ! empty($uri)) {
-            $uri_array   = explode('/', $uri);
+            $uri_array = explode('/', $uri);
+            if ( ! $this->_is_force_module) {
+                $ret['module'] = ucfirst(array_shift($uri_array));
+            }
             $field_count = count($uri_array);
         }
         switch ($field_count) {
             case 0:
-                $ret['module']     = $this->getModule();
                 $ret['controller'] = $this->getController();
                 $ret['action']     = $this->getAction();
                 break;
             case 1:
-                $ret['module']     = ucfirst($uri_array[0]);
-                $ret['controller'] = $this->getController();
+                $ret['controller'] = empty($uri_array[0]) ? $this->getController() : ucfirst($uri_array[0]);
                 $ret['action']     = $this->getAction();
                 break;
             case 2:
-                $ret['module']     = ucfirst($uri_array[0]);
-                $ret['controller'] = empty($uri_array[1]) ? $this->getController() : ucfirst($uri_array[1]);
-                $ret['action']     = $this->getAction();
-                break;
-            case 3:
-                $ret['module']     = ucfirst($uri_array[0]);
-                $ret['controller'] = ucfirst($uri_array[1]);
-                $ret['action']     = empty($uri_array[2]) ? $this->getAction() : $uri_array[2];
+                $ret['controller'] = ucfirst($uri_array[0]);
+                $ret['action']     = empty($uri_array[1]) ? $this->getAction() : $uri_array[1];
                 break;
             default:
-                $ret['module'] = ucfirst(array_shift($uri_array));
                 $ret['action'] = array_pop($uri_array);
                 if (empty($ret['action'])) {
                     $ret['action'] = 'index';

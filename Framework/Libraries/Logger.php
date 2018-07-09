@@ -176,9 +176,8 @@ class Logger {
                 $this->flushBuffer();
             }
         } else {
-            $ret = $this->_write($log_str);
+            $this->_write($log_str);
         }
-        return $ret;
     }
     /**
      * 清空和输出内存日志

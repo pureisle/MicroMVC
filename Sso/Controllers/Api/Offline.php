@@ -15,7 +15,8 @@ class Offline extends Controller {
     );
     public function indexAction() {
         try {
-            $params = $this->getGetParams();
+            $this->useAuth('api_auth');
+            $params = $this->getPostParams();
         } catch (\Exception $e) {
             ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
             return false;

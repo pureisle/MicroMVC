@@ -9,6 +9,7 @@
 namespace Framework\Models;
 use Framework\Libraries\ConfigTool;
 use Framework\Libraries\Exception;
+use Framework\Libraries\Tools;
 use Framework\Libraries\Validator;
 use Framework\Models\Request;
 
@@ -61,6 +62,42 @@ abstract class Controller {
         return $ret_params;
     }
     /**
+     * csrf检测，需要在输出前调用。
+     *
+     * 在需要验证的接口或页面的 前置controller的action接口内调用 csrfSet();
+     * 然后在验证接口或页面调用 csrfCheck() 方法即可完成验证。
+     */
+    const CSRF_VAR_NAME     = 'CSRF_AUTH_TOKEN';
+    const CSRF_TOKEN_EXPIRE = 3600;
+    /**
+     * 开启csrf验证
+     */
+    public function csrfSet(string $host = '') {
+        if (empty($host)) {
+            list($host, $port) = explode(':', $_SERVER['HTTP_HOST']);
+        }
+        $value = Tools::uniqid(6);
+        $ret = setcookie(self::CSRF_VAR_NAME, $value, time() + self::CSRF_TOKEN_EXPIRE, '/', $host, false, true);
+        if ( ! $ret) {
+            throw new ControllerException(ControllerException::ERROR_CSRF_AUTH_CHECK, 'cookie set error');
+        }
+        session_start();
+        $_SESSION[self::CSRF_VAR_NAME] = $value;
+    }
+    /**
+     * csrf 检测
+     */
+    public function csrfCheck() {
+        if ( ! isset($_COOKIE[self::CSRF_VAR_NAME])) {
+            throw new ControllerException(ControllerException::ERROR_CSRF_AUTH_CHECK, 'csrf auth check error');
+        }
+        session_start();
+        if ($_SESSION[self::CSRF_VAR_NAME] != $_COOKIE[self::CSRF_VAR_NAME]) {
+            throw new ControllerException(ControllerException::ERROR_CSRF_AUTH_CHECK, 'csrf auth check error');
+        }
+        unset($_SESSION[self::CSRF_VAR_NAME]); //验证后使其失效
+    }
+    /**
      * 接口使用auth认证
      *
      * 安全认证主要包括：
@@ -89,7 +126,15 @@ abstract class Controller {
         if (empty($config_set)) {
             throw new ControllerException(ControllerException::ERROR_API_AUTH_CHECK, 'auth config load fail');
         }
-        $params = array_merge($this->_request->getGetParams(), $this->_request->getPostParams());
+        $params = array();
+        $get    = $this->_request->getGetParams();
+        if ( ! empty($get)) {
+            $params = $get;
+        }
+        $post = $this->_request->getPostParams();
+        if ( ! empty($post)) {
+            $params = array_merge($params, $post);
+        }
         if ( ! isset($params['app_key']) || empty($params['app_key']) || empty($config_set[$params['app_key']])) {
             throw new ControllerException(ControllerException::ERROR_API_AUTH_CHECK, 'app_key error');
         }
@@ -126,16 +171,21 @@ abstract class Controller {
 }
 
 class ControllerException extends Exception {
-    const ERROR_PARAM_CHECK    = 1;
-    const ERROR_API_AUTH_CHECK = 2;
-    public $ERROR_SET          = array(
-        self::ERROR_PARAM_CHECK    => array(
+    const ERROR_PARAM_CHECK     = 1;
+    const ERROR_API_AUTH_CHECK  = 2;
+    const ERROR_CSRF_AUTH_CHECK = 3;
+    public $ERROR_SET           = array(
+        self::ERROR_PARAM_CHECK     => array(
             'code'    => self::ERROR_PARAM_CHECK,
             'message' => 'param check error.'
         ),
-        self::ERROR_API_AUTH_CHECK => array(
+        self::ERROR_API_AUTH_CHECK  => array(
             'code'    => self::ERROR_API_AUTH_CHECK,
             'message' => 'api auth check error.'
+        ),
+        self::ERROR_CSRF_AUTH_CHECK => array(
+            'code'    => self::ERROR_CSRF_AUTH_CHECK,
+            'message' => 'csrf error.'
         )
     );
 }

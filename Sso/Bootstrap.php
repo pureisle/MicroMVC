@@ -7,11 +7,11 @@
 namespace Sso;
 
 use Framework\Models\Dispatcher;
-use Sso\Models\Session;
+use Framework\Libraries\SingletonManager;
 
 class Bootstrap extends \Framework\Models\Bootstrap {
     public function _initSession() {
-        $handler = new Session();
+        $handler = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Models\Session');
         session_set_save_handler(
             array($handler, 'open'),
             array($handler, 'close'),

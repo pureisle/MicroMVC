@@ -256,8 +256,9 @@ abstract class ControllMysql {
      * @return int
      */
     protected function count($where_condition = null) {
-        $sql             = 'SELECT COUNT(*) FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition);
+        $sql             = 'SELECT COUNT(*) as count FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition);
         $this->_last_sql = $sql;
+        $this->_is_query = true;
         return $this;
     }
     /**
@@ -315,6 +316,7 @@ abstract class ControllMysql {
     public static function buildWhereCondition(string $field, $condition, string $operator = '=', string $logic = 'AND') {
         return array('field' => $field, 'condition' => $condition, 'operator' => $operator, 'logic' => $logic);
     }
+
     /**
      * 获取操作表名
      * @return string
@@ -372,7 +374,6 @@ abstract class ControllMysql {
         }
         $result = ' WHERE 1';
         $params = array();
-
         foreach ($where_arr as $condition) {
             if (empty($condition['logic'])) {
                 $condition['logic'] = 'AND';
@@ -381,24 +382,26 @@ abstract class ControllMysql {
                 $condition['operator'] = '=';
             }
             $result .= ' ' . $condition['logic'] . ' ' . $this->_putFieldQuote($condition['field']) . ' ' . $condition['operator'];
-            $tmp_field             = $this->_getFieldId();
             $condition['operator'] = strtoupper($condition['operator']);
-            switch ($condition['operator']) {
-                case 'LIKE':
-                case 'NOT LIKE':
-                    $result .= ' "%' . $tmp_field . '%"';
-                    break;
-                case 'IN':
-                case 'NOT IN':
-                    $result .= ' (' . $tmp_field . ')';
-                    break;
-                case 'BETWEEN':
-                case 'NOT BETWEEN':
-                default:
-                    $result .= ' ' . $tmp_field;
-                    break;
+            if ('IN' == $condition['operator'] || 'NOT IN' == $condition['operator']) {
+                if (is_array($condition['condition'])) {
+                    $t_field = $condition['condition'];
+                } else {
+                    $t_field = explode(',', $condition['condition']);
+                }
+                $result .= ' (';
+                foreach ($t_field as $value) {
+                    $tt_field = $this->_getFieldId();
+                    $result .= $tt_field . ",";
+                    $params[$tt_field] = $value;
+                }
+                $result = substr($result, 0, -1);
+                $result .= ')';
+            } else {
+                $tmp_field = $this->_getFieldId();
+                $result .= ' ' . $tmp_field;
+                $params[$tmp_field] = $condition['condition'];
             }
-            $params[$tmp_field] = $condition['condition'];
         }
         $this->_addVar($params);
         return $result;

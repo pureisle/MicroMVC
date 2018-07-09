@@ -52,9 +52,9 @@ class Session {
         // return $s_obj->addSession($session_id, $data, $expire) === false ? false : true;
     }
 
-    public function destroy($id) {
+    public function destroy($session_id) {
         $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
-        $ret   = $cache->remoive($session_id);
+        $ret   = $cache->remove($session_id);
 
         // $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
         // $tmp   = $s_obj->removeById($id);

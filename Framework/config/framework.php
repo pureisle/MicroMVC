@@ -24,7 +24,9 @@ return array(
     ),
     //定义module，并控制是否开启
     'modules'        => array(
-        'Demo' => true
+        'Index' => true,
+        'Sso'   => true,
+        'Admin' => true
     ),
-    'default_module' => 'Demo'
+    'default_module' => 'Index'
 );

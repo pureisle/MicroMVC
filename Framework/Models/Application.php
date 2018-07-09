@@ -24,7 +24,8 @@ class Application {
     private $_dispatcher               = null;
     private $_request                  = null;
     private $_autoload                 = null;
-    public function __construct($app_name) {
+    private $_is_force_module          = false;
+    public function __construct(string $app_name) {
         //每次app实例单独加在AutoLoad，以便隔离不同module的底层加载
         $this->_iniAutoLoad($app_name);
         //框架只加载一次
@@ -32,9 +33,11 @@ class Application {
             $this->_loadFramework();
             self::$_is_load_framework = true;
         }
-        if (empty($app_name)) {
-            $f_config        = $this->getConfig();
-            $this->_app_name = $f_config['default_module'];
+        $f_config = $this->getConfig();
+        //如果app_name为空 或者 未注册 或者 注册了未开启，则启用默认app_name
+        if (empty($app_name) || ! isset($f_config['modules'][$app_name]) || ! $f_config['modules'][$app_name]) {
+            $this->_app_name        = $f_config['default_module'];
+            $this->_is_force_module = true;
             $this->_autoload->setPathPrefix($this->_app_name);
         } else {
             $this->_app_name = $app_name;
@@ -57,7 +60,7 @@ class Application {
             $plugin->routerStartup($request, $response);
         }
         $router = new Router();
-        $router->setModule($this->_app_name); //先增加默认module
+        $router->setModule($this->_app_name, $this->_is_force_module);
         $router->route($request);
 
         $dispatcher->setRouter($router);

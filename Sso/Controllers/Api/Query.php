@@ -17,8 +17,8 @@ class Query extends Controller {
         'uid' => 'requirement&not_empty'
     );
     public function indexAction() {
+        $this->useAuth('api_auth');
         try {
-            $this->useAuth('api_auth');
             $params = $this->getGetParams();
         } catch (\Exception $e) {
             ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
@@ -26,7 +26,7 @@ class Query extends Controller {
         }
         $user = new User();
         $info = $user->getInfo($params['uid']);
-        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('name' => $info['name'], 'uid' => $info['uid'], 'extend' => $info['extend']));
+        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('name' => $info['name'], 'uid' => $info['uid'], 'extend' => $info['extend'], 'tel' => $info['tel'] , 'email' => $info['email']));
         return false;
     }
     /**
@@ -36,6 +36,7 @@ class Query extends Controller {
         'name' => 'requirement&not_empty'
     );
     public function nameAction() {
+        $this->useAuth('api_auth');
         try {
             $params = $this->getGetParams();
         } catch (\Exception $e) {
@@ -44,7 +45,50 @@ class Query extends Controller {
         }
         $user = new User();
         $info = $user->getInfoByName($params['name']);
-        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('name' => $info['name'], 'uid' => $info['uid'], 'extend' => $info['extend']));
+        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('name' => $info['name'], 'uid' => $info['uid'], 'extend' => $info['extend'], 'tel' => $info['tel'] , 'email' => $info['email']));
         return false;
     }
+
+    /**
+     * 获取用户列表
+     */
+    public static $LIST_PARAM_RULES = array(
+        'count' => '',
+        'page'  => '',
+    );
+    public function listAction() {
+        $this->useAuth('api_auth');
+        try {
+            $params = $this->getGetParams();
+        } catch (\Exception $e) {
+            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
+            return false;
+        }
+        $user = new User();
+        $data['info']  = $user->getUserList($params['count'], $params['page']);
+        $data['count'] = $user->countUser();
+        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, $data);
+        return false;
+    }
+
+    /**
+     * 批量获取用户信息
+     */
+    public static $MUTILGETUSER_PARAM_RULES = array(
+        'uids' => ' ',
+    );
+    public function mutilGetUserAction() {
+        $this->useAuth('api_auth');
+        try {
+            $params = $this->getGetParams();
+        } catch (\Exception $e) {
+            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
+            return false;
+        }
+        $user = new User();
+        $data = $user->multiGetUser($params['uids']);
+        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, $data);
+        return false;
+    }
+
 }

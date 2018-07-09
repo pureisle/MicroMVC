@@ -60,6 +60,22 @@ EOT;
         return parent::add($data)->_exec(self::WRITE_DB_RESOURCE);
     }
     /**
+     * 批量获取用户信息
+     */
+    public function multiGetUser($uids){
+        if (empty($uids)) {
+            return false;
+        }
+        $where[] = parent::buildWhereCondition('uid', $uids, 'in');
+        parent::getList(-1, -1, array(), $where);
+        $ret = $this->_exec(self::READ_DB_RESOURCE);
+        foreach ($ret as $key => $value) {
+            $this->_formatData($value);
+            $ret[$key] = $value;
+        }
+        return $ret;
+    }
+    /**
      * 分页获取id倒序数据 或获取指定id数据
      * @param  int     $count
      * @param  int     $page
@@ -169,6 +185,16 @@ EOT;
         $where[] = $this->buildWhereCondition('uid', $uid, '=', 'AND');
         return parent::remove($where)->_exec(self::WRITE_DB_RESOURCE);
     }
+    /**
+     * count
+     * 
+     * @param array|string $where_condition
+     */
+    public function countUser($where = null){
+       $ret  = parent::count($where)->_exec(self::READ_DB_RESOURCE);
+       return $ret;
+    }
+
     private function _extendEncode(array $extend) {
         return json_encode($extend);
     }

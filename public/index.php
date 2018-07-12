@@ -24,6 +24,6 @@ if ( ! empty(trim($server_uri, '/'))) {
     $tmp    = explode('/', $server_uri);
     $module = ucfirst($tmp[1]);
 }
-require FRAMEWORK_PATH . '/Models/Application.php';
+require_once FRAMEWORK_PATH . '/Models/Application.php';
 $app = new Framework\Models\Application($module);
 $app->bootstrap()->run();

@@ -12,6 +12,7 @@
 namespace Framework\Libraries;
 abstract class ControllCache extends KeyBuilder {
     const CACHE_TYPE_REDIS   = 'redis';
+    const CACHE_TYPE_MC      = 'mc';
     private $_config_name    = '';
     private $_module         = '';
     private static $INSTANCE = array();
@@ -38,6 +39,9 @@ abstract class ControllCache extends KeyBuilder {
         switch ($type) {
             case self::CACHE_TYPE_REDIS:
                 self::$INSTANCE[$cache_key] = new Redis($config_name, $this->_module);
+                break;
+            case self::CACHE_TYPE_MC:
+                self::$INSTANCE[$cache_key] = new Memcached($config_name, $this->_module);
                 break;
             default:
                 return false;

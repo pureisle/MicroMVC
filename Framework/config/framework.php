@@ -24,9 +24,11 @@ return array(
     ),
     //定义module，并控制是否开启
     'modules'        => array(
-        'Index' => true,
-        'Sso'   => true,
-        'Admin' => true
+        'Index'      => true,
+        'Sso'        => true,
+        'Admin'      => true,
+        'Government' => true,
+        'Xhprof'     => true
     ),
     'default_module' => 'Index'
 );

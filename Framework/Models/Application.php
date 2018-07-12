@@ -42,7 +42,6 @@ class Application {
         } else {
             $this->_app_name = $app_name;
         }
-        $this->_dispatcher = new Dispatcher($this->getConfig());
     }
     /**
      * 核心运行流程
@@ -122,7 +121,7 @@ class Application {
             return $this;
         }
         $class_name = $this->_app_name . '\\' . self::BOOTSTRAP_NAME;
-        new $class_name($this->_dispatcher);
+        new $class_name($this->getDispatcher());
         return $this;
     }
     public function getRequest() {
@@ -140,6 +139,9 @@ class Application {
      * @return object
      */
     public function getDispatcher() {
+        if ( ! isset($this->_dispatcher)) {
+            $this->_dispatcher = new Dispatcher($this->getConfig());
+        }
         return $this->_dispatcher;
     }
     /**

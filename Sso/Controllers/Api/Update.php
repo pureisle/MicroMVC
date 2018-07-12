@@ -24,7 +24,7 @@ class Update extends Controller {
     public function indexAction() {
         $this->useAuth('api_auth');
         try {
-            $params = $this->getGetParams();
+            $params = $this->getPostParams();
             extract($params);
             if (empty($email) && empty($tel) && empty($extend) && ! isset($status)) {
                 throw new \Exception('params empty');
@@ -62,7 +62,7 @@ class Update extends Controller {
     public function extendAction() {
         $this->useAuth('api_auth');
         try {
-            $params = $this->getGetParams();
+            $params = $this->getPostParams();
             $extend = json_decode($params['extend'], true);
             if (empty($extend)) {
                 throw new \Exception('extend jsondecode error');
@@ -94,7 +94,7 @@ class Update extends Controller {
     public function passwdAction(){
         $this->useAuth('api_auth');
         try {
-            $params = $this->getGetParams();
+            $params = $this->getPostParams();
         } catch (\Exception $e) {
             ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
             return false;
@@ -102,13 +102,13 @@ class Update extends Controller {
         $user         = new User();
         $info         = $user->getInfo($params['uid']);
         if (empty($info)){
-            ApiDisplay::display(ApiDisplay::FAIL_CODE, '当前用户信息有误');
+            ApiDisplay::display(ApiDisplay::FAIL_CODE, array(), '当前用户信息有误');
         }
         $check_passwd = $user->checkPasswd($params['old_passwd'], $info['name']);
 
 
         if (!$check_passwd){
-            ApiDisplay::display(ApiDisplay::FAIL_CODE, '当前密码有误，请重新输入');
+            ApiDisplay::display(ApiDisplay::FAIL_CODE, array(),  '当前密码有误，请重新输入');
         }
 
         $ret = $user->updatePasswd($params['uid'], $params['new_passwd']);

@@ -45,17 +45,24 @@ class Validator {
         'length_min'    => 'The "%s" string length must more then %s', //字符串长度不小于指定个数的通过检测
         'length_not_in' => true,                                       //字符串长度不在指定个数的通过检测
         'enum'          => 'The "%s" must in %s',                      //符合枚举的字符串通过检测 enum:1,2,3,a,b
-        'not_empty'     => 'The "%s" can not be empty'                //参数不能为空,'',0,false等均为空
+        'not_empty'     => 'The "%s" can not be empty',                //参数不能为空,'',0,false等均为空
+
+        'default'       => '' // 参数没有传递时，设置默认值。 如果参数传递了即便无值，也不会设置默认值，因为确实会有传递空字符串的情况。
     );
     private $_err_msg = '';
     public function __construct() {}
-    public function check($data, $rule_set) {
+    public function check(&$data, $rule_set) {
+        $ret = true;
         foreach ($rule_set as $key => $value) {
             $error_rule  = '';
             $error_valid = '';
             if (isset($data[$key])) {
                 $ret       = $this->_parseRule($value, $data[$key], $error_rule, $error_valid);
                 $error_msg = sprintf(self::$KEY_WORD[$error_rule], $key, $error_valid) . ' but value is ' . $data[$key];
+            } else if ($this->isDefault($value)) {
+                $tmp        = explode('default:', $value, 2);
+                $tmp        = explode('&', $tmp[1], 2);
+                $data[$key] = $tmp[0];
             } else if ($this->isRequirement($value)) {
                 $error_msg = sprintf(self::$KEY_WORD['requirement'], $key);
                 $ret       = false;
@@ -185,6 +192,13 @@ class Validator {
     }
     public function isRequirement($rule_string) {
         if (strpos($rule_string, 'requirement') !== false) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    public function isDefault($rule_string) {
+        if (strpos($rule_string, 'default:') !== false) {
             return true;
         } else {
             return false;

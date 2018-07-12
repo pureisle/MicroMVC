@@ -6,20 +6,24 @@
  */
 namespace Sso;
 
-use Framework\Models\Dispatcher;
 use Framework\Libraries\SingletonManager;
+use Framework\Models\Dispatcher;
 
 class Bootstrap extends \Framework\Models\Bootstrap {
+    private static $_is_set_session_handler = false;
     public function _initSession() {
-        $handler = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Models\Session');
-        session_set_save_handler(
-            array($handler, 'open'),
-            array($handler, 'close'),
-            array($handler, 'read'),
-            array($handler, 'write'),
-            array($handler, 'destroy'),
-            array($handler, 'gc')
-        );
-        register_shutdown_function('session_write_close');
+        if ( ! self::$_is_set_session_handler) {
+            $handler = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Models\Session');
+            session_set_save_handler(
+                array($handler, 'open'),
+                array($handler, 'close'),
+                array($handler, 'read'),
+                array($handler, 'write'),
+                array($handler, 'destroy'),
+                array($handler, 'gc')
+            );
+            register_shutdown_function('session_write_close');
+            self::$_is_set_session_handler = true;
+        }
     }
 }

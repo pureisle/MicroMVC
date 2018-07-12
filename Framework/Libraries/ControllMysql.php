@@ -53,6 +53,7 @@ abstract class ControllMysql {
     private $_last_sql       = null;
     private $_module         = null;
     private $_is_query       = false;
+    private $_is_add         = false;
     private $_table_name     = '';
     private $_last_params    = array();
     private $_placeholder_id = 0;
@@ -97,6 +98,11 @@ abstract class ControllMysql {
             $ret = $this->_pdo->query($sql, $var);
         } else {
             $ret = $this->_pdo->exec($sql, $var);
+            //如果是插入操作则返回插入值的id,仅当表主键为AUTO_INCREMENT时是这样，否则返回0
+            if ($this->_is_add) {
+                $ret           = $this->_pdo->lastInsertId();
+                $this->_is_add = false;
+            }
         }
         $this->_is_query = false;
         return $ret;
@@ -141,6 +147,7 @@ abstract class ControllMysql {
         }
         $this->_addVar($params);
         $this->_last_sql = $sql;
+        $this->_is_add   = true;
         return $this;
     }
     /**

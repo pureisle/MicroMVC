@@ -40,12 +40,15 @@ class ApiDisplay {
         )
     );
     public function __construct() {}
-    public static function display(int $code, array $result = array()) {
+    public static function display(int $code, array $result = array(), string $msg = '') {
         if ( ! isset(self::$RETURN_STRUCT[$code])) {
             $code = self::UNKNOWN_CODE;
         }
         $ret         = self::$RETURN_STRUCT[$code];
         $ret['data'] = $result;
+        if($msg){
+            $ret ['msg'] = $msg;
+        }
         echo json_encode($ret);
     }
 }

@@ -21,8 +21,8 @@ class Add extends Controller {
         'extend' => ''
     );
     public function indexAction() {
+        $this->useAuth('api_auth');
         try {
-            $this->useAuth('api_auth');
             $params = $this->getPostParams();
         } catch (\Exception $e) {
             ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));

@@ -26,8 +26,6 @@ return array(
     'modules'        => array(
         'Index'      => true,
         'Sso'        => true,
-        'Admin'      => true,
-        'Government' => true,
         'Xhprof'     => true
     ),
     'default_module' => 'Index'

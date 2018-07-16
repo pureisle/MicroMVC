@@ -1,7 +1,6 @@
 <?php
-$log_root_path = '/data1/www/logs/my_app';
 return array(
-    'root_path'          => $log_root_path . '/sso',
+    'root_path'          => LOG_ROOT_PATH . '/sso',
     'file_name'          => 'sql',
     'suffix_date_format' => 'Ymd',
     'lock_wait'          => 0.3,  //文件写锁获取等待时间，单位秒

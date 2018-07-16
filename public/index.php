@@ -6,6 +6,7 @@ define("ROOT_PATH", realpath(dirname(__FILE__) . '/../'));
 define('FRAMEWORK_NAME', 'Framework');
 define('FRAMEWORK_PATH', ROOT_PATH . '/Framework');
 define('CONFIG_FOLDER', 'config');
+define('LOG_ROOT_PATH', '/data1/media.weibo.com/logs');
 define('FRAMEWORK_CONFIG_PATH', FRAMEWORK_PATH . DIRECTORY_SEPARATOR . CONFIG_FOLDER);
 define("FRAMEWORK_CONFIG_FILE", FRAMEWORK_CONFIG_PATH . DIRECTORY_SEPARATOR . FRAMEWORK_NAME . ".php");
 //框架路由解析路径顺序

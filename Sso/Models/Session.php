@@ -14,7 +14,9 @@ class Session {
      * @param int|integer $expire session 持续时间
      */
     public function __construct(string $session_name = 'PHPSESSID', int $expire = 3600, int $gc_divisor = 100) {
-        ini_set("session.save_handler", "user");
+        if (version_compare(PHP_VERSION, '7.2.0') == -1) {
+            ini_set("session.save_handler", "user"); //7.2.0 执行会报错，且高版本不用执行该句即可使用session_set_save_handler
+        }
         ini_set("session.gc_probability", 1);
         ini_set("session.gc_divisor", $gc_divisor);
         ini_set("session.name", $session_name);

@@ -59,7 +59,8 @@ class Request {
         if (isset($_SERVER['PATH_INFO'])) {
             $server_uri = $_SERVER['PATH_INFO'];
         } else if (isset($_SERVER['REQUEST_URI'])) {
-            $server_uri = $_SERVER['REQUEST_URI'];
+            $tmp = explode('?', $_SERVER['REQUEST_URI'],2);
+            $server_uri=$tmp[0];
         } else if (isset($_SERVER['ORIG_PATH_INFO'])) {
             $server_uri = $_SERVER['ORIG_PATH_INFO'];
         } else {

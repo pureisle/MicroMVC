@@ -37,6 +37,13 @@ class ConfigTool {
      */
     public static function getFilePath(string $file_name, string $module_name) {
         $path = ROOT_PATH . DIRECTORY_SEPARATOR . $module_name . DIRECTORY_SEPARATOR . CONFIG_FOLDER . DIRECTORY_SEPARATOR . $file_name . self::FILE_SUFFIX;
+        $env  = Tools::getEnv();
+        if (Tools::ENV_PRO != $env) {
+            $test_path = ROOT_PATH . DIRECTORY_SEPARATOR . $module_name . DIRECTORY_SEPARATOR . CONFIG_FOLDER . DIRECTORY_SEPARATOR . $env . DIRECTORY_SEPARATOR . $file_name . self::FILE_SUFFIX;
+            if (file_exists($test_path)) {
+                $path = $test_path;
+            }
+        }
         return $path;
     }
     /**

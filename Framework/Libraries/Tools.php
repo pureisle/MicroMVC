@@ -6,6 +6,46 @@
 namespace Framework\Libraries;
 class Tools {
     /**
+     * 设置代码运行环境
+     */
+    const ENV_INDEX_NAME = 'VISIT_SERVER_ENV';
+    const ENV_DEV        = 'dev'; //开发环境
+    const ENV_PRO        = 'pro'; //生产环境
+    private static $_env = null;
+    public static function getEnv() {
+        //生产环境禁止变更设置
+        if (self::ENV_PRO == $_SERVER[self::ENV_INDEX_NAME]) {
+            return self::ENV_PRO;
+        }
+        if (isset(self::$_env)) {
+            $env = self::$_env;
+        } else if (isset($_COOKIE[self::ENV_INDEX_NAME])) {
+            $env = $_COOKIE[self::ENV_INDEX_NAME];
+        } else if (isset($_SERVER[self::ENV_INDEX_NAME])) {
+            $env = $_SERVER[self::ENV_INDEX_NAME];
+        } else {
+            $env = self::ENV_PRO;
+        }
+        return $env;
+    }
+    public static function setEnv(string $env) {
+        list($host, $port) = explode(':', $_SERVER['HTTP_HOST']);
+        self::$_env        = $env;
+        if ( ! self::isCli()) {
+            @setcookie(self::ENV_INDEX_NAME, $env, time() + 288800, '/', $host, false, true);
+        }
+    }
+    /**
+     * 是否为cli方式运行
+     * @return boolean
+     */
+    public static function isCli() {
+        if (substr(php_sapi_name(), 0, 3) == 'cli') {
+            return true;
+        }
+        return false;
+    }
+    /**
      * 生产指定长度随机串，伪随机
      * @param  int|integer $lenth
      * @return string

@@ -104,12 +104,22 @@ class PDOManager {
         if ($prepare_sql === $this->_last_prepare_sql) {
             return $this->_last_prepare_sth;
         }
-        $db_handle = $this->_getDBHandle();
-        $sth       = $db_handle->prepare($prepare_sql, $driver_options);
-        if (false === $sth) {
-            $error = $db_handle->errorInfo();
-            throw new PDOManagerException(PDOManagerException::PDO_ERROR_MSG, implode(' ', $error));
-        }
+        $first = true;
+        do {
+            $db_handle = $this->_getDBHandle();
+            $sth       = $db_handle->prepare($prepare_sql, $driver_options);
+            if (false === $sth) {
+                $error = $db_handle->errorInfo();
+                //如果是数据库连接断开则自动重连一次
+                if (strpos($error[2], 'MySQL server has gone away') !== false && $first) {
+                    $this->forceReconnect();
+                    $first = false;
+                    continue;
+                }
+                throw new PDOManagerException(PDOManagerException::PDO_ERROR_MSG, implode(' ', $error));
+            }
+            break;
+        } while (true);
         $this->_last_prepare_sql = $prepare_sql;
         $this->_last_prepare_sth = $sth;
         return $this->_last_prepare_sth;

@@ -15,6 +15,8 @@ if (substr(php_sapi_name(), 0, 3) !== 'cli') {
 declare (ticks = 1);
 abstract class ProcessManager {
     private $_max_processes      = 9999;
+    private $_total_processes    = 10;
+    private $_max_time_out       = 400;
     private $_current_jobs       = array();
     private $_signal_queue       = array();
     private $_jobs_exec_info     = array();
@@ -69,6 +71,30 @@ abstract class ProcessManager {
         }
         return $this;
     }
+
+    /**
+     * 设置本次一共需要多少进程要跑
+     * @param int $max_num 最大正在执行子任务数
+     */
+    public function setTotalProcesses($totalProcesses)
+    {
+       if (is_numeric($totalProcesses)) {
+            $this->_total_processes = $totalProcesses;
+        }
+        return $this;
+    }
+
+    /**
+     * 设置最大执行时间
+     * @param int $max_time_out 最大执行时间
+     */
+    public function setMaxTimeout($max_time_out) {
+        if (is_numeric($max_time_out)) {
+            $this->_max_time_out = $max_time_out;
+        }
+        return $this;
+    }
+
     /**
      * 获取任务执行信息
      * @return array
@@ -76,6 +102,8 @@ abstract class ProcessManager {
     public function getJobExecInfo() {
         return $this->_jobs_exec_info;
     }
+
+
     /**
      * 执行入口
      */

@@ -49,7 +49,7 @@ use Framework\Entities\PDOConfig;
 
 abstract class ControllMysql {
     private $_db_conf        = null;
-    private $_pdo            = null;
+    private $_pdo            = array();
     private $_last_sql       = null;
     private $_module         = null;
     private $_is_query       = false;
@@ -79,32 +79,24 @@ abstract class ControllMysql {
         if (empty($this->_last_sql)) {
             throw new ControllMysqlException(ControllMysqlException::NO_SQL_TO_EXEC);
         }
-        if ( ! isset($this->_pdo)) {
-            $db_conf              = ConfigTool::loadByName($resource_name, $this->_module);
-            $pdo_config           = new PDOConfig();
-            $pdo_config->host     = $db_conf['host'];
-            $pdo_config->port     = $db_conf['port'];
-            $pdo_config->username = $db_conf['username'];
-            $pdo_config->password = $db_conf['password'];
-            $pdo_config->dbname   = $db_conf['dbname'];
-            $this->_db_conf       = $pdo_config;
-            $this->_pdo           = new PDOManager($pdo_config);
-        }
+        $pd                 = $this->_connectPdo($resource_name);
         $sql                = $this->_last_sql;
         $this->_last_sql    = '';
         $var                = $this->_last_params;
         $this->_last_params = array();
-        if (true === $this->_is_query) {
-            $ret = $this->_pdo->query($sql, $var);
+        $is_add             = $this->_is_add;
+        $this->_is_add      = false;
+        $is_query           = $this->_is_query;
+        $this->_is_query    = false;
+        if ($is_query) {
+            $ret = $pd->query($sql, $var);
         } else {
-            $ret = $this->_pdo->exec($sql, $var);
+            $ret = $pd->exec($sql, $var);
             //如果是插入操作则返回插入值的id,仅当表主键为AUTO_INCREMENT时是这样，否则返回0
-            if ($this->_is_add) {
-                $ret           = $this->_pdo->lastInsertId();
-                $this->_is_add = false;
+            if ($is_add) {
+                $ret = $pd->lastInsertId();
             }
         }
-        $this->_is_query = false;
         return $ret;
     }
     /**
@@ -139,11 +131,7 @@ abstract class ControllMysql {
         $values = substr($values, 0, -1);
         $sql    = 'INSERT INTO ' . $this->getTableName() . ' (' . $fields . ') VALUE (' . $values . ')';
         if ( ! empty($duplicate)) {
-            if (is_array($duplicate)) {
-                $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->_buildSet($duplicate);
-            } else {
-                $sql .= ' ' . $duplicate;
-            }
+            $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->_buildSet($duplicate);
         }
         $this->_addVar($params);
         $this->_last_sql = $sql;
@@ -156,11 +144,11 @@ abstract class ControllMysql {
      * 其中每维数组的key为field名，value为相应字段插入的值
      * $duplicate 参数结构与add()方法中的相同
      *
-     * @param  array[] $data
-     * @param  array   $duplicate=null
+     * @param  array[]      $data
+     * @param  array|string $duplicate=null
      * @return mix
      */
-    protected function multiAdd(array $data_arr, array $duplicate = null) {
+    protected function multiAdd(array $data_arr, $duplicate = null) {
         if (empty($data_arr)) {
             throw new ControllMysqlException(ControllMysqlException::PARAMS_ERROR_MESSAGE);
         }
@@ -184,7 +172,11 @@ abstract class ControllMysql {
         }
         $sql = substr($sql, 0, -1);
         if ( ! empty($duplicate)) {
-            $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->_buildSet($duplicate);
+            if (is_array($duplicate)) {
+                $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->_buildSet($duplicate);
+            } else {
+                $sql .= ' ON DUPLICATE KEY UPDATE ' . $duplicate;
+            }
         }
         $this->_addVar($params);
         $this->_last_sql = $sql;
@@ -275,14 +267,33 @@ abstract class ControllMysql {
     protected function getLastSql() {
         return array('sql' => $this->_last_sql, 'params' => $this->_last_params);
     }
+
+    private function _connectPdo($resource_name) {
+        if (empty($resource_name)) {
+            throw new ControllMysqlException(ControllMysqlException::ERROR_DB_POOL_EMPTY);
+        }
+        if ( ! isset($this->_pdo[$resource_name])) {
+            $db_conf                    = ConfigTool::loadByName($resource_name, $this->_module);
+            $pdo_config                 = new PDOConfig();
+            $pdo_config->host           = $db_conf['host'];
+            $pdo_config->port           = $db_conf['port'];
+            $pdo_config->username       = $db_conf['username'];
+            $pdo_config->password       = $db_conf['password'];
+            $pdo_config->dbname         = $db_conf['dbname'];
+            $this->_db_conf             = $pdo_config;
+            $this->_pdo[$resource_name] = new PDOManager($pdo_config);
+        }
+        return $this->_pdo[$resource_name];
+    }
     /**
      * 启用mysql事务
      *
      * @param  string    $work_name=null
      * @return boolean
      */
-    protected function beginTransaction($work_name = 'default') {
-        $this->_mysql->beginTransaction();
+    protected function beginTransaction(string $resource_name) {
+        $pdo = $this->_connectPdo($resource_name);
+        $pdo->beginTransaction();
         return true;
     }
     /**
@@ -291,8 +302,9 @@ abstract class ControllMysql {
      * @param  string    $work_name=null
      * @return boolean
      */
-    protected function commit($work_name = 'default') {
-        $this->_mysql->commit();
+    protected function commit(string $resource_name) {
+        $pdo = $this->_connectPdo($resource_name);
+        $pdo->commit();
         return true;
     }
     /**
@@ -301,17 +313,11 @@ abstract class ControllMysql {
      * @param  string    $work_name=null
      * @return boolean
      */
-    protected function rollback($work_name = 'default') {
-        $this->_mysql->rollback();
+    protected function rollback(string $resource_name) {
+        $pdo = $this->_connectPdo($resource_name);
+        $pdo->rollback();
         return true;
     }
-    /**
-     * 停止事务
-     *
-     * @param  string    $work_name=null
-     * @return boolean
-     */
-    protected function stopTransaction($work_name = 'default') {}
     /**
      * 构造条件语句
      * @param  string  $field

@@ -4,7 +4,8 @@
 * 按 Module 进行资源分离，以便对业务进行微服务化隔离或后期的服务便捷迁移；
 * 提供简单好用的单元测试框架；
 * 提供便捷的接口参数合法性验证服务；
-* 提供简单好用工具类，如 Mysql 、Curl 等资源的封装，Xhprof 性能优化工具等；
+* 提供简单好用工具类，如 Mysql 、Curl 等资源的封装、Xhprof 性能优化工具等；
+* 根据代码运行的环境自动加载相应的配置文件，方便的切换仿真、生产环境；
 * 提供PSR-3规范的日志类，额外提供 log buffer 功能（性能提升） 和 全局日志标记码（一个进程一个标记码，方便定位问题）的功能；
 * 所有开发基于 PHP7 环境，未做低版本运行验证和兼容；
 
@@ -107,6 +108,30 @@ View 文件路径：MODULE_ROOT\Views\Demo\A\index.phtml
 #### 如何进行自动化测试（单元测试）
 1. 在各自 Module 下的 Tests 文件夹内创建单元测试文件，需要继承框架 Framework\Libraries\TestSuite 类；
 1. 命令行下执行 php public/run_test.php 即可完成全部单元测试文件的执行。也可指定要执行的单元测试文件或 Module。如： php public/run_test.php Framework TestPDOManager.php
+
+#### 如何进行仿真环境配置文件加载重定向
+1. 在 config 下创建 {env_name} 文件夹, {env_name} 名字任意，'pro' 为保留的关键字，视为生产环境标志。文件夹内的配置文件命名同正式的配置文件名即可; 
+1. ConfigTool 加载配置文件时，会依次判断静态变量 $_env 、 $_COOKIE['VISIT_SERVER_ENV'] 和 $_SERVER['VISIT_SERVER_ENV']，如有设置环境名，则启用相应环境的配置文件夹下的同名配置文件。
+1. \Framework\Libraries\Tools::setEnv(string $env) 可以设置环境名，此时会给 静态变量 $_env 和 setcookie()。  
+1. 样例参考 Sso 下的 config\dev\database.php 和 config\database.php ，分别会在仿真环境和生产环境读取。生产环境下，不会重定向到非生产环境的配置文件，Tools::getEnv() 强制返回生产环境标志,以防止cookie伪造。
+
+#### 如何使用接口认证
+ * 通过配置文件设置认证方式，安全认证字段主要包括(可以参考Sso\config\api_auth.php)：
+ 	* app_secret参与的签名验证；需要开启参数use_sign = true 和设置 app_secret 值
+    * 白名单验证，需要设置 white_ips , 值的格式为: 10.83,10.222.69.0/27,127.0.0.1,10.210.10,10
+    * 请求时间有效性验证，在app_secret参与验证的基础上增加设置 valid_time值大于0，则会进行时间验证,该值的单位时间为10s
+ 
+ * 签名相关接收的参数为：
+    * app_key  接口调用方id
+    * app_sign  接口调用方加密后的签名
+    * app_time  如果需要时间有效性验证，则会覆盖占用该参数，接口参数定义不要使用这个参数
+ 
+ * app_secret 及 时间验证的签名规则：
+    1. 参数数组增加签证密钥，如：$params['app_secret']=$app_secret，如果需要验证时间，则需增加 $params['app_time']= intval(time() / 10);
+    2. 把参数数组构建为无下标的新数组,如： $tmp = array('param_a=1','param_b=stringxxx','app_secret=xxx')
+    3. 对新数组进行按字母生序排序,如： sort($tmp);
+    4. 使用字符"&"合并排序后的数组生成字符串,如： $params_str = implode('&',$tmp);
+    5. 使用md5获取哈希值，取前6位，至此获得参数的签名字符串,如： $sign = substr(md5($params_str), 0, 6);
 
 #### 如果进行性能优化
 1. 在想进行代码优化的开始位置执行以下代码：

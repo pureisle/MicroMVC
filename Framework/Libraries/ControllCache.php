@@ -15,6 +15,7 @@ abstract class ControllCache extends KeyBuilder {
     const CACHE_TYPE_MC      = 'mc';
     private $_config_name    = '';
     private $_module         = '';
+    private $_last_instance  = null;
     private static $INSTANCE = array();
     public $key_sets         = array(
         'demo' => array('rule' => 'Framework\ControllCache->demo_id:{id}:{name}', 'expire' => 2) //这是个样例
@@ -31,10 +32,23 @@ abstract class ControllCache extends KeyBuilder {
         }
         $this->_module = $module;
     }
+    /**
+     * 魔术方法
+     * @param  string $fun_name
+     * @param  array  $params
+     * @return mix
+     */
+    public function __call($fun_name, $params) {
+        if (empty($this->_last_instance)) {
+            return false;
+        }
+        return $this->_last_instance->$fun_name(...$params);
+    }
     public function getInstance(string $config_name, string $type = self::CACHE_TYPE_REDIS, bool $re_contect = false) {
         $cache_key = $config_name . $type;
         if ( ! $re_contect && isset(self::$INSTANCE[$cache_key])) {
-            return self::$INSTANCE[$cache_key];
+            $this->_last_instance = self::$INSTANCE[$cache_key];
+            return $this;
         }
         switch ($type) {
             case self::CACHE_TYPE_REDIS:
@@ -46,7 +60,8 @@ abstract class ControllCache extends KeyBuilder {
             default:
                 return false;
         }
-        return self::$INSTANCE[$cache_key];
+        $this->_last_instance = self::$INSTANCE[$cache_key];
+        return $this;
     }
 }
 

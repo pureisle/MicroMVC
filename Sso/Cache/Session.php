@@ -18,17 +18,17 @@ class Session extends ControllCache {
     public function get($id) {
         $key   = $this->buildKey(self::SESSION_KEY_INDEX, array('id' => $id));
         $redis = $this->getInstance(self::READ_CONFIG_NAME);
-        $tmp   = $redis->get($key);
+        $tmp   = parent::get($key);
         return $tmp;
     }
     public function set($id, $value) {
         $key   = $this->buildKey(self::SESSION_KEY_INDEX, array('id' => $id));
         $redis = $this->getInstance(self::WRITE_CONFIG_NAME);
-        return $redis->set($key, $value, $this->key_sets[self::SESSION_KEY_INDEX]['expire']);
+        return parent::set($key, $value, $this->key_sets[self::SESSION_KEY_INDEX]['expire']);
     }
     public function remove($id) {
         $key   = $this->buildKey(self::SESSION_KEY_INDEX, array('id' => $id));
         $redis = $this->getInstance(self::WRITE_CONFIG_NAME);
-        return $redis->delete($key);
+        return parent::delete($key);
     }
 }

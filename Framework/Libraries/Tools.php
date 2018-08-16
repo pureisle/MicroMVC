@@ -6,6 +6,26 @@
 namespace Framework\Libraries;
 class Tools {
     /**
+     * base64 url encode
+     * @param    array $data
+     * @return
+     */
+    public static function base64UrlEncode(array $data) {
+        $data = http_build_query($data);
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+    /**
+     * base64 url decode
+     * @param    string $data
+     * @return
+     */
+    public static function base64UrlDecode(string $data) {
+        $tmp = base64_decode(str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT));
+        $ret = array();
+        parse_str($tmp, $ret);
+        return $ret;
+    }
+    /**
      * 设置代码运行环境
      */
     const ENV_INDEX_NAME = 'VISIT_SERVER_ENV';

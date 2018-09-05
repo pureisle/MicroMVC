@@ -108,7 +108,13 @@ class Dispatcher {
         $controller = $request->getController();
         $action     = $request->getAction();
         $class_name = $module . '\\' . $this->_config['path']['controller'] . '\\' . $controller;
-        $class      = new $class_name($request);
+        //判断非法controller重定向到404
+        $file_path = \Framework\Models\AutoLoad::getFilePath($class_name);
+        if (file_exists($file_path) === false) {
+            http_response_code(404);
+            return false;
+        }
+        $class = new $class_name($request);
         if ($class instanceof Controller === false) {
             throw new DispatcherException(DispatcherException::ERROR_OBJECT_TYPE);
         }

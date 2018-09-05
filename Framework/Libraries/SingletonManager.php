@@ -29,6 +29,19 @@ class SingletonManager {
         return $this->_singletons[$key] = $ret;
     }
     /**
+     * 判断一个classname类型的实例是否存在，如果实例存在，直接获取，不存在则返回false
+     * @param  [type]  $class_name [description]
+     * @return boolean             [description]
+     */
+    public function hasInstance($class_name) {
+        $args = func_get_args();
+        $key = $this -> _buildKey($class_name, $args);
+        if(isset($this -> _singletons[$key])) {
+            return $this -> _singletons[$key];
+        }
+        return false;
+    }
+    /**
      * 获取一个classname类型的实例,并在第一次获取时调用$init_function($instance)
      * 如果init_function失败，则该函数返回失败
      */

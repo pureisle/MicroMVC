@@ -56,6 +56,17 @@ class Tools {
         }
     }
     /**
+     * 检查函数是否被禁用
+     * @return
+     */
+    public static function execEnabled(string $function_name) {
+        if (empty($function_name)) {
+            return true;
+        }
+        $disabled = explode(',', ini_get('disable_functions'));
+        return ! in_array($function_name, $disabled);
+    }
+    /**
      * 是否为cli方式运行
      * @return boolean
      */
@@ -183,7 +194,7 @@ class Tools {
      */
     public static function getHostName() {
         static $hostname = null;
-        if (is_null($hostname)) {
+        if (is_null($hostname) && self::execEnabled('popen')) {
             $tmpstr   = '';
             $fp       = popen("hostname -s", 'r');
             $tmpstr   = trim(fread($fp, 1024));

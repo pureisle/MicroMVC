@@ -8,7 +8,10 @@ namespace Sso\Models;
 use Framework\Libraries\SingletonManager;
 
 class Session {
-    private $_expire = 0;
+    private $_expire       = 0;
+    const MYSQL_STORE_TYPE = 0;
+    const REDIS_STORE_TYPE = 1;
+    private $_store_type   = self::MYSQL_STORE_TYPE;
     /**
      * session构造函数
      * @param int|integer $expire session 持续时间
@@ -31,41 +34,47 @@ class Session {
     }
 
     public function read($session_id) {
-        $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
-        return $cache->get($session_id);
-
-        // $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
-        // $ret   = $s_obj->getById($session_id);
-        // if ( ! empty($ret['data'])) {
-        //     return $ret['data'];
-        // }
-        // return '';
+        if (self::REDIS_STORE_TYPE == $this->_store_type) {
+            $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
+            return $cache->get($session_id);
+        } else {
+            $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
+            $ret   = $s_obj->getById($session_id);
+            if ( ! empty($ret['data'])) {
+                return $ret['data'];
+            }
+            return '';
+        }
     }
 
     public function write($session_id, $data) {
         if (empty($data)) {
             return false;
         }
-        $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
-        return $cache->set($session_id, $data);
-
-        // $s_obj  = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
-        // $expire = date('Y-m-d H:i:s', time() + $this->_expire);
-        // return $s_obj->addSession($session_id, $data, $expire) === false ? false : true;
+        if (self::REDIS_STORE_TYPE == $this->_store_type) {
+            $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
+            return $cache->set($session_id, $data);
+        } else {
+            $s_obj  = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
+            $expire = date('Y-m-d H:i:s', time() + $this->_expire);
+            return $s_obj->addSession($session_id, $data, $expire) === false ? false : true;
+        }
     }
 
     public function destroy($session_id) {
-        $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
-        $ret   = $cache->remove($session_id);
-
-        // $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
-        // $tmp   = $s_obj->removeById($id);
+        if (self::REDIS_STORE_TYPE == $this->_store_type) {
+            $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
+            $ret   = $cache->remove($session_id);
+        } else {
+            $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
+            $tmp   = $s_obj->removeById($id);
+        }
         return true;
     }
 
     public function gc($max_life_time) {
-        // $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
-        // $tmp   = $s_obj->removeExpire();
+        $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
+        $tmp   = $s_obj->removeExpire();
         return true;
     }
 }

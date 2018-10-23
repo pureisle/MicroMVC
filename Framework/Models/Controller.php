@@ -44,6 +44,16 @@ abstract class Controller {
         return $this->_view;
     }
     /**
+     * 获取Json参数，并进行参数校验
+     * @return array
+     */
+    public function getJsonParams() {
+        $data_json  = file_get_contents('php://input');
+        $params     = json_decode($data_json, true);
+        $ret_params = $this->_checkParams($params);
+        return $ret_params;
+    }
+    /**
      * 获取post参数，并进行参数校验
      * @return array
      */
@@ -77,7 +87,7 @@ abstract class Controller {
             list($host, $port) = explode(':', $_SERVER['HTTP_HOST']);
         }
         $value = Tools::uniqid(6);
-        $ret = setcookie(self::CSRF_VAR_NAME, $value, time() + self::CSRF_TOKEN_EXPIRE, '/', $host, false, true);
+        $ret   = setcookie(self::CSRF_VAR_NAME, $value, time() + self::CSRF_TOKEN_EXPIRE, '/', $host, false, true);
         if ( ! $ret) {
             throw new ControllerException(ControllerException::ERROR_CSRF_AUTH_CHECK, 'cookie set error');
         }

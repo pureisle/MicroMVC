@@ -28,8 +28,6 @@ class Bootstrap extends \Framework\Models\Bootstrap {
     }
     /**
      * 注册controller异常处理函数
-     * @param  Dispatcher $dispatcher
-     * @return bool
      */
     public function _initControllerExceptionHandler(Dispatcher $dispatcher) {
         $dispatcher->registerExceptionHandle('\Framework\Models\ControllerException', function ($exception) {

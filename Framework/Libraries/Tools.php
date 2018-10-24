@@ -34,7 +34,7 @@ class Tools {
     private static $_env = null;
     public static function getEnv() {
         //生产环境禁止变更设置
-        if (self::ENV_PRO == $_SERVER[self::ENV_INDEX_NAME]) {
+        if (isset($_SERVER[self::ENV_INDEX_NAME]) && self::ENV_PRO == $_SERVER[self::ENV_INDEX_NAME]) {
             return self::ENV_PRO;
         }
         if (isset(self::$_env)) {

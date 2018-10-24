@@ -59,7 +59,7 @@ class Tools {
      * 检查函数是否被禁用
      * @return
      */
-    public static function execEnabled(string $function_name) {
+    public static function iniFuncEnabled(string $function_name) {
         if (empty($function_name)) {
             return true;
         }
@@ -194,7 +194,7 @@ class Tools {
      */
     public static function getHostName() {
         static $hostname = null;
-        if (is_null($hostname) && self::execEnabled('popen')) {
+        if (is_null($hostname) && self::iniFuncEnabled('popen')) {
             $tmpstr   = '';
             $fp       = popen("hostname -s", 'r');
             $tmpstr   = trim(fread($fp, 1024));

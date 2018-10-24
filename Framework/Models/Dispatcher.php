@@ -12,14 +12,15 @@ use Framework\Models\Request;
 use Framework\Models\Response;
 
 class Dispatcher {
-    const ACTION_SUFFIX  = 'Action';
-    private $_plugin_set = array();
-    private $_request    = null;
-    private $_response   = null;
-    private $_router     = null;
-    private $_view       = null;
-    private $_app        = null;
-    private $_config     = null;
+    const ACTION_SUFFIX     = 'Action';
+    private $_plugin_set    = array();
+    private $_exception_set = array();
+    private $_request       = null;
+    private $_response      = null;
+    private $_router        = null;
+    private $_view          = null;
+    private $_app           = null;
+    private $_config        = null;
     public function __construct($config) {
         $this->_config = $config;
     }
@@ -38,6 +39,26 @@ class Dispatcher {
      */
     public function getPlugins() {
         return $this->_plugin_set;
+    }
+    /**
+     * 注册异常处理函数
+     * @param    string   $exception_class
+     * @param    function $deal_function     这里必须是全局函数或者匿名函数
+     * @return
+     */
+    public function registerExceptionHandle($exception_class, $deal_function) {
+        if (empty($exception_class) || ! is_callable($deal_function, false, $callable_name)) {
+            return false;
+        }
+        $this->_exception_set[] = array('class' => $exception_class, 'func' => $deal_function, 'callable_name' => $callable_name);
+        return true;
+    }
+    /**
+     * 获取注册的异常处理句柄
+     * @return array
+     */
+    public function getExceptionHandles() {
+        return $this->_exception_set;
     }
     /**
      * 设置请求对象

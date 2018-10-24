@@ -222,9 +222,21 @@ class Application {
             $exception->getFile(),
             $exception->getLine()
         );
-        // echo $msg;
         Log::exception($msg);
-        throw $exception;
+        //异常处理管理
+        $ret     = true;
+        $is_deal = false;
+        $handles = $this->_dispatcher->getExceptionHandles();
+        foreach ($handles as $key => $deal) {
+            if ($exception instanceof $deal['class']) {
+                $is_deal = true;
+                $ret     = $ret && $deal['func']($exception); //任何一个返回false就抛出异常
+            }
+        }
+        //没人处理或者处理了有错就抛出异常
+        if ( ! $is_deal || ! $ret) {
+            throw $exception;
+        }
     }
     /**
      * 注册自动加载类

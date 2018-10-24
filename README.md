@@ -4,6 +4,7 @@
 * 按 Module 进行资源分离，以便对业务进行微服务化隔离或后期的服务便捷迁移；
 * 提供简单好用的单元测试框架；
 * 提供便捷的接口参数合法性验证服务；
+* 提供便捷的异常处理服务；
 * 提供简单好用工具类，如 Mysql 、Curl 等资源的封装、Xhprof 性能优化工具等；
 * 根据代码运行的环境自动加载相应的配置文件，方便的切换仿真、生产环境；
 * 提供PSR-3规范的日志类，额外提供 log buffer 功能（性能提升） 和 全局日志标记码（一个进程一个标记码，方便定位问题）的功能；
@@ -140,3 +141,16 @@ $lc = new LocalCurl();
 $lc->setAction('test', 'http://127.0.0.1/xhprof/xhprof/run');
 ```
 1. 随后在进程结束后会给出查看程序执行细节profile的链接，点击查看即可。
+
+#### 如果使用框架提供的异常处理服务
+1. 参考Sso\Bootstrap.php 初始化函数：
+``` 
+ public function _initControllerExceptionHandler(Dispatcher $dispatcher) {
+        $dispatcher->registerExceptionHandle('\Framework\Models\ControllerException', function ($exception) {
+            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($exception->getMessage()));
+            return true;
+        });
+}
+```
+1. 告诉框架自己想要处理的异常 "\Framework\Models\ControllerException" 以及处理该异常的匿名函数即可。
+1. 这里有一点需要注意，匿名函数可以有返回值告诉框架，这个异常是否处理成功，如果返回 false ，则框架认为未处理成功，会继续抛出这个异常。

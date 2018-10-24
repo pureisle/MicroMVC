@@ -48,8 +48,11 @@ abstract class Controller {
      * @return array
      */
     public function getJsonParams() {
-        $data_json  = file_get_contents('php://input');
-        $params     = json_decode($data_json, true);
+        $data_json = file_get_contents('php://input');
+        $params    = json_decode($data_json, true);
+        if ( ! is_array($params)) {
+            $params = array();
+        }
         $ret_params = $this->_checkParams($params);
         return $ret_params;
     }

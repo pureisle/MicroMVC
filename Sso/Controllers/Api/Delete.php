@@ -15,13 +15,8 @@ class Delete extends Controller {
     );
     public function indexAction() {
         $this->useAuth('api_auth');
-        try {
-            $params = $this->getPostParams();
-        } catch (\Exception $e) {
-            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
-            return false;
-        }
-        $user = new User();
+        $params = $this->getPostParams();
+        $user   = new User();
         try {
             $ret = $user->removeByUid($params['uid']);
         } catch (\Exception $e) {

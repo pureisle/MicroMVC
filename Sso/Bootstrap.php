@@ -5,9 +5,9 @@
  * 调用的次序, 和申明的次序相同
  */
 namespace Sso;
-
 use Framework\Libraries\SingletonManager;
 use Framework\Models\Dispatcher;
+use Sso\Models\ApiDisplay;
 
 class Bootstrap extends \Framework\Models\Bootstrap {
     private static $_is_set_session_handler = false;
@@ -25,5 +25,16 @@ class Bootstrap extends \Framework\Models\Bootstrap {
             register_shutdown_function('session_write_close');
             self::$_is_set_session_handler = true;
         }
+    }
+    /**
+     * 注册controller异常处理函数
+     * @param  Dispatcher $dispatcher
+     * @return bool
+     */
+    public function _initControllerExceptionHandler(Dispatcher $dispatcher) {
+        $dispatcher->registerExceptionHandle('\Framework\Models\ControllerException', function ($exception) {
+            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($exception->getMessage()));
+            return true;
+        });
     }
 }

@@ -18,15 +18,10 @@ class Query extends Controller {
     );
     public function indexAction() {
         $this->useAuth('api_auth');
-        try {
-            $params = $this->getPostParams();
-        } catch (\Exception $e) {
-            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
-            return false;
-        }
-        $user = new User();
-        $info = $user->getInfo($params['uid']);
-        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('name' => $info['name'], 'uid' => $info['uid'], 'extend' => $info['extend'], 'tel' => $info['tel'] , 'email' => $info['email'], 'status' => $info['status']));
+        $params = $this->getPostParams();
+        $user   = new User();
+        $info   = $user->getInfo($params['uid']);
+        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('name' => $info['name'], 'uid' => $info['uid'], 'extend' => $info['extend'], 'tel' => $info['tel'], 'email' => $info['email'], 'status' => $info['status']));
         return false;
     }
     /**
@@ -37,15 +32,10 @@ class Query extends Controller {
     );
     public function nameAction() {
         $this->useAuth('api_auth');
-        try {
-            $params = $this->getPostParams();
-        } catch (\Exception $e) {
-            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
-            return false;
-        }
-        $user = new User();
-        $info = $user->getInfoByName($params['name']);
-        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('name' => $info['name'], 'uid' => $info['uid'], 'extend' => $info['extend'], 'tel' => $info['tel'] , 'email' => $info['email'], 'status' => $info['status']));
+        $params = $this->getPostParams();
+        $user   = new User();
+        $info   = $user->getInfoByName($params['name']);
+        ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('name' => $info['name'], 'uid' => $info['uid'], 'extend' => $info['extend'], 'tel' => $info['tel'], 'email' => $info['email'], 'status' => $info['status']));
         return false;
     }
 
@@ -54,19 +44,14 @@ class Query extends Controller {
      */
     public static $LIST_PARAM_RULES = array(
         'count' => '',
-        'page'  => '',
+        'page'  => ''
     );
     public function listAction() {
         $this->useAuth('api_auth');
-        try {
-            $params = $this->getPostParams();
-        } catch (\Exception $e) {
-            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
-            return false;
-        }
-        $user = new User();
-        $data_info     = $user->getUserList($params['count'], $params['page']);
-        if (!empty($data_info)) {
+        $params    = $this->getPostParams();
+        $user      = new User();
+        $data_info = $user->getUserList($params['count'], $params['page']);
+        if ( ! empty($data_info)) {
             foreach ($data_info as &$item) {
                 unset($item['passwd'], $item['p_v'], $item['salt']);
             }
@@ -81,20 +66,14 @@ class Query extends Controller {
      * 批量获取用户信息
      */
     public static $MUTILGETUSER_PARAM_RULES = array(
-        'uids' => ' ',
+        'uids' => ' '
     );
     public function mutilGetUserAction() {
         $this->useAuth('api_auth');
-        try {
-            $params = $this->getPostParams();
-        } catch (\Exception $e) {
-            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
-            return false;
-        }
-        $user = new User();
-        $data = $user->multiGetUser($params['uids']);
+        $params = $this->getPostParams();
+        $user   = new User();
+        $data   = $user->multiGetUser($params['uids']);
         ApiDisplay::display(ApiDisplay::SUCCESS_CODE, $data);
         return false;
     }
-
 }

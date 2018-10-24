@@ -17,12 +17,7 @@ class Jwtlogin extends Controller {
         'passwd' => 'requirement&not_empty'
     );
     public function indexAction() {
-        try {
-            $params = $this->getGetParams();
-        } catch (\Exception $e) {
-            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
-            return false;
-        }
+        $params = $this->getGetParams();
         extract($params);
         //记录登陆日志
         Log::LoginUser($name, 'api_jwt');

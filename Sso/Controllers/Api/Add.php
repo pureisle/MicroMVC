@@ -22,14 +22,9 @@ class Add extends Controller {
     );
     public function indexAction() {
         $this->useAuth('api_auth');
-        try {
-            $params = $this->getPostParams();
-        } catch (\Exception $e) {
-            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
-            return false;
-        }
+        $params = $this->getPostParams();
         extract($params);
-        $extend = json_decode($extend,true);
+        $extend = json_decode($extend, true);
         if (empty($extend)) {
             $extend = array();
         }

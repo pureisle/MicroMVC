@@ -23,12 +23,7 @@ class Login extends Controller {
             ApiDisplay::display(ApiDisplay::AUTH_FAILED, array($e->getMessage()));
             return false;
         }
-        try {
-            $params = $this->getPostParams();
-        } catch (\Exception $e) {
-            ApiDisplay::display(ApiDisplay::PARAM_ERROR_CODE, array($e->getMessage()));
-            return false;
-        }
+        $params = $this->getPostParams();
         extract($params);
         //记录登陆日志
         Log::LoginUser($name, 'api');
@@ -40,7 +35,7 @@ class Login extends Controller {
         }
         $user_info = $user_obj->getInfoByName($name);
         //判断状态，如果下线了，则不允许登陆
-        if($user_info ['status'] != User::ONLINE_STATUS){
+        if (User::ONLINE_STATUS != $user_info['status']) {
             ApiDisplay::display(ApiDisplay::FAIL_CODE);
             return false;
         }
@@ -48,16 +43,16 @@ class Login extends Controller {
         $_SESSION['uid']    = $user_info['uid'];
         $_SESSION['name']   = $user_info['name'];
         $_SESSION['salt']   = $user_info['salt'];
-        $_SESSION['email']   = $user_info['email'];
-        $_SESSION['tel']   = $user_info['tel'];
+        $_SESSION['email']  = $user_info['email'];
+        $_SESSION['tel']    = $user_info['tel'];
         $_SESSION['extend'] = $user_info['extend'];
         ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('sid' => session_id(), 'sname' => session_name(), 'user_info' => $_SESSION));
         return false;
     }
     /**
-    * 登陆用户session信息
-    */
-    public function getLogininfoAction(){
+     * 登陆用户session信息
+     */
+    public function getLogininfoAction() {
         //接口auth认证
         try {
             $this->useAuth('api_auth');
@@ -66,8 +61,8 @@ class Login extends Controller {
             return false;
         }
         session_start();
-        if(empty($_SESSION)){
-            $_SESSION ['uid'] = '';
+        if (empty($_SESSION)) {
+            $_SESSION['uid'] = '';
         }
         ApiDisplay::display(ApiDisplay::SUCCESS_CODE, array('user_info' => $_SESSION));
         return false;

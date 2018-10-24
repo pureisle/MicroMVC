@@ -2,7 +2,7 @@
 /**
  * 每个项目必须有项目名命名的配置文件
  */
-define('LOG_ROOT_PATH', '/data1/logs');
+define('LOG_ROOT_PATH', '/tmp');
 return array(
     /**
      * 需要用命名空间的文件夹按驼峰规则命名

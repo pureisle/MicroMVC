@@ -193,10 +193,10 @@ abstract class ControllMysql {
      * @param  array|string $group_by=null;
      * @return array
      */
-    protected function getList(int $count = 10, int $page = 0, array $fields = array(), $where_condition = null, $order_by = null, $group_by = null) {
+    protected function getList(int $count = 10, int $page = 0, $fields = array(), $where_condition = null, $order_by = null, $group_by = null) {
         if (empty($fields)) {
             $fields = '*';
-        } else {
+        } else if (is_array($fields)) {
             $fields = '`' . implode('`,`', $fields) . '`';
         }
         if ($count > 0) {
@@ -251,11 +251,12 @@ abstract class ControllMysql {
     /**
      * 根据条件统计条目数
      *
-     * @param  string|string $where_condition
+     * @param  string|array $where_condition
+     * @param  string|array $group_by
      * @return int
      */
-    protected function count($where_condition = null) {
-        $sql             = 'SELECT COUNT(*) as count FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition);
+    protected function count($where_condition = null, $group_by = null) {
+        $sql             = 'SELECT COUNT(*) as count FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition) . $this->_buildGroupBy($group_by);
         $this->_last_sql = $sql;
         $this->_is_query = true;
         return $this;

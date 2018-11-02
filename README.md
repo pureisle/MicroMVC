@@ -21,7 +21,7 @@
 |- public  框架公开访问位置
 	|- index.php 	入口文件
 	|- cli.php 	命令行入口
-	|- run_test.php 	单元测试入口
+    |- run_test.php 	单元测试入口
     |- run_daemon.php   后台任务执行入口
 |- Sso	样例应用,一个简单的Sso用户单点登录系统
 	|- Cache	缓存管理文件

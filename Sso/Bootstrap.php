@@ -35,4 +35,13 @@ class Bootstrap extends \Framework\Models\Bootstrap {
             return true;
         });
     }
+    /**
+     * 样例路由插件
+     * @param    Dispatcher $dispatcher
+     * @return
+     */
+    public function _initPlugin(Dispatcher $dispatcher) {
+        $auth_plugin_obj = new Plugins\Auth();
+        $dispatcher->registerPlugin($auth_plugin_obj);
+    }
 }

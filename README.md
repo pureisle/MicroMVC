@@ -22,10 +22,12 @@
 	|- index.php 	入口文件
 	|- cli.php 	命令行入口
 	|- run_test.php 	单元测试入口
+    |- run_daemon.php   后台任务执行入口
 |- Sso	样例应用,一个简单的Sso用户单点登录系统
 	|- Cache	缓存管理文件
 	|- config	应用配置文件（mysql、redis等资源配置；api接口配置等;不能变动）
 	|- Controllers	控制器（不能变动）
+    |- Daemons  后台进程任务类（不能变动）
 	|- Models	业务逻辑类 
 	|- Data 	数据访问类
 	|- Entities 业务实体类

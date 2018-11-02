@@ -226,7 +226,7 @@ class Application {
         //异常处理管理
         $ret     = true;
         $is_deal = false;
-        $handles = $this->_dispatcher->getExceptionHandles();
+        $handles = $this->getDispatcher()->getExceptionHandles();
         foreach ($handles as $key => $deal) {
             if ($exception instanceof $deal['class']) {
                 $is_deal = true;

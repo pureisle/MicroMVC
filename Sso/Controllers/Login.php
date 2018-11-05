@@ -22,7 +22,7 @@ class Login extends Controller {
             if (empty($url)) {
                 $url = "http://t.cn";
             }
-            $this->getView()->assign(array("url" => $url));
+            $this->assign(array("url" => $url));
             return true;
         }
         //记录登陆日志

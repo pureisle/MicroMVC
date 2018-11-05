@@ -23,10 +23,27 @@ abstract class Controller {
     /**
      * 设置模板渲染变量
      * @param    array $var_arr
+     * @param    bool  $is_html_encode 是否进行html实体转义,可对输出内容做有限的xss防护
      * @return
      */
-    public function assign($var_arr) {
+    public function assign(array $var_arr, bool $is_html_encode = true) {
+        if ($is_html_encode) {
+            $this->htmlEncode($var_arr);
+        }
         return $this->_view->assign($var_arr);
+    }
+    private function htmlEncode(&$var_arr) {
+        if (empty($var_arr)) {
+            return;
+        }
+        foreach ($var_arr as $key => $value) {
+            if (is_array($value)) {
+                $this->htmlEncode($value);
+                $var_arr[$key] = $value;
+            } else {
+                $var_arr[$key] = htmlspecialchars($value);
+            }
+        }
     }
     /**
      * 设置视图类

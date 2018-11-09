@@ -114,6 +114,7 @@ class TestRandom extends TestSuite {
         $salt_len = 14;
         RunTime::start();
         $range = array_merge(range('a', 'z'), range('A', 'Z'), range('0', '9'));
+        $ret   = '';
         for ($i = 0; $i < self::LOOP_NUM; $i++) {
             for ($j = 0; $j < $salt_len; $j++) {
                 $index = mt_rand(0, strlen($pattern) - 1);

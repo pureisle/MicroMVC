@@ -10,10 +10,9 @@ use Framework\Libraries\TestSuite;
 
 class TestKeyBuilder extends TestSuite {
     public function beginTest() {
-        $kb = new KeyBuilder();
-        $key_sets_index='demo';
-        $param=array('id'=>123);
-        var_dump($kb->buildKey($key_sets_index, $param));
-
+        $kb             = new KeyBuilder();
+        $key_sets_index = 'demo';
+        $param          = array('id' => 123);
+        $kb->buildKey($key_sets_index, $param);
     }
 }

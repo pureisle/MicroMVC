@@ -110,10 +110,10 @@ class TestData extends ControllMysql {
     public function add(array $data, array $duplicate = null) {
         return parent::add($data, $duplicate)->exec(self::WRITE_DB_RESOURCE);
     }
-    public function multiAdd(array $data, array $duplicate = null) {
+    public function multiAdd(array $data, $duplicate = null) {
         return parent::multiAdd($data, $duplicate)->exec(self::WRITE_DB_RESOURCE);
     }
-    public function getList(int $count = 10, int $page = 0, array $fields = array(), $where_condition = null, $order_by = null, $group_by = null) {
+    public function getList(int $count = 10, int $page = 0, $fields = array(), $where_condition = null, $order_by = null, $group_by = null) {
         return parent::getList($count, $page, $fields, $where_condition, $order_by, $group_by)
             ->exec(self::READ_DB_RESOURCE);
     }

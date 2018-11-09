@@ -58,7 +58,7 @@ class Validator {
             $error_valid = '';
             if (isset($data[$key])) {
                 $ret       = $this->_parseRule($value, $data[$key], $error_rule, $error_valid);
-                $error_msg = sprintf(self::$KEY_WORD[$error_rule], $key, $error_valid) . ' but value is ' . $data[$key];
+                $error_msg = @sprintf(self::$KEY_WORD[$error_rule], $key, $error_valid) . ' but value is ' . $data[$key];
             } else if ($this->isDefault($value)) {
                 $tmp        = explode('default:', $value, 2);
                 $tmp        = explode('&', $tmp[1], 2);
@@ -87,7 +87,7 @@ class Validator {
                     $i++;
                 }
                 $tmp                = substr($rule_string, $begin, $i - $begin);
-                list($rule, $valid) = explode(':', $tmp, 2);
+                @list($rule, $valid) = explode(':', $tmp, 2);
                 $check_ret          = $this->_runRuleCheck($rule, $valid, $data);
                 if (false === $check_ret) {
                     $error_rule  = $rule;

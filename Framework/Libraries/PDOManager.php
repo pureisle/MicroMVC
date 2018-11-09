@@ -232,8 +232,8 @@ class PDOManager {
      */
     private function _getDBHandle() {
         $driver_options = array(
-            PDO::ATTR_TIMEOUT   => $this->_db_conf->time_out,
-            PDO::NULL_TO_STRING => true
+            PDO::ATTR_TIMEOUT => $this->_db_conf->time_out
+            //PDO::NULL_TO_STRING => true //这个参数有问题，不能用
         );
         if ($this->_reconnect || empty($this->_db_handle) || $this->_is_db_arrtibute_refresh) {
             $dsn                                          = $this->_db_conf->buildDSN();

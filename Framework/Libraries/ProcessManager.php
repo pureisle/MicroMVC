@@ -76,9 +76,8 @@ abstract class ProcessManager {
      * 设置本次一共需要多少进程要跑
      * @param int $max_num 最大正在执行子任务数
      */
-    public function setTotalProcesses($totalProcesses)
-    {
-       if (is_numeric($totalProcesses)) {
+    public function setTotalProcesses($totalProcesses) {
+        if (is_numeric($totalProcesses)) {
             $this->_total_processes = $totalProcesses;
         }
         return $this;
@@ -102,7 +101,6 @@ abstract class ProcessManager {
     public function getJobExecInfo() {
         return $this->_jobs_exec_info;
     }
-
 
     /**
      * 执行入口
@@ -180,7 +178,7 @@ abstract class ProcessManager {
         //合并信息
         $ret = array();
         foreach ($pid_list as $ppid) {
-            $ret[$ppid] = array();
+            $ret[$ppid] = array('%CPU' => 0, '%MEM' => 0, 'VSZ' => 0, 'RSS' => 0, 'SZ' => 0);
             $pid_array  = array($ppid);
             if ($is_contain_child) {
                 $pid_array = array_merge($pid_array, $children_pid_list[$ppid]);

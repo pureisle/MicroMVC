@@ -67,7 +67,7 @@ class UnitTest {
             include_once $path;
             return true;
         }
-        if ($handle = opendir($path)) {
+        if (is_dir($path) && $handle = opendir($path)) {
             while (false !== ($file = readdir($handle))) {
                 if ('.' == $file || '..' == $file) {
                     continue;

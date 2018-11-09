@@ -46,8 +46,8 @@ class UnitTest {
         if ($total_case_count == $passed_case_count) {
             $displayer->pass("[PASSED] run all test suite passed");
         } else {
-            $displayer->fail("[FAILED] passed " . $passed_suite_num / $total_suite_num . " suite");
-            $displayer->fail("[FAILED] passed " . $passed_case_count / $total_case_count . " case(s)");
+            $displayer->fail("[FAILED] passed " . $passed_suite_num . "/" . $total_suite_num . " suite");
+            $displayer->fail("[FAILED] passed " . $passed_case_count . "/" . $total_case_count . " case(s)");
             $displayer->normal("Failed Cases:");
             foreach ($fail_cases as $case) {
                 $displayer->fail($case);

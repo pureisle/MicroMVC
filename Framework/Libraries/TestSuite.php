@@ -115,7 +115,7 @@ class TestSuite {
      */
     protected function assertFloat($real, $ext_msg = null) {
         if ( ! is_float($real)) {
-            $msg = 'assertMatch Failed :Expect numeric which really is [' . $real . '], is not num.';
+            $msg = 'assertMatch Failed :Expect float which really is [' . $real . '], is not num.';
             if (null != $ext_msg) {
                 $msg .= "With Ext:" . $ext_msg;
             }

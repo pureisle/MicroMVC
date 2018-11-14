@@ -5,20 +5,38 @@
  */
 namespace Framework\Libraries;
 abstract class FiniteState {
-    protected $_fsm;
-    public function __construct(FiniteStateMachine $fsm) {
-        $this->_fsm = $fsm;
+    protected $_fsm      = null;
+    private $_next_state = null;
+    public function __construct(FiniteStateMachine $fsm, int $next_state = null) {
+        $this->_fsm        = $fsm;
+        $this->_next_state = $next_state;
     }
     /**
-     * 进入状态时调用
+     * 进入状态时调用，可覆盖
      */
-    abstract public function OnStateEnter();
+    public function onStateEnter() {}
     /**
-     * 每次动作调用
+     * 每次动作调用,必须实现的抽象方法
      */
-    abstract public function OnStateTick();
+    abstract public function onStateTick();
     /**
-     * 退出状态时调用
+     * 退出状态时调用，可覆盖
      */
-    abstract public function OnStateExit();
+    public function onStateExit() {}
+    /**
+     * 获取预设的下个状态值
+     * @return int
+     */
+    public function getNextState() {
+        return $this->_next_state;
+    }
+    public function trans(int $state) {
+        return $this->_fsm->trans($state);
+    }
+    /**
+     * 终止状态机执行
+     */
+    public function fsmStop() {
+        $this->_fsm->stop();
+    }
 }

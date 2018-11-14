@@ -1,6 +1,26 @@
 <?php
 /**
  * 有限状态机管理类
+ * 用法:
+ * 必须先注册所有状态,如:
+ *     $FiniteStateMachine_OBJ->register(STATE_A, new FiniteState($FiniteStateMachine_OBJ));
+ * 可以自行控制tick,适合每次tick后有额外业务逻辑的情况下使用:
+ *     //TO DO : 初始状态运行 onStateEnter 方法
+ *     while (true) {
+ *         $ret = $FiniteStateMachine_OBJ->tick();
+ *         //TO DO : 额外业务逻辑和退出条件
+ *
+ *     }
+ *     //TO DO : 退出状态机执行最后一个状态的 onStateExit 方法
+ *
+ * 也可以直接运行：
+ *     $FiniteStateMachine_OBJ->run();
+ * 状态机停止时机为停止方法调用后：
+ *     FiniteState->fsmStop()；
+ *
+ * 在运行状态机 run 方法情况下，如果 FiniteState 实例化时传入第二个状态值参数，
+ * 则在状态 FiniteState->tick() 返回结果为 true 时，自动进行状态转移。
+ *
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
 namespace Framework\Libraries;
@@ -8,6 +28,7 @@ class FiniteStateMachine {
     private $_current_state = null;
     private $_state_objs    = array();
     private $_state_set     = array();
+    private $_is_stop       = false;
     /**
      * 注册新的状态
      * @param    int   $state
@@ -19,16 +40,22 @@ class FiniteStateMachine {
         $this->_state_set[$state]  = true;
         return $this;
     }
+    public function getStateList() {
+        return $this->_state_objs;
+    }
     /**
      * 状态转移
      * @param    int $state
      * @return
      */
     public function trans(int $state) {
-        $this->_state_objs[$this->_current_state]->OnStateExit();
-        $this->_state_objs[$state]->OnStateEnter();
+        $this->_state_objs[$this->_current_state]->onStateExit();
+        $this->_state_objs[$state]->onStateEnter();
         $this->_current_state = $state;
         return $this;
+    }
+    public function stop() {
+        $this->_is_stop = true;
     }
     /**
      * 设置初始状态
@@ -43,7 +70,20 @@ class FiniteStateMachine {
      * @return
      */
     public function tick() {
-        $ret = $this->_state_objs[$this->_current_state]->OnStateTick();
+        $ret = $this->_state_objs[$this->_current_state]->onStateTick();
         return $ret;
+    }
+    /**
+     * 状态机执行入口
+     */
+    public function run() {
+        $this->_state_objs[$this->_current_state]->onStateEnter();
+        while (false === $this->_is_stop) {
+            $ret = $this->tick();
+            if ($ret && $this->_state_objs[$this->_current_state]->getNextState() !== null) {
+                $this->trans($this->_state_objs[$this->_current_state]->getNextState());
+            }
+        }
+        $this->_state_objs[$this->_current_state]->onStateExit();
     }
 }

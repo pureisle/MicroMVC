@@ -30,7 +30,6 @@ class UnitTest {
         $passed_case_count = 0;
         $total_case_count  = 0;
         foreach (get_declared_classes() as $class) {
-            // var_dump($class);
             if (is_subclass_of($class, "Framework\Libraries\TestSuite")) {
                 ++$total_suite_num;
                 $test_case = new $class();
@@ -44,10 +43,10 @@ class UnitTest {
             }
         }
         if ($total_case_count == $passed_case_count) {
-            $displayer->pass("[PASSED] run all test suite passed");
+            $displayer->pass("[RESULT] run all test suite passed");
         } else {
-            $displayer->fail("[FAILED] passed " . $passed_suite_num . "/" . $total_suite_num . " suite");
-            $displayer->fail("[FAILED] passed " . $passed_case_count . "/" . $total_case_count . " case(s)");
+            $displayer->fail("[RESULT] passed " . $passed_suite_num . "/" . $total_suite_num . " suite");
+            $displayer->fail("[RESULT] passed " . $passed_case_count . "/" . $total_case_count . " case(s)");
             $displayer->normal("Failed Cases:");
             foreach ($fail_cases as $case) {
                 $displayer->fail($case);

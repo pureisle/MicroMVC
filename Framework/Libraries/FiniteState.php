@@ -30,6 +30,11 @@ abstract class FiniteState {
     public function getNextState() {
         return $this->_next_state;
     }
+    /**
+     * 执行状态转移
+     * @param    int $state
+     * @return
+     */
     public function trans(int $state) {
         return $this->_fsm->trans($state);
     }

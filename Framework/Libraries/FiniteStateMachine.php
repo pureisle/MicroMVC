@@ -40,6 +40,10 @@ class FiniteStateMachine {
         $this->_state_set[$state]  = true;
         return $this;
     }
+    /**
+     * 获取已注册的状态对象列表
+     * @return array
+     */
     public function getStateList() {
         return $this->_state_objs;
     }
@@ -49,6 +53,9 @@ class FiniteStateMachine {
      * @return
      */
     public function trans(int $state) {
+        if ( ! isset($this->_state_objs[$state])) {
+            throw new FiniteStateMachineException(FiniteStateMachineException::STATE_OBJ_EMPTY);
+        }
         $this->_state_objs[$this->_current_state]->onStateExit();
         $this->_state_objs[$state]->onStateEnter();
         $this->_current_state = $state;
@@ -62,6 +69,9 @@ class FiniteStateMachine {
      * @param int $state
      */
     public function setInitState(int $state) {
+        if ( ! isset($this->_state_objs[$state])) {
+            throw new FiniteStateMachineException(FiniteStateMachineException::STATE_OBJ_EMPTY);
+        }
         $this->_current_state = $state;
         return $this;
     }
@@ -85,5 +95,19 @@ class FiniteStateMachine {
             }
         }
         $this->_state_objs[$this->_current_state]->onStateExit();
+    }
+}
+
+class FiniteStateMachineException extends Exception {
+    const STATE_OBJ_EMPTY = 1;
+
+    public $ERROR_SET = array(
+        self::STATE_OBJ_EMPTY => array(
+            'code'    => self::STATE_OBJ_EMPTY,
+            'message' => 'state index is empty'
+        )
+    );
+    public function __construct($code = 0) {
+        parent::__construct($code);
     }
 }

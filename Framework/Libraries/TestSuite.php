@@ -123,6 +123,21 @@ class TestSuite {
         }
     }
     /**
+     * 检查对象类型
+     * @param string $expect
+     * @param object $real
+     * @param string $ext_msg
+     */
+    protected function assertTypeOf($expect, $real, $ext_msg = null) {
+        if ($real instanceof $expect !== true) {
+            $msg = 'assertTypeOf Failed :Expect ' . $expect . ' which really is [' . get_class($real) . '].';
+            if (null != $ext_msg) {
+                $msg .= "With Ext:" . $ext_msg;
+            }
+            $this->_throwExcption($msg);
+        }
+    }
+    /**
      * 断言equal
      *
      * @param mix    $expect期望值

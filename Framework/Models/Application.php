@@ -165,6 +165,7 @@ class Application {
     private function _loadFramework() {
         $this->_iniConfig();
         $this->_iniException();
+        //include "GlobalFunctions.php"; //加载框架全局函数
         return $this;
     }
     /**

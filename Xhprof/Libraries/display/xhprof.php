@@ -1137,7 +1137,7 @@ function symbol_report($url_params,
     print("<br><h4><center>");
     print("Parent/Child $regr_impr report for <b>$rep_symbol</b>");
 
-    $callgraph_href = "$base_path/callgraph.php?"
+    $callgraph_href = "$base_path/callgraph?"
     . http_build_query(xhprof_array_set($url_params, 'func', $rep_symbol));
 
     print(" <a href='$callgraph_href'>[View Callgraph $diff_text]</a><br>");

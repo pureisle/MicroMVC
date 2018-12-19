@@ -141,6 +141,7 @@ View 文件路径：MODULE_ROOT\Views\Demo\A\index.phtml
 ``` 
 $lc = new LocalCurl();
 $lc->setAction('test', 'http://127.0.0.1/xhprof/xhprof/run');
+var_dump($lc->get('test')->body());
 ```
 1. 随后在进程结束后会给出查看程序执行细节profile的链接，点击查看即可。
 

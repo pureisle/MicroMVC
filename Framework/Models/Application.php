@@ -165,7 +165,7 @@ class Application {
     private function _loadFramework() {
         $this->_iniConfig();
         $this->_iniException();
-        //include "GlobalFunctions.php"; //加载框架全局函数
+        include "GlobalFunctions.php"; //加载框架全局函数
         return $this;
     }
     /**
@@ -185,6 +185,10 @@ class Application {
         set_exception_handler(array($this, '_exceptionHandler'));
     }
     public function _exceptionHandler($exception) {
+        // 安全退出的异常不报错直接退出
+        if ($exception instanceof ExitException) {
+            return;
+        }
         // these are our templates
         $traceline = "#%s %s(%s): %s(%s)";
         $msg       = "PHP Fatal error:  Uncaught exception '%s' with message '%s' in %s:%s\nStack trace:\n%s\n  thrown in %s on line %s";

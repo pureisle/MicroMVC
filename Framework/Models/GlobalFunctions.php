@@ -20,3 +20,11 @@ function single_instance($class_name) {
     array_shift($args);
     return \Framework\Libraries\SingletonManager::$SINGLETON_POOL->getInstance($class_name, ...$args);
 }
+/**
+ * 安全退出
+ * 需要使用php的exit()时，建议都使用该方法退出程序。
+ * 以防框架无法完成后续流程。如果使用者清楚自己的目的，依然可以继续使用系统exit()
+ */
+function safe_exit() {
+    throw new \Framework\Models\ExitException();
+}

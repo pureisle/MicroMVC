@@ -19,7 +19,13 @@ abstract class Controller {
     private $_request;
     public function __construct(Request $request) {
         $this->_request = $request;
+        $this->init();
     }
+    /**
+     * 给controller初始化留个口
+     * @return
+     */
+    public function init() {}
     /**
      * 设置模板渲染变量
      * @param    array $var_arr

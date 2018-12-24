@@ -4,8 +4,9 @@ use Framework\Libraries\TestSuite;
 use Sso\Cache\Session;
 
 class CacheSession extends TestSuite {
-    private $_id    = 'test';
-    private $_value = 'hahah';
+    const TEST_CLASS_NAME = \Sso\Cache\Session::class;
+    private $_id          = 'test';
+    private $_value       = 'hahah';
     public function testAdd() {
         $t     = new Session();
         $id    = 'test';

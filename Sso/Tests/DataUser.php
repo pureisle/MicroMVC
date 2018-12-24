@@ -4,8 +4,9 @@ use Framework\Libraries\TestSuite;
 use Sso\Data\User;
 
 class DataUser extends TestSuite {
-    private $_user      = null;
-    private $_user_data = array(
+    const TEST_CLASS_NAME = \Sso\Data\User::class;
+    private $_user        = null;
+    private $_user_data   = array(
         array(
             'name'   => 'name1',
             'email'  => '',
@@ -47,7 +48,7 @@ class DataUser extends TestSuite {
         // $user_list = $this->_user->getListInfo();
         // var_dump($ret, $user_list);
     }
-    public function testRemoveByUid(){
+    public function testRemoveByUid() {
         // $ret       = $this->_user->removeByUid('10');
         // var_dump($ret);
     }

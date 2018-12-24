@@ -709,9 +709,11 @@ class PHPFunctionParser {
                 "########################" . "\n";
         }
         if (is_string($token)) {
-            return "Error occurs!\n" .
-                "Error Infomation (Position): " . $token . "\n";
+            return "Error occurs! " . "Error Infomation (Position): " . $token . "\n";
         }
         return false;
     }
+}
+
+class RuntimeException extends \Exception {
 }

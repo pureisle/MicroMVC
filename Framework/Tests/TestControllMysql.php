@@ -11,6 +11,7 @@ use Framework\Libraries\ControllMysql;
 use Framework\Libraries\TestSuite;
 
 class TestControllMysql extends TestSuite {
+    const TEST_CLASS_NAME = \Framework\Libraries\ControllMysql::class;
     public function beginTest() {
         $this->_pdo = new TestData();
     }

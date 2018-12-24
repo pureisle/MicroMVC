@@ -9,7 +9,8 @@ use Framework\Libraries\TestSuite;
 use Framework\Libraries\Validator;
 
 class TestValidator extends TestSuite {
-    private $_validator = null;
+    const TEST_CLASS_NAME = \Framework\Libraries\Validator::class;
+    private $_validator   = null;
     public function beginTest() {
         $this->_validator = new Validator();
     }

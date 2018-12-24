@@ -5,11 +5,12 @@
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
 namespace Framework\Tests;
-use Framework\Libraries\TestSuite;
 use Framework\Libraries\Logger;
+use Framework\Libraries\TestSuite;
 
 class TestLogger extends TestSuite {
-    private $_logger = null;
+    const TEST_CLASS_NAME = \Framework\Libraries\Logger::class;
+    private $_logger      = null;
     public function beginTest() {
         $this->_logger = new Logger('log.framework', 'Framework');
         $msg           = 'hello {name}';

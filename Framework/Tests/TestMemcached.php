@@ -9,7 +9,8 @@ use Framework\Libraries\Memcached;
 use Framework\Libraries\TestSuite;
 
 class TestMemcached extends TestSuite {
-    private $_mc = null;
+    const TEST_CLASS_NAME = \Framework\Libraries\Memcached::class;
+    private $_mc          = null;
     public function beginTest() {
         $this->_mc  = new Memcached('mc', 'Sso');
         $this->_mc  = new Memcached('mc', 'Sso');

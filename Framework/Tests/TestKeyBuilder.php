@@ -9,6 +9,7 @@ use Framework\Libraries\KeyBuilder;
 use Framework\Libraries\TestSuite;
 
 class TestKeyBuilder extends TestSuite {
+    const TEST_CLASS_NAME = \Framework\Libraries\KeyBuilder::class;
     public function beginTest() {
         $kb             = new KeyBuilder();
         $key_sets_index = 'demo';

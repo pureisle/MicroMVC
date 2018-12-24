@@ -24,7 +24,8 @@ function fun($a, $b) {
     var_dump($a + $b);
 }
 class TestHookManager extends TestSuite {
-    private $_obj = null;
+    const TEST_CLASS_NAME = \Framework\Libraries\HookManager::class;
+    private $_obj         = null;
     public function beginTest() {
         $this->_obj = HookManager::$GLOBAL_HOOKS;
     }

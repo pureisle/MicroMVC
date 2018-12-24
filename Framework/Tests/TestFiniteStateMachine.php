@@ -10,11 +10,12 @@ use Framework\Libraries\FiniteStateMachine;
 use Framework\Libraries\TestSuite;
 
 class TestFiniteStateMachine extends TestSuite {
-    const STATE_A    = 1;
-    const STATE_B    = 2;
-    const STATE_C    = 3;
-    const TICK_COUNT = 5;
-    private $_fsm    = null;
+    const TEST_CLASS_NAME = \Framework\Libraries\FiniteStateMachine::class;
+    const STATE_A         = 1;
+    const STATE_B         = 2;
+    const STATE_C         = 3;
+    const TICK_COUNT      = 5;
+    private $_fsm         = null;
     public function beginTest() {
         $this->_fsm = new FiniteStateMachine();
     }

@@ -9,6 +9,7 @@ use Framework\Libraries\SingletonManager;
 use Framework\Libraries\TestSuite;
 
 class TestSingletonManager extends TestSuite {
+    const TEST_CLASS_NAME    = \Framework\Libraries\SingletonManager::class;
     public $test_var         = '';
     private $test_class_name = 'Framework\Tests\TestSingletonManager';
     public function testNewClass() {

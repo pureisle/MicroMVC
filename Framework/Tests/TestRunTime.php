@@ -9,9 +9,10 @@ use Framework\Libraries\RunTime;
 use Framework\Libraries\TestSuite;
 
 class TestRunTime extends TestSuite {
-    private $_run_time = null;
-    private $_key1     = 'test_key1';
-    private $_key2     = 'test_key2';
+    const TEST_CLASS_NAME = \Framework\Libraries\RunTime::class;
+    private $_run_time    = null;
+    private $_key1        = 'test_key1';
+    private $_key2        = 'test_key2';
     public function beginTest() {
         $this->_run_time = new RunTime();
     }

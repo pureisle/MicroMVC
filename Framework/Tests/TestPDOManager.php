@@ -11,6 +11,7 @@ use Framework\Libraries\PDOManager;
 use Framework\Libraries\TestSuite;
 
 class TestPDOManager extends TestSuite {
+    const TEST_CLASS_NAME     = \Framework\Libraries\PDOManager::class;
     private $_pdo             = null;
     private $_test_table_name = 'firehose_info';
     public function beginTest() {
@@ -43,7 +44,7 @@ class TestPDOManager extends TestSuite {
         $sql    = 'select * from %s  where prefix = :prefix and object_type= :object_type';
         $params = array(':prefix' => '1022:100153', ':object_type' => 1);
         $ret    = $this->_pdo->query(sprintf($sql, $this->_test_table_name), $params);
-        
+
         $params = array(':prefix' => '1022:100153', ':object_type' => 2);
         $ret    = $this->_pdo->query(sprintf($sql, $this->_test_table_name), $params);
         $this->assertEq($ret[0]['prefix'], $params[':prefix']); //空表会报错

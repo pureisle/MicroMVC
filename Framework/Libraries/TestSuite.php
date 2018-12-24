@@ -17,10 +17,11 @@ class TestSuite {
      * 单例测试运行接口
      */
     public function run($displayer) {
-        $this->_fail_cases           = array();
-        $this->_pass_cases           = array();
-        $log_data                    = array();
-        $class_name                  = get_called_class();
+        $this->_fail_cases = array();
+        $this->_pass_cases = array();
+        $log_data          = array();
+        $class_name        = get_called_class();
+        $displayer->normal("$class_name test start running.");
         $log_data['test_class_name'] = $class_name;
         $is_loaded_xdebug            = extension_loaded('xdebug');
         $is_cal_coverage             = $is_loaded_xdebug && defined($class_name . "::TEST_CLASS_NAME") && ! empty($class_name::TEST_CLASS_NAME);
@@ -55,25 +56,32 @@ class TestSuite {
                 $this->_pass_cases[] = "$class_name.$method";
             }
         }
+        $displayer->pass("[RESULT] passed " . count($this->_pass_cases) . "/" . (count($this->_pass_cases) + count($this->_fail_cases)) . " case(s)");
         $this->endTest();
         if ($is_cal_coverage) {
-            $content                = file_get_contents($file_path);
-            $parser                 = new PHPFunctionParser($content);
-            $parser_ret             = $parser->process();
-            $log_data['parser_ret'] = $parser_ret;
-            $line_func_map          = array();
-            $line_func_range        = array();
-            $code_sum_line          = 0;
-            foreach ($parser_ret as $function_name => $line_set) {
-                $code_sum_line += $line_set[1] - $line_set[0] + 1;
-                $line_func_range[$line_set[0]] = $line_set[1];
-                $line_func_map[$line_set[1]]   = $function_name;
-            }
             $run_ret             = xdebug_get_code_coverage();
             $log_data['run_ret'] = $run_ret;
             xdebug_stop_code_coverage();
             $run_ret = $run_ret[$file_path];
             if ( ! empty($run_ret)) {
+                $content = file_get_contents($file_path);
+                try {
+                    $parser     = new PHPFunctionParser($content);
+                    $parser_ret = $parser->process();
+                } catch (RuntimeException $re) {
+                    $displayer->pass("[TEST COVERAGE] " . $class_name::TEST_CLASS_NAME . " parser error : " . trim($re->getMessage()));
+                    Log::unittestLog($log_data);
+                    return count($this->_fail_cases) == 0;
+                }
+                $log_data['parser_ret'] = $parser_ret;
+                $line_func_map          = array();
+                $line_func_range        = array();
+                $code_sum_line          = 0;
+                foreach ($parser_ret as $function_name => $line_set) {
+                    $code_sum_line += $line_set[1] - $line_set[0] + 1;
+                    $line_func_range[$line_set[0]] = $line_set[1];
+                    $line_func_map[$line_set[1]]   = $function_name;
+                }
                 $ret = array();
                 foreach ($run_ret as $line_num => $value) {
                     foreach ($line_func_range as $k1 => $v1) {

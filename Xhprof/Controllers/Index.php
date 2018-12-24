@@ -146,7 +146,7 @@ class Index extends Controller {
         $vrbar  = ' class="vrbar"';
         $vgbar  = ' class="vgbar"';
 
-        $xhprof_runs_impl = new XHProfRuns('/tmp/xhprof');
+        $xhprof_runs_impl = new XHProfRuns(LOG_ROOT_PATH.'/xhprof');
         displayXHProfReport($xhprof_runs_impl, $params, $source, $run, $wts,
             $symbol, $sort, $run1, $run2);
 

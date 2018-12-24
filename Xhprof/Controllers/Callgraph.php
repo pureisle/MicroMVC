@@ -101,7 +101,7 @@ class Callgraph extends Controller {
             $type = $params['type'][1]; // default image type.
         }
 
-        $xhprof_runs_impl = new XHProfRuns('/tmp/xhprof');
+        $xhprof_runs_impl = new XHProfRuns(LOG_ROOT_PATH.'/xhprof');
 
         if ( ! empty($run)) {
             // single run call graph image generation

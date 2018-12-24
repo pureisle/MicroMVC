@@ -18,7 +18,7 @@ class Xhprof extends Controller {
      */
     public function shutdown() {
         $xhprof_data = xhprof_disable();
-        $xhprof_runs = new XHProfRuns('/tmp/xhprof');
+        $xhprof_runs = new XHProfRuns(LOG_ROOT_PATH.'/xhprof');
         $xhprof_name = 'framework_test';
         $run_id      = $xhprof_runs->save_run($xhprof_data, $xhprof_name);
         echo '<a href="/xhprof?run=' . $run_id . '&source=' . $xhprof_name . '" target="_blank">查看</a>';

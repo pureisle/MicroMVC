@@ -10,23 +10,42 @@
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
 namespace Framework\Libraries;
+use Framework\Models\Log;
+
 class TestSuite {
     /**
      * 单例测试运行接口
      */
     public function run($displayer) {
-        $this->_fail_cases = array();
-        $this->_pass_cases = array();
-        $class_name        = get_called_class();
+        $this->_fail_cases           = array();
+        $this->_pass_cases           = array();
+        $log_data                    = array();
+        $class_name                  = get_called_class();
+        $log_data['test_class_name'] = $class_name;
+        $is_loaded_xdebug            = extension_loaded('xdebug');
+        $is_cal_coverage             = $is_loaded_xdebug && defined($class_name . "::TEST_CLASS_NAME") && ! empty($class_name::TEST_CLASS_NAME);
+        $log_data['is_cal_coverage'] = $is_cal_coverage;
+        if ($is_cal_coverage) {
+            $file_path               = ROOT_PATH . "/" . str_replace('\\', '/', $class_name::TEST_CLASS_NAME) . ".php";
+            $log_data['target_file'] = $file_path;
+            if ( ! file_exists($file_path)) {
+                $displayer->fail("[FAILED] test " . $class_name::TEST_CLASS_NAME . " class file not exist");
+                return false;
+            }
+            xdebug_start_code_coverage();
+        }
+        $log_data['method_test'] = array();
         $this->beginTest();
         foreach (get_class_methods($class_name) as $method) {
             if ($this->_startWith($method, "test")) {
                 $displayer->normal("Running $class_name.$method");
                 try {
                     $this->SetUp();
+                    $log_data['method_test'][$method] = true;
                     $this->$method();
                     $this->CleanUp();
                 } catch (Exception $e) {
+                    $log_data['method_test'][$method] = false;
                     $displayer->fail("[FAILED] test case $class_name.$method failed");
                     $displayer->fail(nl2br(htmlspecialchars($e->getMessage())));
                     $this->_fail_cases[] = "$class_name.$method";
@@ -37,6 +56,47 @@ class TestSuite {
             }
         }
         $this->endTest();
+        if ($is_cal_coverage) {
+            $content                = file_get_contents($file_path);
+            $parser                 = new PHPFunctionParser($content);
+            $parser_ret             = $parser->process();
+            $log_data['parser_ret'] = $parser_ret;
+            $line_func_map          = array();
+            $line_func_range        = array();
+            $code_sum_line          = 0;
+            foreach ($parser_ret as $function_name => $line_set) {
+                $code_sum_line += $line_set[1] - $line_set[0] + 1;
+                $line_func_range[$line_set[0]] = $line_set[1];
+                $line_func_map[$line_set[1]]   = $function_name;
+            }
+            $run_ret             = xdebug_get_code_coverage();
+            $log_data['run_ret'] = $run_ret;
+            xdebug_stop_code_coverage();
+            $run_ret = $run_ret[$file_path];
+            if ( ! empty($run_ret)) {
+                $ret = array();
+                foreach ($run_ret as $line_num => $value) {
+                    foreach ($line_func_range as $k1 => $v1) {
+                        if ($line_num >= $k1 && $line_num <= $v1) {
+                            $ret[$line_func_map[$v1]]++;
+                            break;
+                        }
+                    }
+                }
+                foreach ($parser_ret as $key => $value) {
+                    $sum_line                     = $value[1] - $value[0] + 1;
+                    $parser_ret[$key]['coverage'] = 100 * $ret[$key] / $sum_line;
+                }
+                $coverage = round(100 * count($run_ret) / $code_sum_line, 2);
+                $displayer->pass("[TEST COVERAGE] class " . $class_name::TEST_CLASS_NAME . " coverage : " . $coverage . " %");
+                $method_coverage = count($ret) . "/" . count($parser_ret);
+                $displayer->pass("[TEST COVERAGE] method coverage : " . $method_coverage);
+                $log_data['sum_coverage']    = $coverage;
+                $log_data['method_coverage'] = $method_coverage;
+                Log::unittestLog($log_data);
+            } else {
+            }
+        }
         return count($this->_fail_cases) == 0;
     }
     /**

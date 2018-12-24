@@ -9,6 +9,7 @@ use Framework\Libraries\Debug;
 use Framework\Libraries\TestSuite;
 
 class TestDebug extends TestSuite {
+    const TEST_CLASS_NAME = \Framework\Libraries\Debug::class;
     /**
      * 测试设置和获取方法
      */
@@ -45,5 +46,13 @@ class TestDebug extends TestSuite {
         ob_end_clean();
         $this->assertMatch('~' . $test_string . '~', $dump);
         Debug::setDebug(false);
+
+    }
+    public function testsetErrorMessage() {
+        $ret = Debug::setErrorMessage(1, 'test');
+        $this->assertTrue($ret);
+    }
+    public function testgetErrorMessage() {
+        $ret = Debug::getErrorMessage();
     }
 }

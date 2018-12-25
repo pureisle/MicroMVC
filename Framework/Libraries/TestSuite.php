@@ -67,20 +67,24 @@ class TestSuite {
                 $content = file_get_contents($file_path);
                 try {
                     $parser     = new PHPFunctionParser($content);
-                    $parser_ret = $parser->process();
-                } catch (RuntimeException $re) {
+                    $parser_ret = $parser->parse();
+                } catch (PHPFunctionParserException $re) {
                     $displayer->pass("[TEST COVERAGE] " . $class_name::TEST_CLASS_NAME . " parser error : " . trim($re->getMessage()));
                     Log::unittestLog($log_data);
                     return count($this->_fail_cases) == 0;
                 }
                 $log_data['parser_ret'] = $parser_ret;
-                $line_func_map          = array();
-                $line_func_range        = array();
-                $code_sum_line          = 0;
-                foreach ($parser_ret as $function_name => $line_set) {
-                    $code_sum_line += $line_set[1] - $line_set[0] + 1;
-                    $line_func_range[$line_set[0]] = $line_set[1];
-                    $line_func_map[$line_set[1]]   = $function_name;
+                if (empty($parser_ret['classes'][$class_name::TEST_CLASS_NAME])) {
+                    return count($this->_fail_cases) == 0;
+                }
+                $parser_ret      = $parser_ret['classes'][$class_name::TEST_CLASS_NAME];
+                $line_func_map   = array();
+                $line_func_range = array();
+                $code_sum_line   = 0;
+                foreach ($parser_ret['methods'] as $function_name => $line_set) {
+                    $code_sum_line += $line_set[PHPFunctionParser::END_LINE_INDEX] - $line_set[PHPFunctionParser::BEGIN_LINE_INDEX] + 1;
+                    $line_func_range[$line_set[PHPFunctionParser::BEGIN_LINE_INDEX]] = $line_set[PHPFunctionParser::END_LINE_INDEX];
+                    $line_func_map[$line_set[PHPFunctionParser::END_LINE_INDEX]]     = $function_name;
                 }
                 $ret = array();
                 foreach ($run_ret as $line_num => $value) {
@@ -91,13 +95,13 @@ class TestSuite {
                         }
                     }
                 }
-                foreach ($parser_ret as $key => $value) {
-                    $sum_line                     = $value[1] - $value[0] + 1;
-                    $parser_ret[$key]['coverage'] = 100 * $ret[$key] / $sum_line;
+                foreach ($parser_ret['methods'] as $key => $value) {
+                    $sum_line                                = $value[PHPFunctionParser::END_LINE_INDEX] - $value[PHPFunctionParser::BEGIN_LINE_INDEX] + 1;
+                    $parser_ret['methods'][$key]['coverage'] = 100 * $ret[$key] / $sum_line;
                 }
                 $coverage = round(100 * count($run_ret) / $code_sum_line, 2);
                 $displayer->pass("[TEST COVERAGE] class " . $class_name::TEST_CLASS_NAME . " coverage : " . $coverage . " %");
-                $method_coverage = count($ret) . "/" . count($parser_ret);
+                $method_coverage = count($ret) . "/" . count($parser_ret['methods']);
                 $displayer->pass("[TEST COVERAGE] method coverage : " . $method_coverage);
                 $log_data['sum_coverage']    = $coverage;
                 $log_data['method_coverage'] = $method_coverage;

@@ -117,7 +117,8 @@ class InFunc extends FiniteState {
     const STATE = 3; // 在函数里面了
     public function onStateEnter() {
         $this->_left_braces   = 1;
-        $this->_last_line_num = 0;
+        $data                 = $this->getData();
+        $this->_last_line_num = $data['functions'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::BEGIN_LINE_INDEX];
     }
     public function onStateTick($token = null) {
         update_line_num($this->_last_line_num, $token);
@@ -178,7 +179,10 @@ class MeetClass extends FiniteState {
 class InClass extends FiniteState {
     private $_last_line_num;
     const STATE = 5; // 在类里面了
-    public function onStateEnter() {}
+    public function onStateEnter() {
+        $data                 = $this->getData();
+        $this->_last_line_num = $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]][PHPFunctionParser::BEGIN_LINE_INDEX];
+    }
     public function onStateTick($token = null) {
         update_line_num($this->_last_line_num, $token);
         if (is_string($token) && '}' === $token) {
@@ -224,7 +228,8 @@ class InMethod extends FiniteState {
     const STATE = 7; // 进到类的方法里面了
     public function onStateEnter() {
         $this->_left_braces   = 1;
-        $this->_last_line_num = 0;
+        $data                 = $this->getData();
+        $this->_last_line_num = $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]]['methods'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::BEGIN_LINE_INDEX];
     }
     public function onStateTick($token = null) {
         update_line_num($this->_last_line_num, $token);

@@ -135,7 +135,7 @@ class InFunc extends FiniteState {
                 }
             }
         } else if (is_array($token) &&
-            (T_CURLY_OPEN === $token[0] || T_DOLLAR_OPEN_CURLY_BRACES === $token[0] || T_STRING_VARNAME === $token[0])) {
+            (T_CURLY_OPEN === $token[0] || T_DOLLAR_OPEN_CURLY_BRACES === $token[0])) {
             $this->_left_braces++;
         }
     }
@@ -242,7 +242,7 @@ class InMethod extends FiniteState {
                 }
             }
         } else if (is_array($token) &&
-            (T_CURLY_OPEN === $token[0] || T_DOLLAR_OPEN_CURLY_BRACES === $token[0] || T_STRING_VARNAME === $token[0])) {
+            (T_CURLY_OPEN === $token[0] || T_DOLLAR_OPEN_CURLY_BRACES === $token[0])) {
             $this->_left_braces++;
         }
     }

@@ -25,10 +25,13 @@
  */
 namespace Framework\Libraries;
 class FiniteStateMachine {
-    private $_current_state = null;
-    private $_state_objs    = array();
-    private $_state_set     = array();
-    private $_is_stop       = false;
+    private $_current_state      = null;
+    private $_state_objs         = array();
+    private $_state_set          = array();
+    private $_tick_list          = array();
+    private $_is_use_tick_params = false;
+    private $_is_stop            = false;
+    private $_data               = array();
     /**
      * 注册新的状态
      * @param    int   $state
@@ -61,9 +64,6 @@ class FiniteStateMachine {
         $this->_current_state = $state;
         return $this;
     }
-    public function stop() {
-        $this->_is_stop = true;
-    }
     /**
      * 设置初始状态
      * @param int $state
@@ -76,17 +76,48 @@ class FiniteStateMachine {
         return $this;
     }
     /**
+     * 设置特殊的tick时钟数据,每次tick的数据会按该数组内数据进行，如果tick数据循环完毕则强制终止,
+     * 禁止tick数据的值为 false ,这是获取数据终止条件
+     * @param array $data
+     */
+    public function setTickData(array $data) {
+        if (empty($data)) {
+            return true;
+        }
+        $this->_tick_list          = $data;
+        $this->_is_use_tick_params = true;
+        return false;
+    }
+    /**
      * 每次动作调用
      * @return
      */
     public function tick() {
-        $ret = $this->_state_objs[$this->_current_state]->onStateTick();
+        $param = null;
+        if ($this->_is_use_tick_params) {
+            $param = current($this->_tick_list);
+            if (false === $param) {
+                $this->stop();
+                return;
+            }
+            next($this->_tick_list);
+        }
+        $ret = $this->_state_objs[$this->_current_state]->onStateTick($param);
         return $ret;
+    }
+    /**
+     * 停止状态机
+     */
+    public function stop() {
+        $this->_is_stop = true;
     }
     /**
      * 状态机执行入口
      */
     public function run() {
+        if (empty($this->_state_objs[$this->_current_state])) {
+            return;
+        }
         $this->_state_objs[$this->_current_state]->onStateEnter();
         while (false === $this->_is_stop) {
             $ret = $this->tick();
@@ -96,12 +127,28 @@ class FiniteStateMachine {
         }
         $this->_state_objs[$this->_current_state]->onStateExit();
     }
+    /**
+     * 设置状态机数据
+     * @param string $key
+     * @param mix    $data
+     */
+    public function setData($data) {
+        $this->_data = $data;
+        return true;
+    }
+    /**
+     * 获取状态机数据
+     * @param  string $key
+     * @return mix
+     */
+    public function getData() {
+        return $this->_data;
+    }
 }
 
 class FiniteStateMachineException extends Exception {
     const STATE_OBJ_EMPTY = 1;
-
-    public $ERROR_SET = array(
+    public $ERROR_SET     = array(
         self::STATE_OBJ_EMPTY => array(
             'code'    => self::STATE_OBJ_EMPTY,
             'message' => 'state index is empty'

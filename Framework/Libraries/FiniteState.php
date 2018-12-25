@@ -18,7 +18,7 @@ abstract class FiniteState {
     /**
      * 每次动作调用,必须实现的抽象方法
      */
-    abstract public function onStateTick();
+    abstract public function onStateTick($param = null);
     /**
      * 退出状态时调用，可覆盖
      */
@@ -37,6 +37,20 @@ abstract class FiniteState {
      */
     public function trans(int $state) {
         return $this->_fsm->trans($state);
+    }
+    /**
+     * 设置状态机数据
+     * @param mix $data
+     */
+    public function setData($data) {
+        return $this->_fsm->setData($data);
+    }
+    /**
+     * 获取状态机数据
+     * @return mix
+     */
+    public function getData() {
+        return $this->_fsm->getData();
     }
     /**
      * 终止状态机执行

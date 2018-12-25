@@ -126,14 +126,17 @@ class InFunc extends FiniteState {
                 $this->_left_braces++;
             } else if ('}' === $token) {
                 $this->_left_braces--;
+                if (0 === $this->_left_braces) {
+                    $data                                                                                                   = $this->getData();
+                    $data['functions'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::END_LINE_INDEX] = $this->_last_line_num;
+                    unset($data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]);
+                    $this->setData($data);
+                    $this->trans(InPHP::STATE);
+                }
             }
-            if (0 === $this->_left_braces) {
-                $data                                                                                                   = $this->getData();
-                $data['functions'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::END_LINE_INDEX] = $this->_last_line_num;
-                unset($data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]);
-                $this->setData($data);
-                $this->trans(InPHP::STATE);
-            }
+        } else if (is_array($token) &&
+            (T_CURLY_OPEN === $token[0] || T_DOLLAR_OPEN_CURLY_BRACES === $token[0] || T_STRING_VARNAME === $token[0])) {
+            $this->_left_braces++;
         }
     }
     public function onStateExit() {}
@@ -230,14 +233,17 @@ class InMethod extends FiniteState {
                 $this->_left_braces++;
             } else if ('}' === $token) {
                 $this->_left_braces--;
+                if (0 === $this->_left_braces) {
+                    $data                                                                                                                                                           = $this->getData();
+                    $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]]['methods'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::END_LINE_INDEX] = $this->_last_line_num;
+                    unset($data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]);
+                    $this->setData($data);
+                    $this->trans(InClass::STATE);
+                }
             }
-            if (0 === $this->_left_braces) {
-                $data                                                                                                                                                           = $this->getData();
-                $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]]['methods'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::END_LINE_INDEX] = $this->_last_line_num;
-                unset($data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]);
-                $this->setData($data);
-                $this->trans(InClass::STATE);
-            }
+        } else if (is_array($token) &&
+            (T_CURLY_OPEN === $token[0] || T_DOLLAR_OPEN_CURLY_BRACES === $token[0] || T_STRING_VARNAME === $token[0])) {
+            $this->_left_braces++;
         }
     }
     public function onStateExit() {}

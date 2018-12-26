@@ -1,10 +1,9 @@
 ### 为什么用
 * 不过度设计，简单、清晰、好用；
 * 提供最简单基础的 MVC 框架，将性能损耗降到最低，[关于性能](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/performance.md)；
-* 按 Module 进行资源分离，以便对业务进行微服务化隔离或后期的服务便捷迁移；
+* 按 Module 进行资源分离，以便对业务进行微服务化隔离或后期的服务便捷迁移。[关于Module和迁移](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/module.md)；
 * 提供简单好用的单元测试框架,[关于单元测试](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/unittest.md)；
 * 提供便捷的接口参数合法性验证服务，接口合法性调用检测服务，做了基础的防SQL注入、CSRF、XSS等安全防护；
-* 提供便捷的异常处理服务；
 * 提供简单好用工具类，如 Mysql 、Curl 等资源的封装、Xhprof 性能优化工具等；
 * 根据代码运行的环境自动加载相应的配置文件，方便的切换仿真、生产环境；
 * 提供PSR-3规范的日志类，额外提供 log buffer 功能（性能提升） 和 全局日志标记码（一个进程一个标记码，方便定位问题）的功能；
@@ -102,15 +101,6 @@ http://service.movie.weibo.com:8183/demo/demo/a/index?a=test&b=12
 Controller 文件路径： MODULE_ROOT\Controllers\Demo\A.php
 View 文件路径：MODULE_ROOT\Views\Demo\A\index.phtml
 ```
-
-#### 如何方便迁移 Module
-1. 在框架层做了 Module 之间的资源隔离，不同 Module 之间无法通过 new 关键字来进行数据交换；
-1. 框架提供了 LocalCurl 类，可以模拟 HTTP 网络调用，其实是在内存中完成了不同 Module 之间的数据交互；
-1. 迁移的时候，执行 全局替换 LocalCurl 为 Curl 即可完成框架部分的迁移，当然业务里域名修改的地方还需要业务技术另行修改；
-
-#### 如何进行自动化测试（单元测试）
-1. 在各自 Module 下的 Tests 文件夹内创建单元测试文件，需要继承框架 Framework\Libraries\TestSuite 类；
-1. 命令行下执行 php public/run_test.php 即可完成全部单元测试文件的执行。也可指定要执行的单元测试文件或 Module。如： php public/run_test.php Framework TestPDOManager.php
 
 #### 如何进行仿真环境配置文件加载重定向
 1. 在 config 下创建 {env_name} 文件夹, {env_name} 名字任意，'pro' 为保留的关键字，视为生产环境标志。文件夹内的配置文件命名同正式的配置文件名即可; 

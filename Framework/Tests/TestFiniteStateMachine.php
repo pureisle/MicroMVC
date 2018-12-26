@@ -45,7 +45,7 @@ class StateA extends FiniteState {
     public $_tick_count = 0;
     public $_is_enter   = false;
     public $_is_exit    = false;
-    public function onStateEnter() {
+    public function onStateEnter($a) {
         $this->_is_enter = true;
     }
     public function onStateExit() {
@@ -63,7 +63,7 @@ class StateB extends FiniteState {
     public $_tick_count = 0;
     public $_is_enter   = false;
     public $_is_exit    = false;
-    public function onStateEnter() {
+    public function onStateEnter($a) {
         $this->_is_enter = true;
     }
     public function onStateExit() {
@@ -80,7 +80,7 @@ class StateC extends FiniteState {
     public $_tick_count = 0;
     public $_is_enter   = false;
     public $_is_exit    = false;
-    public function onStateEnter() {
+    public function onStateEnter($a) {
         $this->_is_enter = true;
     }
     public function onStateExit() {

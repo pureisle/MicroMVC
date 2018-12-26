@@ -44,7 +44,7 @@ class PHPFunctionParserException extends Exception {
 
 class Init extends FiniteState {
     const STATE = 0; // 初始状态，在php代码之外
-    public function onStateEnter() {}
+    public function onStateEnter($from_state) {}
     public function onStateTick($token = null) {
         if (is_array($token) && T_OPEN_TAG === $token[0]) {
             return true;
@@ -55,7 +55,7 @@ class Init extends FiniteState {
 }
 class InPHP extends FiniteState {
     const STATE = 1; // 进入php代码
-    public function onStateEnter() {}
+    public function onStateEnter($from_state) {}
     public function onStateTick($token = null) {
         $pattern = is_array($token) ? $token[0] : $token;
         switch ($pattern) {
@@ -88,7 +88,7 @@ class MeetFunc extends FiniteState {
     private $_name;
     private $_begin_line;
     const STATE = 2; // 碰到了函数定义，但还没进到函数里面
-    public function onStateEnter() {
+    public function onStateEnter($from_state) {
         $this->_name       = '';
         $this->_begin_line = 0;
     }
@@ -115,7 +115,7 @@ class InFunc extends FiniteState {
     private $_left_braces;
     private $_last_line_num;
     const STATE = 3; // 在函数里面了
-    public function onStateEnter() {
+    public function onStateEnter($from_state) {
         $this->_left_braces   = 1;
         $data                 = $this->getData();
         $this->_last_line_num = $data['functions'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::BEGIN_LINE_INDEX];
@@ -147,7 +147,7 @@ class MeetClass extends FiniteState {
     private $_name;
     private $_begin_line;
     const STATE = 4; // 碰到了类定义，但还没进到类里面
-    public function onStateEnter() {
+    public function onStateEnter($from_state) {
         $this->_name       = '';
         $this->_begin_line = 0;
     }
@@ -179,7 +179,7 @@ class MeetClass extends FiniteState {
 class InClass extends FiniteState {
     private $_last_line_num;
     const STATE = 5; // 在类里面了
-    public function onStateEnter() {
+    public function onStateEnter($from_state) {
         $data                 = $this->getData();
         $this->_last_line_num = $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]][PHPFunctionParser::BEGIN_LINE_INDEX];
     }
@@ -202,7 +202,7 @@ class MeetMethod extends FiniteState {
     private $_name;
     private $_begin_line;
     const STATE = 6; // 碰到了类中方法的定义，但还没进到方法里面
-    public function onStateEnter() {
+    public function onStateEnter($from_state) {
         $this->_name       = '';
         $this->_begin_line = 0;
     }
@@ -226,7 +226,7 @@ class InMethod extends FiniteState {
     private $_left_braces;
     private $_last_line_num;
     const STATE = 7; // 进到类的方法里面了
-    public function onStateEnter() {
+    public function onStateEnter($from_state) {
         $this->_left_braces   = 1;
         $data                 = $this->getData();
         $this->_last_line_num = $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]]['methods'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::BEGIN_LINE_INDEX];
@@ -256,7 +256,7 @@ class InMethod extends FiniteState {
 class MeetNameSpace extends FiniteState {
     private $_name;
     const STATE = 8;
-    public function onStateEnter() {
+    public function onStateEnter($from_state) {
         $this->_name = '';
     }
     public function onStateTick($token = null) {

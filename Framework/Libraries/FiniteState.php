@@ -14,7 +14,8 @@ abstract class FiniteState {
     /**
      * 进入状态时调用，可覆盖
      */
-    public function onStateEnter() {}
+    public function onStateEnter($from_state) {
+    }
     /**
      * 每次动作调用,必须实现的抽象方法
      */

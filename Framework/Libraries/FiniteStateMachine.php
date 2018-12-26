@@ -60,7 +60,7 @@ class FiniteStateMachine {
             throw new FiniteStateMachineException(FiniteStateMachineException::STATE_OBJ_EMPTY);
         }
         $this->_state_objs[$this->_current_state]->onStateExit();
-        $this->_state_objs[$state]->onStateEnter();
+        $this->_state_objs[$state]->onStateEnter($this->_current_state);
         $this->_current_state = $state;
         return $this;
     }
@@ -118,7 +118,7 @@ class FiniteStateMachine {
         if (empty($this->_state_objs[$this->_current_state])) {
             return;
         }
-        $this->_state_objs[$this->_current_state]->onStateEnter();
+        $this->_state_objs[$this->_current_state]->onStateEnter(false);
         while (false === $this->_is_stop) {
             $ret = $this->tick();
             if ($ret && $this->_state_objs[$this->_current_state]->getNextState() !== null) {

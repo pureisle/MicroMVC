@@ -101,6 +101,10 @@ class TestSuite {
                 }
                 $coverage = round(100 * count($run_ret) / $code_sum_line, 2);
                 $displayer->pass("[TEST COVERAGE] class " . $class_name::TEST_CLASS_NAME . " coverage : " . $coverage . " %");
+                foreach ($parser_ret['methods'] as $key => $value) {
+                    list($method, $tmp) = explode('(', $key, 2);
+                    $displayer->pass("[TEST COVERAGE] method " . $class_name::TEST_CLASS_NAME . "::" . $method . " coverage : " . $value['coverage'] . " %");
+                }
                 $method_coverage = count($ret) . "/" . count($parser_ret['methods']);
                 $displayer->pass("[TEST COVERAGE] method coverage : " . $method_coverage);
                 $log_data['sum_coverage']    = $coverage;

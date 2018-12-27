@@ -82,7 +82,7 @@ class TestSuite {
                 $line_func_range = array();
                 $code_sum_line   = 0;
                 foreach ($parser_ret['methods'] as $function_name => $line_set) {
-                    $code_sum_line += $line_set[PHPFunctionParser::END_LINE_INDEX] - $line_set[PHPFunctionParser::BEGIN_LINE_INDEX] + 1;
+                    $code_sum_line += $line_set[PHPFunctionParser::END_LINE_INDEX] - $line_set[PHPFunctionParser::BEGIN_LINE_INDEX] + 1 - $line_set[PHPFunctionParser::INVALID_NUM_INDEX];
                     $line_func_range[$line_set[PHPFunctionParser::BEGIN_LINE_INDEX]] = $line_set[PHPFunctionParser::END_LINE_INDEX];
                     $line_func_map[$line_set[PHPFunctionParser::END_LINE_INDEX]]     = $function_name;
                 }

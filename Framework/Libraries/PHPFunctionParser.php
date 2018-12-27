@@ -12,6 +12,7 @@ namespace Framework\Libraries;
 class PHPFunctionParser {
     const BEGIN_LINE_INDEX       = 'begin_line';
     const END_LINE_INDEX         = 'end_line';
+    const INVALID_NUM_INDEX      = 'invalid_line_count';
     const NAMESPACE_INDEX        = 'current_namespace';
     const CURRENT_CLASS_INDEX    = 'current_class';
     const CURRENT_FUNCTION_INDEX = 'current_function';
@@ -45,7 +46,8 @@ class PHPFunctionParserException extends Exception {
 class Init extends FiniteState {
     const STATE = 0; // 初始状态，在php代码之外
     public function onStateEnter($from_state) {}
-    public function onStateTick($token = null) {
+    public function onStateTick($token_key = null) {
+        $token = $this->getTickData($token_key);
         if (is_array($token) && T_OPEN_TAG === $token[0]) {
             return true;
         }
@@ -56,7 +58,8 @@ class Init extends FiniteState {
 class InPHP extends FiniteState {
     const STATE = 1; // 进入php代码
     public function onStateEnter($from_state) {}
-    public function onStateTick($token = null) {
+    public function onStateTick($token_key = null) {
+        $token   = $this->getTickData($token_key);
         $pattern = is_array($token) ? $token[0] : $token;
         switch ($pattern) {
             case T_CLASS:
@@ -92,7 +95,8 @@ class MeetFunc extends FiniteState {
         $this->_name       = '';
         $this->_begin_line = 0;
     }
-    public function onStateTick($token = null) {
+    public function onStateTick($token_key = null) {
+        $token = $this->getTickData($token_key);
         if (is_string($token) && '{' === $token) {
             $data = $this->getData();
             $f_n  = trim($this->_name);
@@ -113,31 +117,27 @@ class MeetFunc extends FiniteState {
 }
 class InFunc extends FiniteState {
     private $_left_braces;
+    private $_invalid_line_num;
     private $_last_line_num;
     const STATE = 3; // 在函数里面了
     public function onStateEnter($from_state) {
-        $this->_left_braces   = 1;
-        $data                 = $this->getData();
-        $this->_last_line_num = $data['functions'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::BEGIN_LINE_INDEX];
+        $this->_left_braces      = 1;
+        $this->_invalid_line_num = 0;
+        $data                    = $this->getData();
+        $this->_last_line_num    = $data['functions'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::BEGIN_LINE_INDEX];
     }
-    public function onStateTick($token = null) {
+    public function onStateTick($token_key = null) {
+        $token = $this->getTickData($token_key);
         update_line_num($this->_last_line_num, $token);
-        if (is_string($token)) {
-            if ('{' === $token) {
-                $this->_left_braces++;
-            } else if ('}' === $token) {
-                $this->_left_braces--;
-                if (0 === $this->_left_braces) {
-                    $data                                                                                                   = $this->getData();
-                    $data['functions'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::END_LINE_INDEX] = $this->_last_line_num;
-                    unset($data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]);
-                    $this->setData($data);
-                    $this->trans(InPHP::STATE);
-                }
-            }
-        } else if (is_array($token) &&
-            (T_CURLY_OPEN === $token[0] || T_DOLLAR_OPEN_CURLY_BRACES === $token[0])) {
-            $this->_left_braces++;
+        count_invalid_line($this->_invalid_line_num, $token_key, $this->getTickData());
+        update_braces($this->_left_braces, $token);
+        if (0 === $this->_left_braces) {
+            $data                                                                                                      = $this->getData();
+            $data['functions'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::INVALID_NUM_INDEX] = $this->_invalid_line_num;
+            $data['functions'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::END_LINE_INDEX]    = $this->_last_line_num;
+            unset($data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]);
+            $this->setData($data);
+            $this->trans(InPHP::STATE);
         }
     }
     public function onStateExit() {}
@@ -151,7 +151,8 @@ class MeetClass extends FiniteState {
         $this->_name       = '';
         $this->_begin_line = 0;
     }
-    public function onStateTick($token = null) {
+    public function onStateTick($token_key = null) {
+        $token = $this->getTickData($token_key);
         if (is_string($token) && '{' === $token) {
             $data = $this->getData();
             $c_n  = trim($this->_name);
@@ -183,7 +184,8 @@ class InClass extends FiniteState {
         $data                 = $this->getData();
         $this->_last_line_num = $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]][PHPFunctionParser::BEGIN_LINE_INDEX];
     }
-    public function onStateTick($token = null) {
+    public function onStateTick($token_key = null) {
+        $token = $this->getTickData($token_key);
         update_line_num($this->_last_line_num, $token);
         if (is_string($token) && '}' === $token) {
             $data                                                                                              = $this->getData();
@@ -206,7 +208,8 @@ class MeetMethod extends FiniteState {
         $this->_name       = '';
         $this->_begin_line = 0;
     }
-    public function onStateTick($token = null) {
+    public function onStateTick($token_key = null) {
+        $token = $this->getTickData($token_key);
         if (is_string($token) && '{' === $token) {
             $data                                                                            = $this->getData();
             $f_n                                                                             = trim($this->_name);
@@ -225,30 +228,26 @@ class MeetMethod extends FiniteState {
 class InMethod extends FiniteState {
     private $_left_braces;
     private $_last_line_num;
+    private $_invalid_line_num;
     const STATE = 7; // 进到类的方法里面了
     public function onStateEnter($from_state) {
-        $this->_left_braces   = 1;
-        $data                 = $this->getData();
-        $this->_last_line_num = $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]]['methods'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::BEGIN_LINE_INDEX];
+        $this->_left_braces      = 1;
+        $this->_invalid_line_num = 0;
+        $data                    = $this->getData();
+        $this->_last_line_num    = $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]]['methods'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::BEGIN_LINE_INDEX];
     }
-    public function onStateTick($token = null) {
+    public function onStateTick($token_key = null) {
+        $token = $this->getTickData($token_key);
         update_line_num($this->_last_line_num, $token);
-        if (is_string($token)) {
-            if ('{' === $token) {
-                $this->_left_braces++;
-            } else if ('}' === $token) {
-                $this->_left_braces--;
-                if (0 === $this->_left_braces) {
-                    $data                                                                                                                                                           = $this->getData();
-                    $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]]['methods'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::END_LINE_INDEX] = $this->_last_line_num;
-                    unset($data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]);
-                    $this->setData($data);
-                    $this->trans(InClass::STATE);
-                }
-            }
-        } else if (is_array($token) &&
-            (T_CURLY_OPEN === $token[0] || T_DOLLAR_OPEN_CURLY_BRACES === $token[0])) {
-            $this->_left_braces++;
+        count_invalid_line($this->_invalid_line_num, $token_key, $this->getTickData());
+        update_braces($this->_left_braces, $token);
+        if (0 === $this->_left_braces) {
+            $data                                                                                                                                                              = $this->getData();
+            $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]]['methods'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::END_LINE_INDEX]    = $this->_last_line_num;
+            $data['classes'][$data[PHPFunctionParser::CURRENT_CLASS_INDEX]]['methods'][$data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]][PHPFunctionParser::INVALID_NUM_INDEX] = $this->_invalid_line_num;
+            unset($data[PHPFunctionParser::CURRENT_FUNCTION_INDEX]);
+            $this->setData($data);
+            $this->trans(InClass::STATE);
         }
     }
     public function onStateExit() {}
@@ -259,7 +258,8 @@ class MeetNameSpace extends FiniteState {
     public function onStateEnter($from_state) {
         $this->_name = '';
     }
-    public function onStateTick($token = null) {
+    public function onStateTick($token_key = null) {
+        $token = $this->getTickData($token_key);
         if (is_string($token) && ';' === $token) {
             $data                                     = $this->getData();
             $data[PHPFunctionParser::NAMESPACE_INDEX] = trim($this->_name);
@@ -270,13 +270,70 @@ class MeetNameSpace extends FiniteState {
     }
     public function onStateExit() {}
 }
+function update_braces(&$braces_num, $token) {
+    if (is_string($token)) {
+        if ('{' === $token) {
+            $braces_num++;
+        } else if ('}' === $token) {
+            $braces_num--;
+        }
+    } else if (is_array($token) &&
+        (T_CURLY_OPEN === $token[0] || T_DOLLAR_OPEN_CURLY_BRACES === $token[0])) {
+        $braces_num++;
+    }
+}
+function count_invalid_line(&$invalid_num, $token_key, $token_data) {
+    $token = $token_data[$token_key];
+    if (is_array($token)) {
+        if (T_WHITESPACE === $token[0]) {
+            $tmp = count_line_num($token[1]);
+            if ($tmp > 0) {
+                $last_token = $token_data[$token_key - 1];
+                if (is_array($last_token) && count_line_num($last_token[1]) > 0) {
+                    $invalid_num += $tmp;
+                } else {
+                    $invalid_num += $tmp - 1;
+                }
+            }
+        } else if (T_DOC_COMMENT === $token[0]) {
+            $invalid_num += count_line_num($token[1]);
+        } else if (T_COMMENT === $token[0]) {
+            $last_key = $token_key;
+            while (true) {
+                $last_key--;
+                $last_token = $token_data[$last_key];
+                if (is_array($last_token)) {
+                    if (T_WHITESPACE === $last_token[0]) {
+                        if (count_line_num($last_token[1]) > 0) {
+                            $invalid_num += 1;
+                            break;
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        if ($last_token[2] !== $token[2]) {
+                            $invalid_num += 1;
+                        }
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+}
 function update_line_num(&$line_num, $token) {
     if (is_array($token)) {
         $line_num = $token[2];
         if (T_WHITESPACE === $token[0]) {
-            $count1 = substr_count($token[1], "\r");
-            $count2 = substr_count($token[1], "\n");
-            $line_num += max($count1, $count2);
+            $tmp = count_line_num($token[1]);
+            $line_num += $tmp;
         }
     }
+}
+function count_line_num($string) {
+    $count1 = substr_count($string, "\r");
+    $count2 = substr_count($string, "\n");
+    return max($count1, $count2);
 }

@@ -96,7 +96,7 @@ class TestSuite {
                     }
                 }
                 foreach ($parser_ret['methods'] as $key => $value) {
-                    $sum_line                                = $value[PHPFunctionParser::END_LINE_INDEX] - $value[PHPFunctionParser::BEGIN_LINE_INDEX] + 1;
+                    $sum_line                                = $value[PHPFunctionParser::END_LINE_INDEX] - $value[PHPFunctionParser::BEGIN_LINE_INDEX] + 1 - $value[PHPFunctionParser::INVALID_NUM_INDEX];
                     $parser_ret['methods'][$key]['coverage'] = 100 * $ret[$key] / $sum_line;
                 }
                 $coverage = round(100 * count($run_ret) / $code_sum_line, 2);

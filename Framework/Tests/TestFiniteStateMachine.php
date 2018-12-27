@@ -51,7 +51,7 @@ class StateA extends FiniteState {
     public function onStateExit() {
         $this->_is_exit = true;
     }
-    public function onStateTick($param = NULL) {
+    public function onStateTick($tick_key = NULL) {
         $this->_tick_count++;
         if ($this->_tick_count >= TestFiniteStateMachine::TICK_COUNT) {
             return true;
@@ -69,7 +69,7 @@ class StateB extends FiniteState {
     public function onStateExit() {
         $this->_is_exit = true;
     }
-    public function onStateTick($param = NULL) {
+    public function onStateTick($tick_key = NULL) {
         $this->_tick_count++;
         if ($this->_tick_count >= TestFiniteStateMachine::TICK_COUNT) {
             $this->trans(TestFiniteStateMachine::STATE_C);
@@ -86,7 +86,7 @@ class StateC extends FiniteState {
     public function onStateExit() {
         $this->_is_exit = true;
     }
-    public function onStateTick($param = NULL) {
+    public function onStateTick($tick_key = NULL) {
         $this->_tick_count++;
         if ($this->_tick_count >= TestFiniteStateMachine::TICK_COUNT) {
             $this->fsmStop();

@@ -29,6 +29,7 @@ class FiniteStateMachine {
     private $_state_objs         = array();
     private $_state_set          = array();
     private $_tick_list          = array();
+    private $_current_tick_key   = 0;
     private $_is_use_tick_params = false;
     private $_is_stop            = false;
     private $_data               = array();
@@ -89,20 +90,31 @@ class FiniteStateMachine {
         return false;
     }
     /**
+     * 获取自定义时钟数据
+     * @return array
+     */
+    public function getTickData($key = null) {
+        if (null !== $key) {
+            return $this->_tick_list[$key];
+        }
+        return $this->_tick_list;
+    }
+    /**
      * 每次动作调用
      * @return
      */
     public function tick() {
-        $param = null;
         if ($this->_is_use_tick_params) {
-            $param = current($this->_tick_list);
-            if (false === $param) {
+            $this->_current_tick_key = key($this->_tick_list);
+            if (null === $this->_current_tick_key) {
                 $this->stop();
                 return;
             }
             next($this->_tick_list);
+        } else {
+            $this->_current_tick_key++;
         }
-        $ret = $this->_state_objs[$this->_current_state]->onStateTick($param);
+        $ret = $this->_state_objs[$this->_current_state]->onStateTick($this->_current_tick_key);
         return $ret;
     }
     /**
@@ -134,7 +146,7 @@ class FiniteStateMachine {
      */
     public function setData($data) {
         $this->_data = $data;
-        return true;
+        return $this;
     }
     /**
      * 获取状态机数据

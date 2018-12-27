@@ -14,16 +14,23 @@ abstract class FiniteState {
     /**
      * 进入状态时调用，可覆盖
      */
-    public function onStateEnter($from_state) {
-    }
+    public function onStateEnter($from_state) {}
     /**
      * 每次动作调用,必须实现的抽象方法
      */
-    abstract public function onStateTick($param = null);
+    abstract public function onStateTick($tick_key = null);
     /**
      * 退出状态时调用，可覆盖
      */
     public function onStateExit() {}
+    /**
+     * 获取状态机自定义时钟数据
+     * @param  string $key
+     * @return mix
+     */
+    public function getTickData($key = null) {
+        return $this->_fsm->getTickData($key);
+    }
     /**
      * 获取预设的下个状态值
      * @return int

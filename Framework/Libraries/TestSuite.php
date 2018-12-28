@@ -82,21 +82,27 @@ class TestSuite {
                 $line_func_range = array();
                 $code_sum_line   = 0;
                 foreach ($parser_ret['methods'] as $function_name => $line_set) {
-                    $code_sum_line += $line_set[PHPFunctionParser::END_LINE_INDEX] - $line_set[PHPFunctionParser::BEGIN_LINE_INDEX] + 1 - $line_set[PHPFunctionParser::INVALID_NUM_INDEX];
+                    //一般函数定义出现 { 就会换行了，所以总行数的计算：行号相减不再加 1 了。
+                    $code_sum_line += $line_set[PHPFunctionParser::END_LINE_INDEX] - $line_set[PHPFunctionParser::BEGIN_LINE_INDEX] - $line_set[PHPFunctionParser::INVALID_NUM_INDEX];
                     $line_func_range[$line_set[PHPFunctionParser::BEGIN_LINE_INDEX]] = $line_set[PHPFunctionParser::END_LINE_INDEX];
                     $line_func_map[$line_set[PHPFunctionParser::END_LINE_INDEX]]     = $function_name;
                 }
                 $ret = array();
                 foreach ($run_ret as $line_num => $value) {
+                    $is_match = false;
                     foreach ($line_func_range as $k1 => $v1) {
                         if ($line_num >= $k1 && $line_num <= $v1) {
                             $ret[$line_func_map[$v1]]++;
+                            $is_match = true;
                             break;
                         }
                     }
+                    if ( ! $is_match) {
+                        unset($run_ret[$line_num]);
+                    }
                 }
                 foreach ($parser_ret['methods'] as $key => $value) {
-                    $sum_line                                = $value[PHPFunctionParser::END_LINE_INDEX] - $value[PHPFunctionParser::BEGIN_LINE_INDEX] + 1 - $value[PHPFunctionParser::INVALID_NUM_INDEX];
+                    $sum_line                                = $value[PHPFunctionParser::END_LINE_INDEX] - $value[PHPFunctionParser::BEGIN_LINE_INDEX] - $value[PHPFunctionParser::INVALID_NUM_INDEX];
                     $parser_ret['methods'][$key]['coverage'] = 100 * $ret[$key] / $sum_line;
                 }
                 $coverage = round(100 * count($run_ret) / $code_sum_line, 2);

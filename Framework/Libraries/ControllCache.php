@@ -15,6 +15,7 @@ abstract class ControllCache extends KeyBuilder {
     const CACHE_TYPE_MC      = 'mc';
     private $_config_name    = '';
     private $_module         = '';
+    private $_is_use_cache   = true;
     private $_last_instance  = null;
     private static $INSTANCE = array();
     public $key_sets         = array(
@@ -33,13 +34,27 @@ abstract class ControllCache extends KeyBuilder {
         $this->_module = $module;
     }
     /**
+     * 启用cache
+     */
+    public function enableCache() {
+        $this->_is_use_cache = true;
+        return $this;
+    }
+    /**
+     * 禁用cache
+     */
+    public function disableCache() {
+        $this->_is_use_cache = false;
+        return $this;
+    }
+    /**
      * 魔术方法
      * @param  string $fun_name
      * @param  array  $params
      * @return mix
      */
     public function __call($fun_name, $params) {
-        if (empty($this->_last_instance)) {
+        if (empty($this->_last_instance) || ! $this->_is_use_cache) {
             return false;
         }
         return $this->_last_instance->$fun_name(...$params);

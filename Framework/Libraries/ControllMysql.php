@@ -48,15 +48,16 @@ namespace Framework\Libraries;
 use Framework\Entities\PDOConfig;
 
 abstract class ControllMysql {
-    private $_db_conf        = null;
-    private $_pdo            = array();
-    private $_last_sql       = null;
-    private $_module         = null;
-    private $_is_query       = false;
-    private $_is_add         = false;
-    private $_table_name     = '';
-    private $_last_params    = array();
-    private $_placeholder_id = 0;
+    private $_db_conf           = null;
+    private $_pdo               = array();
+    private static $_static_pdo = array();
+    private $_last_sql          = null;
+    private $_module            = null;
+    private $_is_query          = false;
+    private $_is_add            = false;
+    private $_table_name        = '';
+    private $_last_params       = array();
+    private $_placeholder_id    = 0;
 
     public function __construct(string $table_name, string $module = null) {
         $this->setTableName($table_name);
@@ -114,7 +115,7 @@ abstract class ControllMysql {
      * @param  array     $duplicate=null
      * @return string
      */
-    protected function add(array $data, array $duplicate = null) {
+    protected function add(array $data, $duplicate = null) {
         if (empty($data)) {
             throw new ControllMysqlException(ControllMysqlException::PARAMS_ERROR_MESSAGE);
         }
@@ -172,11 +173,7 @@ abstract class ControllMysql {
         }
         $sql = substr($sql, 0, -1);
         if ( ! empty($duplicate)) {
-            if (is_array($duplicate)) {
-                $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->_buildSet($duplicate);
-            } else {
-                $sql .= ' ON DUPLICATE KEY UPDATE ' . $duplicate;
-            }
+            $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->_buildSet($duplicate);
         }
         $this->_addVar($params);
         $this->_last_sql = $sql;
@@ -293,8 +290,11 @@ abstract class ControllMysql {
      * @return boolean
      */
     protected function beginTransaction(string $resource_name) {
-        $pdo = $this->_connectPdo($resource_name);
-        $pdo->beginTransaction();
+        if ( ! isset(self::$_static_pdo[$resource_name])) {
+            $pdo                               = $this->_connectPdo($resource_name);
+            self::$_static_pdo[$resource_name] = $pdo;
+        }
+        self::$_static_pdo[$resource_name]->beginTransaction();
         return true;
     }
     /**
@@ -304,8 +304,10 @@ abstract class ControllMysql {
      * @return boolean
      */
     protected function commit(string $resource_name) {
-        $pdo = $this->_connectPdo($resource_name);
-        $pdo->commit();
+        if ( ! isset(self::$_static_pdo[$resource_name])) {
+            return false;
+        }
+        self::$_static_pdo[$resource_name]->commit();
         return true;
     }
     /**
@@ -315,8 +317,10 @@ abstract class ControllMysql {
      * @return boolean
      */
     protected function rollback(string $resource_name) {
-        $pdo = $this->_connectPdo($resource_name);
-        $pdo->rollback();
+        if ( ! isset(self::$_static_pdo[$resource_name])) {
+            return false;
+        }
+        self::$_static_pdo[$resource_name]->rollback();
         return true;
     }
     /**
@@ -330,7 +334,27 @@ abstract class ControllMysql {
     public static function buildWhereCondition(string $field, $condition, string $operator = '=', string $logic = 'AND') {
         return array('field' => $field, 'condition' => $condition, 'operator' => $operator, 'logic' => $logic);
     }
-
+    /**
+     * 字段自增自减
+     * @param number $num
+     */
+    public static function fieldIncrease($num) {
+        if ( ! is_numeric($num)) {
+            throw new ControllMysqlException(ControllMysqlException::PARAMS_ERROR_MESSAGE);
+        }
+        return array('key' => 'inc', 'value' => $num);
+    }
+    /**
+     * 使用mysql的内置函数
+     * @param string $func_name 类似：substring(`field_name`,{2},{3})
+     * @param array  $params    类似：$params=array({2}'=>xx,'{3}'=>xx)
+     */
+    public static function useFunc(string $func_name, $params = array()) {
+        if (empty($func_name)) {
+            throw new ControllMysqlException(ControllMysqlException::PARAMS_ERROR_MESSAGE);
+        }
+        return array('key' => 'func', 'func' => $func_name, 'params' => $params);
+    }
     /**
      * 获取操作表名
      * @return string
@@ -365,13 +389,43 @@ abstract class ControllMysql {
         $set_str = '';
         $params  = array();
         foreach ($set_arr as $field => $value) {
-            $tmp_key = $this->_getFieldId();
-            $set_str .= $this->_putFieldQuote($field) . '=' . $tmp_key . ',';
-            $params[$tmp_key] = $value;
+            if (is_array($value)) {
+                $set_str .= $this->_buildArrayValue($field, $value) . ',';
+            } else {
+                $tmp_key = $this->_getFieldId();
+                $set_str .= $this->_putFieldQuote($field) . '=' . $tmp_key . ',';
+                $params[$tmp_key] = $value;
+            }
         }
-        $set_str = substr($set_str, 0, -1);
         $this->_addVar($params);
+        $set_str = substr($set_str, 0, -1);
         return $set_str;
+    }
+    private function _buildArrayValue(string $field, array $value) {
+        $ret = '';
+        switch ($value['key']) {
+            case 'inc':
+                $tmp_key          = $this->_getFieldId();
+                $ret              = $this->_putFieldQuote($field) . '=' . $this->_putFieldQuote($field) . '+' . $tmp_key;
+                $params[$tmp_key] = $value['value'];
+                $this->_addVar($params);
+                break;
+            case 'func':
+                $tmp_params = array();
+                $params     = array();
+                foreach ($value['params'] as $k => $v) {
+                    $tmp_key          = $this->_getFieldId();
+                    $tmp_params[$k]   = $tmp_key;
+                    $params[$tmp_key] = $v;
+                }
+                $this->_addVar($params);
+                $ret = $this->_putFieldQuote($field) . '=' . strtr($value['func'], $tmp_params);
+                break;
+            default:
+                throw new ControllMysqlException(ControllMysqlException::PARAMS_ERROR_MESSAGE);
+                break;
+        }
+        return $ret;
     }
     /**
      * 构建where条件语句

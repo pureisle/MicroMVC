@@ -102,7 +102,10 @@ class TestSuite {
                     }
                 }
                 foreach ($parser_ret['methods'] as $key => $value) {
-                    $sum_line                                = $value[PHPFunctionParser::END_LINE_INDEX] - $value[PHPFunctionParser::BEGIN_LINE_INDEX] - $value[PHPFunctionParser::INVALID_NUM_INDEX];
+                    $sum_line = $value[PHPFunctionParser::END_LINE_INDEX] - $value[PHPFunctionParser::BEGIN_LINE_INDEX] - $value[PHPFunctionParser::INVALID_NUM_INDEX];
+                    if (0 == $sum_line) {
+                        $sum_line = 1; //避免单行函数，下边除以0
+                    }
                     $parser_ret['methods'][$key]['coverage'] = 100 * $ret[$key] / $sum_line;
                 }
                 $coverage = round(100 * count($run_ret) / $code_sum_line, 2);

@@ -27,9 +27,10 @@ class Curl {
     private $_proxy_pass;
     protected $_cookie;
     protected $_options;
-    protected $_url     = array();
-    protected $_referer = array();
-    private $_outHeader = '';
+    protected $_url      = array();
+    protected $_referer  = array();
+    private $_outHeader  = '';
+    private $_curl_shell = '';
     /**
      * 构造方法，初始化HttpRequest对象
      *
@@ -48,6 +49,7 @@ class Curl {
                 $this->_options[$key] = $value;
             }
         }
+        $this->_curl_shell = 'curl -v';
         $this->init($header);
     }
     /**
@@ -77,8 +79,7 @@ class Curl {
      * @return object
      */
     public function timeOutForConnect($time) {
-        $this->_options['timeout'] = $time;
-        curl_setopt($this->_ch, CURLOPT_CONNECTTIMEOUT, $time);
+        $this->setOpt(CURLOPT_CONNECTTIMEOUT, $time);
         return $this;
     }
     /**
@@ -88,17 +89,25 @@ class Curl {
      * @return object
      */
     public function timeOutForExecute($time) {
-        $this->_options['exec_timeout'] = $time;
-        curl_setopt($this->_ch, CURLOPT_TIMEOUT, $time);
+        $this->setOpt(CURLOPT_TIMEOUT, $time);
         return $this;
     }
     /**
      * 设置毫秒超时时间
      */
     public function timeOut($ms) {
-        $this->_options['exec_timeout_ms'] = $ms;
-        curl_setopt($this->_ch, CURLOPT_NOSIGNAL, 1);     //注意，毫秒超时一定要设置这个.cURL 7.16.2中被加入。从PHP 5.2.3起可使用
-        curl_setopt($this->_ch, CURLOPT_TIMEOUT_MS, $ms); //单位为毫秒
+        $this->setOpt(CURLOPT_NOSIGNAL, 1);     //注意，毫秒超时一定要设置这个.cURL 7.16.2中被加入。从PHP 5.2.3起可使用
+        $this->setOpt(CURLOPT_TIMEOUT_MS, $ms); //单位为毫秒
+        return $this;
+    }
+    /**
+     * 设置curl参数
+     * @param string $opt_name
+     * @param mix    $value
+     */
+    public function setOpt($opt_name, $value) {
+        $this->_options['exec_' . $opt_name] = $value;
+        curl_setopt($this->_ch, $opt_name, $value);
         return $this;
     }
     /**
@@ -122,6 +131,9 @@ class Curl {
      */
     public function setHeader($header = array('Expect:')) {
         if (is_array($header)) {
+            foreach ($header as $one) {
+                $this->_curl_shell .= ' --Header "' . $one . '"';
+            }
             curl_setopt($this->_ch, CURLOPT_HTTPHEADER, $header);
         }
         $this->_outHeader = $header;
@@ -231,7 +243,7 @@ class Curl {
         curl_setopt($this->_ch, CURLOPT_URL, $this->_url[$action]);
         curl_setopt($this->_ch, CURLOPT_REFERER, $this->_referer[$action]);
         curl_setopt($this->_ch, CURLOPT_POSTFIELDS, $query);
-        Debug::debugDump($this->_url[$action] . "?" . $query);
+        $this->_curl_shell .= ' --referer "' . $this->_referer[$action] . '" --data "' . $query . '" "' . $this->_url[$action] . '"';
         $this->_requrest();
         return $this;
     }
@@ -256,7 +268,7 @@ class Curl {
         curl_setopt($this->_ch, CURLOPT_HTTPGET, true);
         curl_setopt($this->_ch, CURLOPT_URL, $url);
         curl_setopt($this->_ch, CURLOPT_REFERER, $this->_referer[$action]);
-
+        $this->_curl_shell .= ' --referer "' . $this->_referer[$action] . '" "' . $url . '"';
         $this->_requrest();
         return $this;
     }
@@ -403,7 +415,9 @@ class Curl {
      */
     private function _requrest() {
         $response = curl_exec($this->_ch);
-        $errno    = curl_errno($this->_ch);
+        Debug::debugDump($this->_curl_shell);
+        $this->_curl_shell = 'curl -v';
+        $errno             = curl_errno($this->_ch);
         if ($errno > 0) {
             throw new CurlRequestException($errno, curl_error($this->_ch));
         }
@@ -418,9 +432,6 @@ class Curl {
      * @return string
      */
     private function _buildQuery($params) {
-        if (empty($params) || ! is_array($params)) {
-            return $params;
-        }
         return http_build_query($params);
 
         $o = '';

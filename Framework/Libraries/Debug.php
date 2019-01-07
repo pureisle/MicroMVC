@@ -43,6 +43,9 @@ class Debug {
      *
      */
     public static function getDebug() {
+        if (Tools::ENV_PRO === Tools::getEnv()) {
+            return false;
+        }
         return self::$_debug || (isset($_GET['debug']) && 'true' == $_GET['debug']);
     }
     /**

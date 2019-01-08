@@ -121,10 +121,14 @@ class Dispatcher {
      * @return Dispatcher
      */
     public function dispatch() {
-        if (empty($this->_request)) {
+        $request = $this->getRequest();
+        if (empty($request)) {
             throw new DispatcherException(DispatcherException::ERROR_REQUEST_NULL);
         }
-        $request    = $this->_request;
+        $response = $this->getResponse();
+        if (empty($response)) {
+            throw new DispatcherException(DispatcherException::ERROR_REQUEST_NULL);
+        }
         $module     = $request->getModule();
         $controller = $request->getController();
         $action     = $request->getAction();
@@ -133,9 +137,9 @@ class Dispatcher {
         $file_path = \Framework\Models\AutoLoad::getFilePath($class_name);
         if (file_exists($file_path) === false) {
             http_response_code(404);
-            return false;
+            return $this;
         }
-        $class = new $class_name($request);
+        $class = new $class_name($request, $response);
         if ($class instanceof Controller === false) {
             throw new DispatcherException(DispatcherException::ERROR_OBJECT_TYPE);
         }
@@ -149,10 +153,6 @@ class Dispatcher {
             $tpl_file_path = ROOT_PATH . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . $this->_config['path']['view'] . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $controller) . DIRECTORY_SEPARATOR . $action . '.' . $this->_config['template']['suffix'];
             $body .= $this->_view->render($tpl_file_path);
         }
-        if (empty($this->_response)) {
-            throw new DispatcherException(DispatcherException::ERROR_REQUEST_NULL);
-        }
-        $response = $this->_response;
         $response->setBody($body);
         return $this;
     }

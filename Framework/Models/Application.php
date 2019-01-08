@@ -94,6 +94,10 @@ class Application {
         }
         $ret_body = $response->getBody();
         if ($is_echo) {
+            $header = $response->getHeader();
+            foreach ($header as $one) {
+                header($one);
+            }
             echo $ret_body;
         } else {
             return $ret_body;

@@ -3,7 +3,7 @@
 * 提供最简单基础的 MVC 框架，将性能损耗降到最低。[关于性能](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/performance.md)；
 * 按 Module 进行资源分离，以便对业务进行微服务化隔离或后期的服务便捷迁移。[关于Module和迁移](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/module.md)；
 * 提供简单好用的单元测试框架。[关于单元测试](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/unittest.md)；
-* 提供便捷的接口[参数合法性验证](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/params_check.md)服务，接口合法性调用检测服务，做了基础的防SQL注入、CSRF、XSS等安全防护；
+* 提供便捷的接口[参数合法性验证](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/params_check.md)服务，接口合法性调用检测服务，做了基础的防SQL注入、CSRF、XSS等安全防护。[关于安全](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/secure.md)；
 * 提供简单好用工具类，如 [Mysql](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/controllmysql.md) 、Curl 等资源的封装、Xhprof 性能优化工具等；
 * 根据代码运行的环境自动加载相应的配置文件，方便的切换仿真、生产环境；
 * 提供PSR-3规范的日志类，额外提供 log buffer 功能（性能提升） 和 全局日志标记码（一个进程一个标记码，方便定位问题）的功能；

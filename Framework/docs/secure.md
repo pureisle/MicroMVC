@@ -20,7 +20,7 @@
 1. 防 SQL 注入。对数据库的操作如果继承了父类 Framework\Libraries\ControllMysql 类，并且没有使用特别的自己拼写 SQL 的用法，则基本上不用担心 SQL 注入问题。底层实现方式主要是依赖 PDO 扩展的 prepare() 方法。
 1. 防 XSS 。在 Controller 基类里，下发渲染数据时需要使用 assign(array $var_arr, bool $is_html_encode = true) 方法，该方法提供了默认的 HTML 实体转译的操作，防止下发的渲染数据出现 XSS 漏洞。
 1. 防 CSRF 。 该漏洞一般发生上行接口且上行接口前一页是表单页。目前常见做法是增加验证码。框架的做法是在前置页使用 Controller 基类提供的 csrfSet(string $host = '') 方法，该方法会下发一个框架 cookie ，然后在后职页使用 csrfCheck() 方法，会去检查相应 cookie 是否存在，以此来防治 CSRF 漏洞的出现。
-1. 请求合法性验证。 具体使用 Controller 父类的 useAuth(string $auth_config) 方法，提供了多种验证方式，如下：
+1. 请求合法性验证。 具体使用 Controller 父类的 useAuth(string $auth_config) 方法，其中 $auth_config 参数为配置文件名称，具体可以参考 Sso 项目下的 api_auth.php 配置。框架提供的多种验证方式，如下：
 ```
 安全认证主要包括：
      *     1、app_secret参与的签名验证；需要开启参数use_sign = true 和设置 app_secret 值

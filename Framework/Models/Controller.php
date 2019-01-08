@@ -12,13 +12,16 @@ use Framework\Libraries\Exception;
 use Framework\Libraries\Tools;
 use Framework\Libraries\Validator;
 use Framework\Models\Request;
+use Framework\Models\Response;
 
 abstract class Controller {
     const PARAM_SUFFIX = '_PARAM_RULES';
     private $_view;
     private $_request;
-    public function __construct(Request $request) {
-        $this->_request = $request;
+    private $_response;
+    public function __construct(Request $request, Response $response) {
+        $this->_request  = $request;
+        $this->_response = $response;
         $this->init();
     }
     /**
@@ -119,6 +122,7 @@ abstract class Controller {
         }
         session_start();
         $_SESSION[self::CSRF_VAR_NAME] = $value;
+        return $this;
     }
     /**
      * csrf 检测
@@ -132,6 +136,7 @@ abstract class Controller {
             throw new ControllerException(ControllerException::ERROR_CSRF_AUTH_CHECK, 'csrf auth check error');
         }
         unset($_SESSION[self::CSRF_VAR_NAME]); //验证后使其失效
+        return $this;
     }
     /**
      * 接口使用auth认证
@@ -180,7 +185,85 @@ abstract class Controller {
         if ( ! $ret) {
             throw new ControllerException(ControllerException::ERROR_API_AUTH_CHECK, $error);
         }
-        return true;
+        return $this;
+    }
+    /**
+     * 安全的localtion跳转
+     * @param string $url
+     * @param string $pattern_config='localtion_url' 需要检查的可供跳转的url配置文件
+     */
+    public function localtion(string $url, string $pattern_config = 'localtion_url') {
+        $tmp                 = get_class($this);
+        list($module, $null) = explode('\\', $tmp, 2);
+        $config_set          = ConfigTool::loadByName($pattern_config, $module);
+        if (empty($config_set)) {
+            throw new ControllerException(ControllerException::ERROR_API_AUTH_CHECK, 'localtion url config load fail');
+        }
+        //need to do filter url.
+        $this->_response->setHeader('Location: ' . $url);
+        return $this;
+    }
+    /**
+     * 强制让浏览器使用https请求
+     * @param int|integer $sec
+     * @param string      $include_sub_domain 要求使用https的子域名
+     */
+    public function forceHTTPS(int $sec = 319550916, string $include_sub_domain = '') {
+        $tmp = 'strict-transport-security: max-age=' . $sec;
+        $this->_response->setHeader($tmp);
+        return $this;
+    }
+    /**
+     * 使用是否禁止iframe嵌套报头
+     * $opt=DENY：不允许被任何页面嵌入；
+     * $opt=SAMEORIGIN：不允许被本域以外的页面嵌入； 默认值。
+     * $opt=ALLOW-FROM uri：不允许被指定的域名以外的页面嵌入（Chrome现阶段不支持）；
+     * @param string $opt
+     */
+    public function useFrame(string $opt = 'SAMEORIGIN') {
+        $this->_response->setHeader('x-frame-options: ' . $opt);
+        return $this;
+    }
+    /**
+     * 禁用浏览器文件类型嗅探
+     * 有的浏览器会嗅探文件类型，攻击者利用该特性可以让原本应该解析为图片的请求被解析为JavaScript
+     */
+    public function disableSniffing() {
+        $this->_response->setHeader('X-Content-Type-Options: nosniff');
+        return $this;
+    }
+    /**
+     * 使用浏览器内置的XSS防护
+     * @param $enable=1
+     */
+    public function useXSS($enable = 1) {
+        $this->_response->setHeader('x-xss-protection: ' . $enable . '; mode=block');
+        return $this;
+    }
+    /**
+     * 定义页面可以加载哪些资源
+     * facebook 的该报头使用样例
+     * content-security-policy: default-src *;script-src https://*.facebook.com http://*.facebook.com https://*.fbcdn.net http://*.fbcdn.net *.facebook.net *.google-analytics.com *.virtualearth.net *.google.com 127.0.0.1:* *.spotilocal.com:* chrome-extension://lifbcibllhkdhoafpjfnlhfpfgnpldfl 'unsafe-inline' 'unsafe-eval' https://*.akamaihd.net http://*.akamaihd.net;style-src * 'unsafe-inline';connect-src https://*.facebook.com http://*.facebook.com https://*.fbcdn.net http://*.fbcdn.net *.facebook.net *.spotilocal.com:* https://*.akamaihd.net ws://*.facebook.com:* http://*.akamaihd.net https://fb.scanandcleanlocal.com:*;
+     *
+     * 配置文件样例参考 Sso 中的 policy_urls.php
+     * @param $policy_urls_config='policy_urls' 使用相应的配置文件内容
+     */
+    public function usePolicy(string $policy_urls_config = 'policy_urls') {
+        $tmp                 = get_class($this);
+        list($module, $null) = explode('\\', $tmp, 2);
+        $config_set          = ConfigTool::loadByName($policy_urls_config, $module);
+        if (empty($config_set)) {
+            throw new ControllerException(ControllerException::ERROR_API_AUTH_CHECK, 'url-load policy config load fail');
+        }
+        $tmp = '';
+        foreach ($config_set as $key => $value) {
+            if (empty($value)) {
+                continue;
+            }
+            $tmp .= $key . ' ' . implode(' ', $value) . ";";
+        }
+        $this->_response->setHeader('content-security-policy: ' . $tmp);
+        return $this;
     }
     /**
      * 参数校验

@@ -27,4 +27,19 @@ class Response {
     public function getBody() {
         return $this->_body;
     }
+    /**
+     * 设置header
+     * @param string $str
+     */
+    public function setHeader(string $str) {
+        $this->_header[] = $str;
+        return $this;
+    }
+    /**
+     * 获取header
+     * @return array
+     */
+    public function getHeader() {
+        return $this->_header;
+    }
 }

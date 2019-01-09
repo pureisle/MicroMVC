@@ -13,16 +13,13 @@ class Login extends Controller {
     public static $INDEX_PARAM_RULES = array(
         'name'   => '',
         'passwd' => '',
-        'url'    => ''
+        'url'    => 'default:http://t.cn'
     );
     public function indexAction() {
         $this->usePolicy()->useXSS()->disableSniffing()->useFrame()->forceHTTPS();
         $params = $this->getGetParams();
         extract($params);
         if (empty($passwd) || empty($name)) {
-            if (empty($url)) {
-                $url = "http://t.cn";
-            }
             $this->assign(array("url" => $url, 'test_xss' => array('a' => '<a href=xxx></a>', 'b' => 123)));
             return true;
         }
@@ -40,7 +37,7 @@ class Login extends Controller {
         $_SESSION['name']   = $user_info['name'];
         $_SESSION['extend'] = $user_info['extend'];
         //应该增加url安全域检验
-        header("Location: " . $url);
+        $this->localtion($url);
         return false;
     }
 }

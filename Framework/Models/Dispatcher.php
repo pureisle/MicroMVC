@@ -146,8 +146,13 @@ class Dispatcher {
         $class->setView($this->_view);
         $action_name = $action . self::ACTION_SUFFIX;
         ob_start();
-        $action_ret = $class->$action_name();
-        $body       = ob_get_contents();
+        //安全退出的话相当于 action 返回 false 继续运行
+        try {
+            $action_ret = $class->$action_name();
+        } catch (ExitException $e) {
+            $action_ret = false;
+        }
+        $body = ob_get_contents();
         ob_end_clean();
         if (false !== $action_ret) {
             $tpl_file_path = ROOT_PATH . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . $this->_config['path']['view'] . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $controller) . DIRECTORY_SEPARATOR . $action . '.' . $this->_config['template']['suffix'];

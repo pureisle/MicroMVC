@@ -16,6 +16,7 @@ class Login extends Controller {
         'url'    => ''
     );
     public function indexAction() {
+        $this->usePolicy()->useXSS()->disableSniffing()->useFrame()->forceHTTPS();
         $params = $this->getGetParams();
         extract($params);
         if (empty($passwd) || empty($name)) {

@@ -35,7 +35,7 @@ class Session {
 
     public function read($session_id) {
         if (self::REDIS_STORE_TYPE == $this->_store_type) {
-            $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
+            $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\SessionRedis');
             return $cache->get($session_id);
         } else {
             $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
@@ -52,7 +52,7 @@ class Session {
             return false;
         }
         if (self::REDIS_STORE_TYPE == $this->_store_type) {
-            $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
+            $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\SessionRedis');
             return $cache->set($session_id, $data);
         } else {
             $s_obj  = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');
@@ -63,7 +63,7 @@ class Session {
 
     public function destroy($session_id) {
         if (self::REDIS_STORE_TYPE == $this->_store_type) {
-            $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Cache\Session');
+            $cache = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\SessionRedis');
             $ret   = $cache->remove($session_id);
         } else {
             $s_obj = SingletonManager::$SINGLETON_POOL->getInstance('\Sso\Data\Session');

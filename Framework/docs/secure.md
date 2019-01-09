@@ -40,7 +40,7 @@
      *     4、使用字符"&"合并排序后的数组生成字符串,如： $params_str = implode('&',$tmp);
      *     5、使用md5获取哈希值，取前6位，至此获得参数的签名字符串,如： $sign = substr(md5($params_str), 0, 6);
 ```
-1. 框架的控制器基类 Controller 提供了一些基于浏览器实现的HTTP协议报头，这些报头需要使用者深入了解其机制后使用，以避免不必要的安全损失,方法如下:
+1. 框架的控制器基类 Controller 提供了一些基于浏览器实现的HTTP协议报头，这些报头需要使用者深入了解其机制后使用，以避免不必要的安全损失。（！特别强调，使用框架的如下方法，绝对不要使用 exit() 直接退出程序，应该使用框架提供的安全退出方法 safe_exit()，以便框架还能继续运行处理善后问题！）方法如下:
 ```
 forceHTTPS(int $sec = 319550916, string $include_sub_domain = '') 强制浏览器访问HTTPS协议的地址
 useFrame(string $opt = 'SAMEORIGIN')	禁止当前页面被其他 iframe 嵌套

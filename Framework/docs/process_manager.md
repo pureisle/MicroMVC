@@ -65,4 +65,6 @@ addJobIdList($job_id_list)
 setMaxProcess($max_num)  
 getResourceInfo($pid_list = array(), $is_contain_child = true) //获取制定pid列表的资源状态  
 getAllChildrenPidList($pid_list = array())  //获取所有的子pid  
-killProcessAndChilds($pid_list = array(), $signal = SIGKILL, &$error_pid = array()) //结束进程及其所有子进程  
+killProcessAndChilds($pid_list = array(), $signal = SIGKILL, &$error_pid = array()) //结束进程及其所有子进程
+1. 父类 ProcessManager 完成的另外一个功能就是记录和控制子进程的进展状况，可以通过 getJobExecInfo() 方法来获取所有子进程任务的进展情况。如任务开始结束时间、 CPU 占用、MEM 占用、任务执行状态等信息。
+

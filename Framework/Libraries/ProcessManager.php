@@ -18,9 +18,7 @@ if (version_compare(PHP_VERSION, '7.1') >= 0) {
     declare (ticks = 1);
 }
 abstract class ProcessManager {
-    private $_max_processes      = 9999;
-    private $_total_processes    = 10;
-    private $_max_time_out       = 400;
+    private $_max_processes      = 999;
     private $_current_jobs       = array();
     private $_signal_queue       = array();
     private $_jobs_exec_info     = array();
@@ -45,7 +43,7 @@ abstract class ProcessManager {
      * @param  int $job_id     任务id
      * @return int 退出码
      */
-    abstract public function childExec($job_id);
+    abstract public function doJob($job_id);
     /**
      * 超时检测
      * @param  int       $job_id            任务id
@@ -78,29 +76,6 @@ abstract class ProcessManager {
         }
         return $this;
     }
-
-    /**
-     * 设置本次一共需要多少进程要跑
-     * @param int $max_num 最大正在执行子任务数
-     */
-    public function setTotalProcesses($totalProcesses) {
-        if (is_numeric($totalProcesses)) {
-            $this->_total_processes = $totalProcesses;
-        }
-        return $this;
-    }
-
-    /**
-     * 设置最大执行时间
-     * @param int $max_time_out 最大执行时间
-     */
-    public function setMaxTimeout($max_time_out) {
-        if (is_numeric($max_time_out)) {
-            $this->_max_time_out = $max_time_out;
-        }
-        return $this;
-    }
-
     /**
      * 获取任务执行信息
      * @return array
@@ -278,7 +253,7 @@ abstract class ProcessManager {
         if (-1 == $pid) {
             return false;
         } else if (0 == $pid) {
-            $exit_code = $this->childExec($job_id);
+            $exit_code = $this->doJob($job_id);
             exit($exit_code);
         }
         $this->_current_jobs[$pid] = $job_id;

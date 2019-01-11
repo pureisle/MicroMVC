@@ -17,10 +17,10 @@ class TestProcessManager extends TestSuite {
         // var_dump($ret, $error_pid);
         $ret = ProcessManager::getResourceInfo(array(1, 2008, 45534));
         // var_dump($ret, $error_pid);
-
     }
     public function testRun() {
         $t = new TestPM();
+        $t->setMaxProcess(20);
         $t->run();
         $this->assertEq(count($t->getJobExecInfo()), count($t->my_job_list));
     }
@@ -46,7 +46,7 @@ class TestPM extends ProcessManager {
      * @param  int $job_id     任务id
      * @return int 退出码
      */
-    public function childExec($job_id) {
+    public function doJob($job_id) {
         // echo $job_id . "\n";
     }
     /**

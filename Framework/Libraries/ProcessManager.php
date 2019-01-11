@@ -12,7 +12,11 @@ if (substr(php_sapi_name(), 0, 3) !== 'cli') {
     die("This Programe can only be run in CLI mode");
 }
 //尽可能更快的检测待处理的信号
-declare (ticks = 1);
+if (version_compare(PHP_VERSION, '7.1') >= 0) {
+    pcntl_async_signals(true);
+} else {
+    declare (ticks = 1);
+}
 abstract class ProcessManager {
     private $_max_processes      = 9999;
     private $_total_processes    = 10;
@@ -22,10 +26,13 @@ abstract class ProcessManager {
     private $_jobs_exec_info     = array();
     private $_jobs_exec_resource = array();
     private $_job_ids            = array();
-
     public function __construct() {
         pcntl_signal(SIGCHLD, array($this, "_childSignalHandler"));
     }
+    /**
+     * run之前基类会初始化调用
+     */
+    public function init() {}
     /**
      * 监控任务使用资源状态
      * @param  id     $job_id
@@ -106,6 +113,7 @@ abstract class ProcessManager {
      * 执行入口
      */
     public function run() {
+        $this->init();
         $job_ids = $this->getJobIdList();
         if (empty($job_ids)) {
             return true;
@@ -207,7 +215,7 @@ abstract class ProcessManager {
      */
     public static function getAllChildrenPidList($pid_list = array()) {
         if (empty($pid_list)) {
-            return arrary();
+            return array();
         }
         $cmd     = "ps -eo pid,ppid|grep -v PID";
         $cmd_ret = shell_exec($cmd);
@@ -277,7 +285,8 @@ abstract class ProcessManager {
         $this->_addJobExecInfo($pid, $job_id);
         //处理已经提前结束的子进程队列
         if (isset($this->_signal_queue[$pid])) {
-            $this->_childSignalHandler(SIGCHLD, $pid, $this->_signal_queue[$pid]);
+            $this->_signal_queue[$pid]['initiative'] = true;
+            $this->_childSignalHandler(SIGCHLD, $this->_signal_queue[$pid]);
             unset($this->_signal_queue[$pid]);
         }
         return true;
@@ -285,11 +294,14 @@ abstract class ProcessManager {
     /**
      * 子进程结束handler
      * @param  string    $signo
-     * @param  int       $pid
-     * @param  int       $status
+     * @param  array     $siginfo
      * @return boolean
      */
-    private function _childSignalHandler($signo, $pid = null, $status = null) {
+    private function _childSignalHandler($signo, $siginfo = null) {
+        if (isset($siginfo['pid'])) {
+            $pid    = $siginfo['pid'];
+            $status = $siginfo['status'];
+        }
         if ( ! $pid) {
             $pid = pcntl_waitpid(-1, $status, WNOHANG);
         }
@@ -301,7 +313,12 @@ abstract class ProcessManager {
                 unset($this->_current_jobs[$pid]);
             } else {
                 //不在任务列表加入信号队列等待主进程调用时处理
-                $this->_signal_queue[$pid] = $status;
+                if (empty($siginfo)) {
+                    //兼容有些低版本版本没有传第二个参数
+                    $siginfo['pid']    = $pid;
+                    $siginfo['status'] = $status;
+                }
+                $this->_signal_queue[$pid] = $siginfo;
             }
             $pid = pcntl_waitpid(-1, $status, WNOHANG);
         }

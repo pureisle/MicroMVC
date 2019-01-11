@@ -46,7 +46,7 @@ class TestPM extends ProcessManager {
      * @param  int $job_id     任务id
      * @return int 退出码
      */
-    public function doJob($job_id) {
+    public function childExec($job_id) {
         // echo $job_id . "\n";
     }
     /**

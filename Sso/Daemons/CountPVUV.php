@@ -16,6 +16,7 @@ class CountPVUV extends Daemon {
     }
     public function doJob() {
         echo "CountPVUV run\n";
-        sleep(30);
+        sleep(8);
+        echo "CountPVUV finished\n";
     }
 }

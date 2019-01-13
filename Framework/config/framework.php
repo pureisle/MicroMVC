@@ -15,6 +15,7 @@ return array(
         'test'       => 'Tests',
         'controller' => 'Controllers',
         'view'       => 'Views',
+        'daemon'     => 'Daemons',
         'plugin'     => 'Plugins',
         'cache'      => 'Cache',
         'data'       => 'Data',

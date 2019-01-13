@@ -37,8 +37,13 @@ class AutoLoad {
             return false;
         }
         $file_path = self::getFilePath($class_name);
-        require_once $file_path;
-        return true;
+        if (file_exists($file_path)) {
+            require_once $file_path;
+            return true;
+        } else {
+            // throw new \Exception('file not exist:' . $file_path);
+            return false;
+        }
     }
     /**
      * 根据类名获取文件路径

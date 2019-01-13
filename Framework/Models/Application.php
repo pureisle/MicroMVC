@@ -114,7 +114,6 @@ class Application {
             return $function_name($this->getConfig(), $argv);
         }
         throw new ApplicationException(ApplicationException::ERROR_FUNCTION_NOT_EXIST);
-        return false;
     }
     /**
      * 执行应用初始化类

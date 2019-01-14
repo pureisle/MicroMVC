@@ -9,14 +9,11 @@
  */
 namespace Framework\Libraries;
 abstract class Daemon {
-    public $params = array();
     /**
      * 构造函数
      * @param array $params 脚本运行时传入的参数列表
      */
-    public function __construct($params) {
-        $this->params = $params;
-    }
+    public function __construct($params) {}
     /**
      * 初始化钩子
      * @return
@@ -49,4 +46,4 @@ abstract class Daemon {
         $sh_ret_arr  = explode("\n", $sh_ret);
         return $sh_ret_arr;
     }
-} 
+}

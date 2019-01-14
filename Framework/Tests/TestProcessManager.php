@@ -20,8 +20,10 @@ class TestProcessManager extends TestSuite {
     }
     public function testRun() {
         $t = new TestPM();
-        $t->setMaxProcess(20);
+        $t->setMaxProcess(5);
+        $t->getJobIdList();
         $t->run();
+        // var_dump($t->getJobExecInfo());
         $this->assertEq(count($t->getJobExecInfo()), count($t->my_job_list));
     }
 }
@@ -48,6 +50,7 @@ class TestPM extends ProcessManager {
      */
     public function childExec($job_id) {
         // echo $job_id . "\n";
+        // sleep(1);
     }
     /**
      * 超时检测

@@ -18,19 +18,24 @@ if (version_compare(PHP_VERSION, '7.1') >= 0) {
     declare (ticks = 1);
 }
 abstract class ProcessManager {
-    private $_max_processes      = 999;
-    private $_current_jobs       = array();
-    private $_signal_queue       = array();
-    private $_jobs_exec_info     = array();
-    private $_jobs_exec_resource = array();
-    private $_job_ids            = array();
+    private $_max_processes  = 999;
+    private $_current_jobs   = array();
+    private $_signal_queue   = array();
+    private $_jobs_exec_info = array();
+    private $_job_ids        = array();
+    private $_ppid           = 0;
     public function __construct() {
+        $this->_ppid = getmypid();
         pcntl_signal(SIGCHLD, array($this, "_childSignalHandler"));
     }
     /**
      * run之前基类会初始化调用
      */
     public function init() {}
+    /**
+     * 任务退出时调用
+     */
+    public function onJobExit($job_id, $siginfo) {}
     /**
      * 监控任务使用资源状态
      * @param  id     $job_id
@@ -56,15 +61,28 @@ abstract class ProcessManager {
      * @param array $job_id_list 任务id号数组
      */
     public function addJobIdList($job_id_list) {
-        $this->_job_ids = array_merge($this->_job_ids, $job_id_list);
+        foreach ($job_id_list as $one) {
+            if ( ! is_int($one)) {
+                return false;
+            }
+        }
+        $this->_job_ids = array_unique(array_merge($this->_job_ids, $job_id_list));
         return $this;
     }
     /**
-     * 获取执行任务id列表
+     * 获取待执行的任务id列表
      * @return array
      */
     public function getJobIdList() {
         return $this->_job_ids;
+    }
+    /**
+     * 弹出一个任务id
+     * @return int
+     */
+    public function popJobId() {
+        $job_id = array_shift($this->_job_ids);
+        return $job_id;
     }
     /**
      * 设置最大子进程数
@@ -83,26 +101,35 @@ abstract class ProcessManager {
     public function getJobExecInfo() {
         return $this->_jobs_exec_info;
     }
-
+    /**
+     * 给子类开一个清理数据的口子
+     * @param int $pid
+     */
+    protected function unsetJobExecInfo($pid) {
+        unset($this->_jobs_exec_info[$pid]);
+        return $this;
+    }
     /**
      * 执行入口
      */
     public function run() {
         $this->init();
-        $job_ids = $this->getJobIdList();
-        if (empty($job_ids)) {
-            return true;
-        }
-        foreach ($job_ids as $job_id) {
-            while (count($this->_current_jobs) >= $this->_max_processes) {
-                $this->_monitor();
-                sleep(1);
-            }
-            $launched = $this->_forkJob($job_id);
-        }
-        while (count($this->_current_jobs) > 0) {
+        while (true) {
             $this->_monitor();
-            sleep(1);
+            $job_id = $this->popJobId();
+            if (null === $job_id) {
+                if (count($this->_current_jobs) <= 0) {
+                    break;
+                } else {
+                    sleep(1);
+                    continue;
+                }
+            } else {
+                $launched = $this->_forkJob($job_id);
+                while (count($this->_current_jobs) >= $this->_max_processes) {
+                    sleep(1);
+                }
+            }
         }
         return true;
     }
@@ -115,7 +142,6 @@ abstract class ProcessManager {
         list($usec, $sec) = explode(' ', microtime());
         return ((float) $usec + (float) $sec);
     }
-
     /**
      * 获取制定pid列表的资源状态
      * @param  array   $pid_list
@@ -161,7 +187,7 @@ abstract class ProcessManager {
         //合并信息
         $ret = array();
         foreach ($pid_list as $ppid) {
-            $ret[$ppid] = array('%CPU' => 0, '%MEM' => 0, 'VSZ' => 0, 'RSS' => 0, 'SZ' => 0);
+            $ret[$ppid] = array('pid' => $ppid, '%CPU' => 0, '%MEM' => 0, 'VSZ' => 0, 'RSS' => 0, 'SZ' => 0);
             $pid_array  = array($ppid);
             if ($is_contain_child) {
                 $pid_array = array_merge($pid_array, $children_pid_list[$ppid]);
@@ -284,8 +310,8 @@ abstract class ProcessManager {
             //在当前任务列表中，进行结束处理
             if (isset($this->_current_jobs[$pid])) {
                 $exit_code = pcntl_wexitstatus($status);
-                $this->_addJobExecInfo($pid, $this->_current_jobs[$pid], $status, $exit_code);
-                unset($this->_current_jobs[$pid]);
+                $job_id    = $this->_current_jobs[$pid];
+                $this->_addJobExecInfo($pid, $job_id, $status, $exit_code);
             } else {
                 //不在任务列表加入信号队列等待主进程调用时处理
                 if (empty($siginfo)) {
@@ -312,6 +338,8 @@ abstract class ProcessManager {
         if ( ! is_null($exit_code)) {
             $this->_jobs_exec_info[$pid]['exit_code'] = $exit_code;
             $this->_jobs_exec_info[$pid]['end_time']  = self::getMicrotime();
+            unset($this->_current_jobs[$pid]);                                                  //删除当前任务
+            $this->onJobExit($job_id, array('pid' => $pid, 'status' => SIGKILL, 'code' => -1)); //通知子类
         }
         return $this;
     }
@@ -320,12 +348,12 @@ abstract class ProcessManager {
      * @return boolean
      */
     private function _monitor() {
-        $job_exec_info = $this->getJobExecInfo();
         if (count($this->_current_jobs) <= 0) {
             return true;
         }
-        $pid_list  = array_keys($this->_current_jobs);
-        $pids_info = self::getResourceInfo($pid_list);
+        $pid_list      = array_keys($this->_current_jobs);
+        $pids_info     = self::getResourceInfo($pid_list);
+        $job_exec_info = $this->getJobExecInfo();
         foreach ($pids_info as $pid => $pid_info) {
             $job_id = $this->_jobs_exec_info[$pid]['job_id'];
             //资源监控记录日志
@@ -334,8 +362,8 @@ abstract class ProcessManager {
             if ($this->timeOutCheck($job_id, $job_exec_info[$pid]['begin_time']) == true) {
                 $tmp = self::killProcessAndChilds(array($pid), SIGKILL, $error_pid);
                 if (true == $tmp) {
+                    //posix_kill 的信息量 没接收到,这里额外清理一下需要处理的数据
                     $this->_addJobExecInfo($pid, $job_id, SIGKILL, -1);
-                    unset($this->_current_jobs[$pid]);
                     unset($this->_signal_queue[$pid]);
                 }
             }

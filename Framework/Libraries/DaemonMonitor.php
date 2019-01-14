@@ -1,6 +1,28 @@
 <?php
 /**
  * 常驻进程控制和监控类
+ *
+ * //配置文件格式：
+ * //{Daemon 类名} => array(
+ * //    'count' => {启动进程个数}
+ * //    'time_out' => {最大执行时间}  //单位 秒，可以为小数
+ * //    'log_config_name'  // 日志配置名
+ * // )
+ * return array(
+ * 'CountPVUV' => array(
+ * 'count'           => 1,
+ * 'time_out'        => 3.5,
+ * 'log_config_name' => ''
+ * )
+ * // 'DaemonName2' => array(
+ * //     'count'    => 5,
+ * //     'time_out' => 3
+ * // ),
+ * // 'DaemonName3' => array(
+ * //     'count' => 4
+ * // )
+ * );
+ *
  * @author zhiyuan12@staff.weibo.com
  */
 namespace Framework\Libraries;
@@ -27,7 +49,7 @@ class DaemonMonitor extends ProcessManager {
         $job_id   = self::$KEEP_ALIVE_DAEMON['job_id'] + 1;
         foreach ($this->_config as $daemon_name => $config) {
             for ($i = 0; $i < $config['count']; $i++) {
-                $job_list[$job_id] = array('name' => $daemon_name, 'id' => $i);
+                $job_list[$job_id] = array('name' => $daemon_name, 'id' => $i, 'params' => $config['params']);
                 $this->_writeLog($job_id, array('job_info' => $job_list[$job_id]));
                 $this->_restart_count[$job_id] = 0;
                 $job_id++;
@@ -96,7 +118,7 @@ class DaemonMonitor extends ProcessManager {
             echo "class not exist and stop restart:" . $class_name . "\n";
             safe_exit();
         }
-        $obj = new $class_name(array('id' => $this->_job_list[$job_id]['id'], 'restart_num' => $this->_restart_count[$job_id]));
+        $obj = new $class_name(array('id' => $this->_job_list[$job_id]['id'], 'restart_num' => $this->_restart_count[$job_id], 'params' => $this->_job_list[$job_id]['params']));
         $obj->run();
     }
     /**

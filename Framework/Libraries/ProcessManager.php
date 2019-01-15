@@ -77,6 +77,13 @@ abstract class ProcessManager {
         return $this->_job_ids;
     }
     /**
+     * 获取父进程id
+     * @return int
+     */
+    public function getParentPid() {
+        return $this->_ppid;
+    }
+    /**
      * 弹出一个任务id
      * @return int
      */
@@ -187,7 +194,7 @@ abstract class ProcessManager {
         //合并信息
         $ret = array();
         foreach ($pid_list as $ppid) {
-            $ret[$ppid] = array('pid' => $ppid, '%CPU' => 0, '%MEM' => 0, 'VSZ' => 0, 'RSS' => 0, 'SZ' => 0);
+            $ret[$ppid] = array('pid' => 0, '%CPU' => 0, '%MEM' => 0, 'VSZ' => 0, 'RSS' => 0, 'SZ' => 0);
             $pid_array  = array($ppid);
             if ($is_contain_child) {
                 $pid_array = array_merge($pid_array, $children_pid_list[$ppid]);
@@ -196,6 +203,7 @@ abstract class ProcessManager {
                 if (empty($resource_info[$pid])) {
                     continue;
                 }
+                $ret[$ppid]['pid'] = $ppid;
                 $ret[$ppid]['%CPU'] += $resource_info[$pid]['%CPU'];
                 $ret[$ppid]['%MEM'] += $resource_info[$pid]['%MEM'];
                 $ret[$ppid]['VSZ'] += $resource_info[$pid]['VSZ'];
@@ -205,6 +213,9 @@ abstract class ProcessManager {
                 if ($pid != $ppid) {
                     $ret[$ppid]['children_pid'][] = $pid;
                 }
+            }
+            if (0 === $ret[$ppid]['pid']) {
+                $ret[$ppid] = array();
             }
         }
         return $ret;

@@ -58,6 +58,30 @@ class DaemonMonitor extends ProcessManager {
         }
         $this->_job_list = $job_list;
         $this->addJobIdList(array_keys($job_list));
+        //清理原有的相同监控程序
+        $ppid       = $this->getParentPid();
+        $pinfo      = $this->getResourceInfo(array($ppid));
+        $pinfo      = $pinfo[$ppid];
+        $cmd        = $pinfo['CMD'][0];
+        $sh_str     = ' ps -eo pid,cmd  | grep -v grep | grep "' . $cmd . '"';
+        $sh_ret     = trim(shell_exec($sh_str));
+        $sh_ret_arr = explode("\n", $sh_ret);
+        if (count($sh_ret_arr) > 1) {
+            $to_kill = array();
+            foreach ($sh_ret_arr as $one) {
+                list($t_pid, $t_cmd) = explode(' ', $one, 2);
+                if ($t_pid == $ppid) {
+                    continue;
+                } else {
+                    $to_kill[] = $t_pid;
+                }
+            }
+            $tmp = $this->killProcessAndChilds($to_kill, SIGKILL, $error_pid);
+            if (true != $tmp) {
+                echo "clear old process error, pid list:" . json_encode($error_pid) . "\n";
+                safe_exit();
+            }
+        }
     }
     /**
      * 退出任务的时候重新添加
@@ -111,8 +135,13 @@ class DaemonMonitor extends ProcessManager {
             //监控程序保活进程
             while (true) {
                 sleep(60);
+                $ret = $this->getResourceInfo(array($this->_ppid));
+                //防止父进程故障保活进程不退出
+                if ( ! isset($ret[$this->_ppid]['pid'])) {
+                    break;
+                }
             }
-            return;
+            exit();
         }
         $class_name = '\\' . $this->_module . '\\Daemons\\' . $this->_job_list[$job_id]['name'];
         if ( ! class_exists($class_name)) {

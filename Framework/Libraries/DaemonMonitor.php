@@ -33,6 +33,7 @@ class DaemonMonitor extends ProcessManager {
     private $_restart_count           = array();
     private static $KEEP_ALIVE_DAEMON = array('job_id' => 0, 'id' => 0, 'name' => 'FRAMEWORK_KEEP_ALIVE_DAEMON');
     private $_config                  = array();
+    private $_restart_file            = LOG_ROOT_PATH . "/DaemonMonitor.lock";
     public function __construct(string $module, $config_name = 'daemons') {
         $this->_module = $module;
         $config        = ConfigTool::loadByName($config_name, $module);
@@ -57,31 +58,57 @@ class DaemonMonitor extends ProcessManager {
             }
         }
         $this->_job_list = $job_list;
-        $this->addJobIdList(array_keys($job_list));
         //清理原有的相同监控程序
         $ppid       = $this->getParentPid();
         $pinfo      = $this->getResourceInfo(array($ppid));
         $pinfo      = $pinfo[$ppid];
         $cmd        = $pinfo['CMD'][0];
-        $sh_str     = ' ps -eo pid,cmd  | grep -v grep | grep "' . $cmd . '"';
+        $sh_str     = 'ps -eo pid,cmd  | grep -v grep | grep "' . $cmd . '"';
         $sh_ret     = trim(shell_exec($sh_str));
         $sh_ret_arr = explode("\n", $sh_ret);
         if (count($sh_ret_arr) > 1) {
-            $to_kill = array();
-            foreach ($sh_ret_arr as $one) {
-                list($t_pid, $t_cmd) = explode(' ', $one, 2);
-                if ($t_pid == $ppid) {
-                    continue;
-                } else {
-                    $to_kill[] = $t_pid;
+            $content = trim(file_get_contents($this->_restart_file));
+            $content = json_decode($content, true);
+            $cmd     = $content['cmd'];
+            //任务一致性检查，不一致则重启程序
+            if ((count($sh_ret_arr) - 2) !== count($job_list)) {
+                //(count($sh_ret_arr) - 2 减去当前进程和之前监控任务主进程后，应该与job_list数量一致
+                $cmd = 'restart';
+            } else {
+                $last_job_list = $content['job_list'];
+                //只需要比较value是否相同。由于前序逻辑上能确保数组数量一致的时候，两个数组的key也一致,见job_id生成方法
+                foreach ($job_list as $job_id => $value) {
+                    //有任意任务不一致就重启
+                    if ( ! empty(array_diff_assoc($last_job_list[$job_id], $value)) || ! empty(array_diff_assoc($value, $last_job_list[$job_id]))) {
+                        $cmd = 'restart';
+                        break;
+                    }
                 }
             }
-            $tmp = $this->killProcessAndChilds($to_kill, SIGKILL, $error_pid);
-            if (true != $tmp) {
-                echo "clear old process error, pid list:" . json_encode($error_pid) . "\n";
-                safe_exit();
+            switch ($cmd) {
+                case 'restart':
+                    $to_kill = array();
+                    foreach ($sh_ret_arr as $one) {
+                        list($t_pid, $t_cmd) = explode(' ', $one, 2);
+                        if ($t_pid == $ppid) {
+                            continue;
+                        } else {
+                            $to_kill[] = $t_pid;
+                        }
+                    }
+                    $tmp = $this->killProcessAndChilds($to_kill, SIGKILL, $error_pid);
+                    if (true != $tmp) {
+                        echo "clear old process error, pid list:" . json_encode($error_pid) . "\n";
+                        safe_exit();
+                    }
+                    break;
+                default:
+                    safe_exit();
             }
         }
+        $this->addJobIdList(array_keys($job_list));
+        //记录本次任务
+        file_put_contents($this->_restart_file, json_encode(array('cmd' => '', 'job_list' => $job_list)));
     }
     /**
      * 退出任务的时候重新添加
@@ -135,13 +162,13 @@ class DaemonMonitor extends ProcessManager {
             //监控程序保活进程
             while (true) {
                 sleep(60);
-                $ret = $this->getResourceInfo(array($this->_ppid));
+                $ret = $this->getResourceInfo(array($this->getParentPid()));
                 //防止父进程故障保活进程不退出
-                if ( ! isset($ret[$this->_ppid]['pid'])) {
+                if ( ! isset($ret[$this->getParentPid()]['pid'])) {
                     break;
                 }
             }
-            exit();
+            return 0;
         }
         $class_name = '\\' . $this->_module . '\\Daemons\\' . $this->_job_list[$job_id]['name'];
         if ( ! class_exists($class_name)) {

@@ -1,4 +1,5 @@
 ### 如何写 daemon 程序
+另见[Daemon与Daemon监控](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/daemon_monitor.md)
 
 ### 相关文件
 ```

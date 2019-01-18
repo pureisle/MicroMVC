@@ -270,6 +270,10 @@ abstract class ControllMysql {
         if (empty($resource_name)) {
             throw new ControllMysqlException(ControllMysqlException::ERROR_DB_POOL_EMPTY);
         }
+        if(isset(self::$_static_pdo[$resource_name])){
+            $this->_pdo[$resource_name]  = self::$_static_pdo[$resource_name];
+            return $this->_pdo[$resource_name];
+        }
         if ( ! isset($this->_pdo[$resource_name])) {
             $db_conf                    = ConfigTool::loadByName($resource_name, $this->_module);
             $pdo_config                 = new PDOConfig();

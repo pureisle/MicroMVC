@@ -33,13 +33,14 @@ class DaemonMonitor extends ProcessManager {
     private $_restart_count           = array();
     private static $KEEP_ALIVE_DAEMON = array('job_id' => 0, 'id' => 0, 'name' => 'FRAMEWORK_KEEP_ALIVE_DAEMON');
     private $_config                  = array();
-    private $_restart_file            = LOG_ROOT_PATH . "/DaemonMonitor.lock";
+    private $_restart_file            = LOG_ROOT_PATH . "/DaemonMonitor.";
     public function __construct(string $module, $config_name = 'daemons') {
         $this->_module = $module;
         $config        = ConfigTool::loadByName($config_name, $module);
         if (empty($config)) {
             throw new \Exception($moudle . ' DaemonMonitor config [ ' . $config_name . '] empty');
         }
+        $this->_restart_file .= $config_name . ".lock";
         $this->_config = $config;
         parent::__construct();
     }

@@ -31,6 +31,7 @@ class Curl {
     protected $_referer  = array();
     private $_outHeader  = '';
     private $_curl_shell = '';
+    private $_is_delay   = false;
     /**
      * 构造方法，初始化HttpRequest对象
      *
@@ -71,6 +72,34 @@ class Curl {
         $this->_header = '';
         $this->_body   = '';
         return $this;
+    }
+    /**
+     * 延迟发起请求
+     * @return
+     */
+    public function delayExec() {
+        $this->_is_delay = true;
+        return $this;
+    }
+    /**
+     * 取消延迟，直接发起请求
+     * @return $this
+     */
+    public function exec() {
+        $this->_is_delay = false;
+        $this->_requrest();
+        return $this;
+    }
+    public function getError() {
+        return curl_error($this->_ch);
+    }
+    /**
+     * 获取命令行请求字符串,必须要在发起请求前调用 delayExec() 方法,该方法才可正常使用
+     * 帮助调试
+     * @return string
+     */
+    public function getSheelCurl() {
+        return $this->_curl_shell;
     }
     /**
      * 设置请求超时时间
@@ -414,6 +443,9 @@ class Curl {
      * 请求数据
      */
     private function _requrest() {
+        if ($this->_is_delay) {
+            return false;
+        }
         $response = curl_exec($this->_ch);
         Debug::debugDump($this->_curl_shell);
         $this->_curl_shell = 'curl -v';
@@ -421,9 +453,7 @@ class Curl {
         if ($errno > 0) {
             throw new CurlRequestException($errno, curl_error($this->_ch));
         }
-        $header_size   = $this->_getInfo(CURLINFO_HEADER_SIZE);
-        $this->_header = substr($response, 0, $header_size);
-        $this->_body   = substr($response, $header_size);
+        $this->setResponseData($response);
     }
     /**
      * 构建请求参数字符串
@@ -446,19 +476,22 @@ class Curl {
         $params = substr($o, 0, -1);
         return $params;
     }
-
-    public function getError() {
-        return curl_error($this->_ch);
+    public function setResponseData($response) {
+        if (empty($response)) {
+            return;
+        }
+        $header_size   = $this->_getInfo(CURLINFO_HEADER_SIZE);
+        $this->_header = substr($response, 0, $header_size);
+        $this->_body   = substr($response, $header_size);
+    }
+    public function getHandle() {
+        return $this->_ch;
     }
 }
 /**
  * http请求异常类
  */
 class CurlRequestException extends Exception {
-         /**
-     * 继承异常都要覆盖该变量
-     * 静态错误集合
-     */
     const ERROR_CUEL_CODE = 0;
     public $ERROR_SET     = array();
     public function __construct($code = 0, $msg = '') {

@@ -2,6 +2,8 @@
 namespace Index\Controllers;
 use Framework\Models\Controller;
 
+// use Framework\Models\LocalCurl;
+
 class Index extends Controller {
     public function init() {
         // echo "init\n";
@@ -14,5 +16,4 @@ class Index extends Controller {
         echo "hello,MicroMVC~";
         return false;
     }
-
 }

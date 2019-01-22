@@ -65,10 +65,15 @@ final class ControllerAuth {
             $tmp[] = $k . '=' . $v;
         }
         if ($valid_time > 0) {
-            $current_time = intval(time() / 10);
+            $now_time     = time();
+            $current_time = intval($now_time / 10);
             $sign_array   = array();
             for ($i = 0; $i < $valid_time; $i++) {
                 $sign_array[] = self::getSign(array_merge($tmp, array('app_time=' . ($current_time - $i))));
+            }
+            //可能存在请求服务器时钟比接收服务器时钟超前的误差,只弥补 3s
+            if (($now_time % 10 >= 8)) {
+                $sign_array[] = self::getSign(array_merge($tmp, array('app_time=' . ($current_time + 1))));
             }
             return in_array($res_sign, $sign_array);
         } else {

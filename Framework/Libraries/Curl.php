@@ -5,18 +5,16 @@
  * 提供get、post、put、delete等基本的http请求，支持代理、ssl方式的请求
  *
  * example:
- *     $manager = new Curl ();
- *     $manager->setAction ( 'lg', 'http://wappass.baidu.com/passport/login', 'http://music.baidu.com' )
- *             ->cookie ()->post ( 'lg', $data );
- *     var_dump ( $manager->header () );
- *     var_dump ( $manager->body () );
+ * $manager = new Curl ();
+ * $manager->setAction ( 'lg', 'http://wappass.weibo.com/', 'http://t.cn' )->cookie ()->post ( 'lg', $data );
+ * var_dump ( $manager->header () );
+ * var_dump ( $manager->body () );
  *
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
 namespace Framework\Libraries;
 class Curl {
     private $_header;
-    private $_rHeader = array();
     private $_body;
     private $_ch;
     // private $_proxy_type = 'HTTP';
@@ -30,7 +28,7 @@ class Curl {
     protected $_url      = array();
     protected $_referer  = array();
     private $_outHeader  = '';
-    private $_curl_shell = '';
+    private $_curl_shell = array();
     private $_is_delay   = false;
     /**
      * 构造方法，初始化HttpRequest对象
@@ -50,7 +48,7 @@ class Curl {
                 $this->_options[$key] = $value;
             }
         }
-        $this->_curl_shell = 'curl -v';
+        $this->_curl_shell['begin'] = 'curl -v';
         $this->init($header);
     }
     /**
@@ -67,6 +65,7 @@ class Curl {
         curl_setopt($this->_ch, CURLOPT_HEADER, true);
         curl_setopt($this->_ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->_ch, CURLOPT_USERAGENT, $this->_options['user_agent']);
+        $this->_curl_shell['-A'] = '-A "' . $this->_options['user_agent'] . '"';
         $this->timeOutForConnect($this->_options['time_out']);
         $this->setHeader($header);
         $this->_header = '';
@@ -87,7 +86,7 @@ class Curl {
      */
     public function exec() {
         $this->_is_delay = false;
-        $this->_requrest();
+        $this->_request();
         return $this;
     }
     public function getError() {
@@ -99,7 +98,11 @@ class Curl {
      * @return string
      */
     public function getSheelCurl() {
-        return $this->_curl_shell;
+        $end = $this->_curl_shell['end'];
+        unset($this->_curl_shell['end']);
+        $tmp = implode(' ', $this->_curl_shell);
+        $tmp .= ' ' . $end;
+        return $tmp;
     }
     /**
      * 设置请求超时时间
@@ -109,6 +112,7 @@ class Curl {
      */
     public function timeOutForConnect($time) {
         $this->setOpt(CURLOPT_CONNECTTIMEOUT, $time);
+        $this->_curl_shell['--connect-timeout'] = '--connect-timeout ' . $time;
         return $this;
     }
     /**
@@ -119,6 +123,7 @@ class Curl {
      */
     public function timeOutForExecute($time) {
         $this->setOpt(CURLOPT_TIMEOUT, $time);
+        $this->_curl_shell['--max-time'] = '--max-time ' . $time;
         return $this;
     }
     /**
@@ -161,7 +166,10 @@ class Curl {
     public function setHeader($header = array('Expect:')) {
         if (is_array($header)) {
             foreach ($header as $one) {
-                $this->_curl_shell .= ' --Header "' . $one . '"';
+                list($header_name, $value) = explode(':', $one, 2);
+                if ( ! empty($value)) {
+                    $this->_curl_shell['header_' . $header_name] = '--Header "' . $one . '"';
+                }
             }
             curl_setopt($this->_ch, CURLOPT_HTTPHEADER, $header);
         }
@@ -212,6 +220,7 @@ class Curl {
         if (fwrite($file_handle, $cookie) === false) {
             echo "warning: cookie写入失败";
         }
+        $this->_curl_shell['header_Cookie'] = '--Header "Cookie: ' . $cookie . '"';
         return $this;
     }
     /**
@@ -272,8 +281,10 @@ class Curl {
         curl_setopt($this->_ch, CURLOPT_URL, $this->_url[$action]);
         curl_setopt($this->_ch, CURLOPT_REFERER, $this->_referer[$action]);
         curl_setopt($this->_ch, CURLOPT_POSTFIELDS, $query);
-        $this->_curl_shell .= ' --referer "' . $this->_referer[$action] . '" --data "' . $query . '" "' . $this->_url[$action] . '"';
-        $this->_requrest();
+        $this->_curl_shell['--referer'] = '--referer "' . $this->_referer[$action] . '"';
+        $this->_curl_shell['--data']    = '--data "' . $query . '"';
+        $this->_curl_shell['end']       = '"' . $this->_url[$action] . '"';
+        $this->_request();
         return $this;
     }
     /**
@@ -297,8 +308,9 @@ class Curl {
         curl_setopt($this->_ch, CURLOPT_HTTPGET, true);
         curl_setopt($this->_ch, CURLOPT_URL, $url);
         curl_setopt($this->_ch, CURLOPT_REFERER, $this->_referer[$action]);
-        $this->_curl_shell .= ' --referer "' . $this->_referer[$action] . '" "' . $url . '"';
-        $this->_requrest();
+        $this->_curl_shell['--referer'] = '--referer "' . $this->_referer[$action] . '"';
+        $this->_curl_shell['end']       = '"' . $url . '"';
+        $this->_request();
         return $this;
     }
     /**
@@ -325,12 +337,14 @@ class Curl {
             $this->setAction('auto_location_gateway', $url, $this->effectiveUrl());
             $this->get('auto_location_gateway')->followLocation($max - 1);
         }
+        $this->_curl_shell['-L'] = '-L';
         return $this;
     }
     // ps：写上curl原生的follow location是想着可能有效率上的优势，自己写的有灵活上的优势
     public function followLocationSetOpt($action, $max = -1) {
         curl_setopt($this->_ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($this->_ch, CURLOPT_AUTOREFERER, true);
+        $this->_curl_shell['-L'] = '-L';
         if ($max > 0) {
             curl_setopt($this->_ch, CURLOPT_MAXREDIRS, $max);
         }
@@ -442,13 +456,13 @@ class Curl {
     /**
      * 请求数据
      */
-    private function _requrest() {
+    private function _request() {
         if ($this->_is_delay) {
             return false;
         }
         $response = curl_exec($this->_ch);
         Debug::debugDump($this->_curl_shell);
-        $this->_curl_shell = 'curl -v';
+        $this->_curl_shell = array('begin' => 'curl -v');
         $errno             = curl_errno($this->_ch);
         if ($errno > 0) {
             throw new CurlRequestException($errno, curl_error($this->_ch));

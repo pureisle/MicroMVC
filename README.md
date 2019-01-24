@@ -1,5 +1,5 @@
 ### 为什么用
-* 不过度设计，简单、清晰、好用；
+* 不过度设计，简单、清晰、好用。经历过国内一线互联网公司众多项目实践，能很好的解决大部分业务研发过程中遇到的团队协作、项目管理、质量和安全等问题；
 * 提供最简单基础的 MVC 框架，将性能损耗降到最低。[关于性能](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/performance.md)；
 * 按 Module 进行资源分离，以便对业务进行微服务化隔离或后期的服务便捷迁移。[关于Module和迁移](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/module.md)；
 * 提供简单好用的单元测试框架。[关于单元测试](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/unittest.md)；

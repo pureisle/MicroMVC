@@ -74,6 +74,7 @@ class LogConfig {
         $file_name = $this->getLogFileName();
         if ($this->_last_date !== $this->_new_date) {
             $file_path        = $this->getFilePath();
+            $this->closeHandle();
             $fp               = fopen($file_path, $mode);
             $this->_last_fp   = $fp;
             $this->_last_date = $this->_new_date;

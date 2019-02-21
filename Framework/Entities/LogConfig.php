@@ -73,7 +73,7 @@ class LogConfig {
     public function getHandle($mode = 'w+') {
         $file_name = $this->getLogFileName();
         if ($this->_last_date !== $this->_new_date) {
-            $file_path        = $this->getFilePath();
+            $file_path = $this->getFilePath();
             $this->closeHandle();
             $fp               = fopen($file_path, $mode);
             $this->_last_fp   = $fp;
@@ -88,6 +88,8 @@ class LogConfig {
      */
     public function closeHandle() {
         $this->_last_date = '';
-        return fclose($this->_last_fp);
+        if (isset($this->_last_fp)) {
+            fclose($this->_last_fp);
+        }
     }
 }

@@ -147,6 +147,7 @@ class DaemonMonitor extends ProcessManager {
             $config = $this->_config[$class_name]['log_config_name'];
             $module = $this->_module;
         } else {
+            return true;            //没设置日志路径的不记录
             $config = 'log.daemon'; //默认日志配置
             $module = 'Framework';
         }

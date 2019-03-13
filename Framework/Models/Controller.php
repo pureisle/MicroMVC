@@ -194,7 +194,10 @@ abstract class Controller {
      * @return
      */
     public function useCORS(string $pattern_config = 'cors_url') {
-        $url                 = $_SERVER['HTTP_HOST'];
+        if (empty($_SERVER['HTTP_ORIGIN'])) {
+            return $this;
+        }
+        $url                 = $_SERVER['HTTP_ORIGIN'];
         $tmp                 = get_class($this);
         list($module, $null) = explode('\\', $tmp, 2);
         $config_set          = ConfigTool::loadByName($pattern_config, $module);
@@ -210,7 +213,7 @@ abstract class Controller {
         foreach ($domain_arr as $one) {
             $match_str = $one . '.' . $match_str;
             if (isset($config_set[$match_str])) {
-                $this->_response->setHeader('Access-Control-Allow-Origin: ' . $domain);
+                $this->_response->setHeader('Access-Control-Allow-Origin: ' . $url);
                 foreach ($config_set[$match_str] as $key => $value) {
                     if (empty($value)) {
                         continue;

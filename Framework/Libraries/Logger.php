@@ -163,7 +163,7 @@ class Logger {
      * @return void
      */
     public function log(string $level, string $message, array $context = array(), string $business_name = self::DEFAULT_BUSINESS) {
-        $msg    = $this->_interpolate($message, $context);
+        $msg    = self::interpolate($message, $context);
         $params = array(
             'level'    => $level,
             'b_name'   => $business_name,
@@ -268,7 +268,7 @@ class Logger {
     /**
      * Interpolates context values into the message placeholders.
      */
-    private function _interpolate($message, array $context = array()) {
+    public static function interpolate($message, array $context = array()) {
         // build a replacement array with braces around the context keys
         $replace = array();
         foreach ($context as $key => $val) {

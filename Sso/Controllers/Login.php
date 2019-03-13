@@ -16,6 +16,7 @@ class Login extends Controller {
         'url'    => 'default:http://t.cn'
     );
     public function indexAction() {
+        // $this->useCORS();
         $this->usePolicy()->useXSS()->disableSniffing()->useFrame()->forceHTTPS();
         $params = $this->getGetParams();
         extract($params);

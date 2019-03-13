@@ -188,6 +188,41 @@ abstract class Controller {
         return $this;
     }
     /**
+     * 跨域设置
+     * @param    string $url
+     * @param    string $pattern_config
+     * @return
+     */
+    public function useCORS(string $pattern_config = 'cors_url') {
+        $url                 = $_SERVER['HTTP_HOST'];
+        $tmp                 = get_class($this);
+        list($module, $null) = explode('\\', $tmp, 2);
+        $config_set          = ConfigTool::loadByName($pattern_config, $module);
+        if (empty($config_set)) {
+            throw new ControllerException(ControllerException::ERROR_PARAM_CHECK, 'CORS url config load fail');
+        }
+        $url_arr    = parse_url($url);
+        $domain     = $url_arr['host'];
+        $domain_arr = explode('.', $domain);
+        $domain_arr = array_reverse($domain_arr);
+        $match_str  = $domain_arr[0];
+        array_shift($domain_arr);
+        foreach ($domain_arr as $one) {
+            $match_str = $one . '.' . $match_str;
+            if (isset($config_set[$match_str])) {
+                $this->_response->setHeader('Access-Control-Allow-Origin: ' . $domain);
+                foreach ($config_set[$match_str] as $key => $value) {
+                    if (empty($value)) {
+                        continue;
+                    }
+                    $this->_response->setHeader('Access-Control-' . $key . ': ' . $value);
+                }
+                return $this;
+            }
+        }
+        throw new ControllerException(ControllerException::ERROR_PARAM_CHECK, 'CORS error');
+    }
+    /**
      * 安全的localtion跳转
      * @param string $url
      * @param string $pattern_config='localtion_url' 需要检查的可供跳转的url配置文件,匹配规则为：域名按 "." 号分段后反转连续拼接验证

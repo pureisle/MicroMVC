@@ -42,4 +42,23 @@ class Response {
     public function getHeader() {
         return $this->_header;
     }
+    /**
+     * 设置响应码
+     * @param int $code
+     */
+    public function setCode(int $code) {
+        $this->_code = $code;
+        return $this;
+    }
+    /**
+     * http 响应输出
+     */
+    public function response() {
+        $header = $this->getHeader();
+        foreach ($header as $one) {
+            header($one);
+        }
+        $ret_body = $this->getBody();
+        echo $ret_body;
+    }
 }

@@ -61,7 +61,6 @@ class Application {
         $router = new Router();
         $router->setModule($this->_app_name, $this->_is_force_module);
         $router->route($request);
-
         $dispatcher->setRouter($router);
         $request->setRouter($router);
         //路由结束
@@ -69,11 +68,12 @@ class Application {
             $plugin->routerShutdown($request, $response);
         }
         $module = $router->getModule();
-        //未开启的module 返回404
+        //用户钩子执行完毕后，未开启的module 返回404
         if (true !== $config['modules'][$module]) {
+            http_response_code(404);
+            return $this;
         }
         $dispatcher->setRequest($request);
-
         $view = new View();
         $dispatcher->setView($view);
         //分发开始前
@@ -83,7 +83,6 @@ class Application {
         $dispatcher->setResponse($response);
         //分发处理
         $dispatcher->dispatch();
-
         //分发结束
         foreach ($plugins as $plugin) {
             $plugin->dispatchShutdown($request, $response);
@@ -92,16 +91,11 @@ class Application {
         foreach ($plugins as $plugin) {
             $plugin->preResponse($request, $response);
         }
-        $ret_body = $response->getBody();
-        if ($is_echo) {
-            $header = $response->getHeader();
-            foreach ($header as $one) {
-                header($one);
-            }
-            echo $ret_body;
-        } else {
+        if ( ! $is_echo) {
+            $ret_body = $response->getBody();
             return $ret_body;
         }
+        $response->response();
     }
     /**
      * 命令行执行一个函数

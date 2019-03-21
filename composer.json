@@ -1,0 +1,23 @@
+{
+    "name": "pureisle/MicroMVC",
+    "type": "library",
+    "description": "simple、efficient、 easy to project migration, DMVC+C architecture design, only  for PHP 7.0+",
+    "keywords": ["framework","mvc","efficient"],
+    "homepage": "https://github.com/pureisle/MicroMVC",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "pureisle",
+            "email": "hzyhouzhiyuan@qq.com",
+            "homepage": "https://github.com/pureisle",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.0.0"
+    },
+    "autoload": {
+    },
+    "extra": {
+    }
+}

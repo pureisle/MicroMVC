@@ -127,7 +127,7 @@ View 文件路径：MODULE_ROOT\Views\Demo\A\index.phtml
     4. 使用字符"&"合并排序后的数组生成字符串,如： $params_str = implode('&',$tmp);
     5. 使用md5获取哈希值，取前6位，至此获得参数的签名字符串,如： $sign = substr(md5($params_str), 0, 6);
 
-#### 如果进行性能优化
+#### 如何进行性能优化
 1. 在想进行代码优化的开始位置执行以下代码：
 ``` 
 $lc = new LocalCurl();
@@ -136,7 +136,7 @@ var_dump($lc->get('test')->body());
 ```
 1. 随后在进程结束后会给出查看程序执行细节profile的链接，点击查看即可。
 
-#### 如果使用框架提供的异常处理服务
+#### 如何使用框架提供的异常处理服务
 1. 参考Sso\Bootstrap.php 初始化函数：
 ``` 
  public function _initControllerExceptionHandler(Dispatcher $dispatcher) {

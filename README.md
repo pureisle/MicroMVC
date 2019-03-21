@@ -74,7 +74,7 @@ Action: index
 参数: a 和 b
 ```
 这里要注意，url结尾有没有"/"很关键，结尾有"/"意味着 Action 的值会解析成 index 。  
-样例项目中，访问 sso 地址为： http://domain.example.com/sso  
+样例项目中，访问 sso 地址为： http://domain.example.com/sso/login
 1. 每个 module 可以有自己的 Bootstrap.php 在自己的根目录里，在框架初始化时会顺序执行'_init'开头的成员方法。
 1. 每个 module 有自己的路由插件在 Plugins 文件夹内，可以在 Bootstrap 类中调用 Dispatcher 类的 registerPlugin 方法进行插件注册。
 插件包含routerStartup、routerShutdown、dispatchStartup、dispatchShutdown、preResponse几个部分。分别为:

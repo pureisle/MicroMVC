@@ -1,5 +1,5 @@
 {
-    "name": "pureisle/MicroMVC",
+    "name": "pureisle/micro-mvc",
     "type": "library",
     "description": "simple、efficient、 easy to project migration, DMVC+C architecture design, only  for PHP 7.0+",
     "keywords": ["framework","mvc","efficient"],

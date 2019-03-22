@@ -9,6 +9,13 @@
 * 提供PSR-3规范的日志类，额外提供 log buffer 功能（性能提升） 和 全局日志标记码（一个进程一个标记码，方便定位问题）的功能；
 * 所有开发基于 PHP7 环境，未做低版本运行验证和兼容；
 
+### 快速开始
+```
+composer.phar create-project pureisle/micro-mvc {project_name}
+php public/create_module.php {module_name}
+```
+其中{project_name}替换成目标项目名，{module_name}替换成目标模块名。  
+
 ### 文件目录
 ```
 |- Framework	框架

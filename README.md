@@ -11,7 +11,7 @@
 
 ### 快速开始
 ```
-composer.phar create-project pureisle/micro-mvc {project_name}
+composer create-project pureisle/micro-mvc {project_name}
 php public/create_module.php {module_name}
 ```
 其中{project_name}替换成目标项目名，{module_name}替换成目标模块名。  

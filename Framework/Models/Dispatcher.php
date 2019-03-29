@@ -139,15 +139,15 @@ class Dispatcher {
             http_response_code(404);
             return $this;
         }
-        $class = new $class_name($request, $response);
-        if ($class instanceof Controller === false) {
-            throw new DispatcherException(DispatcherException::ERROR_OBJECT_TYPE);
-        }
-        $class->setView($this->_view);
-        $action_name = $action . self::ACTION_SUFFIX;
         ob_start();
         //安全退出的话相当于 action 返回 false 继续运行
         try {
+            $class = new $class_name($request, $response);
+            if ($class instanceof Controller === false) {
+                throw new DispatcherException(DispatcherException::ERROR_OBJECT_TYPE);
+            }
+            $class->setView($this->_view);
+            $action_name = $action . self::ACTION_SUFFIX;
             $action_ret = $class->$action_name();
         } catch (ExitException $e) {
             $action_ret = false;

@@ -2,6 +2,7 @@
 /**
  * 入口文件，以下代码均具有顺序要求，变更时需要注意
  */
+echo 123;exit();
 define("ROOT_PATH", realpath(dirname(__FILE__) . '/../'));
 define('FRAMEWORK_NAME', 'Framework');
 define('FRAMEWORK_PATH', ROOT_PATH . '/Framework');

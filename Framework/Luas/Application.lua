@@ -2,15 +2,12 @@
 -- MVC类
 -- @author zhiyuan <zhiyuan12@staff.weibo.com>
 --]]
-Application = {
-    uri = '',
-}
+require "Class"
+Application = Class:new('Application')
 -- 构造方法
 function Application:new (uri)
-    o = {}
-    setmetatable(o, {__index = self})
     self.uri = uri
-    return o
+    return self
 end
 function Application:run()
     local router_info = self:router()

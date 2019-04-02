@@ -1,6 +1,10 @@
 --[[
 -- 全局公共函数
--- @author zhiyuan <zhiyuan12@staff.weibo.com>
+-- 
+-- function list:
+--  my_string (s)   转化为可以用下标的字符串    @author zhiyuan 
+--  ucfirst(s)      首字母大写   @author zhiyuan 
+--  var_dump(...)   变量输出    @author zhiyuan
 --]]
 -- 转化为可以用下标的字符串
 function my_string (s)
@@ -69,7 +73,9 @@ function var_dump(...)
     end
     local args = {...}
     if #args > 1 then
-        var_dump(args)
+        for k, v in pairs(args) do
+            var_dump(v)
+        end
     else
         ngx.say(recurse(args[1]))
     end

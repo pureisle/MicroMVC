@@ -50,9 +50,9 @@
 1. 此后URL访问类似PHP MVC框架，Module部分含有 "lua_" 字符串的，则统一重定向到 index.lua 入口文件。  
 如：http://micromvc:8183/lua_sso/api/index/index?a=1&b=2
 则会解析为：  
-Module:  Sso
-Controller: Api/Index
-Action: index
+Module:  Sso  
+Controller: Api/Index  
+Action: index  
 此时会搜寻到路径ROOT/Sso/Controllers/Api/Index.lua 并执行indexAction()代码
 1. 框架类库 GlobalFunction.lua 提供了一些PHP中常用、好用的一些全局函数，以便PHP工程师方便的迁移到Lua上开发代码。
 1. 关于Lua代码的面向对象编程约定：

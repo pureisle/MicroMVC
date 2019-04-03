@@ -24,7 +24,6 @@ function Application:run()
     xpcall(function ()
         c_ret = controller[router_info['action'] .. 'Action']()
     end, error_handler)
-    var_dump(c_ret)
 end
 function Application:autoLoad(file)
     local ok, c_obj = pcall(require, file)

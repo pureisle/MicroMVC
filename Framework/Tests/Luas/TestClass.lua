@@ -32,7 +32,3 @@ assert(rt:getName() == class_name2)
 assert(Class:type(rt) == class_name2)
 assert(rt:area() == 35)
 print('all test done')
-
-json = require "../../Framework/Luas/Json"
-print(package.path)
-print(json.encode({1, 2, 3, {x = 10}}))

@@ -3,7 +3,7 @@
 -- @author zhiyuan <zhiyuan12@staff.weibo.com>
 --]]
 require "Class"
-Application = Class:new('Application')
+local Application = Class:new('Application')
 -- 构造方法
 function Application:new (uri)
     self.uri = uri
@@ -16,13 +16,11 @@ function Application:run()
         var_dump(msg)
         var_dump(debug.traceback())
     end
-    -- controller = package.searchpath('Controller', require_path)
     require 'Controller'
     controller = self:autoLoad(require_path)
     xpcall(function ()
         c_name = controller.classCheck()--检验是否继承父类
     end, error_handler)
-
     xpcall(function ()
         c_ret = controller[router_info['action'] .. 'Action']()
     end, error_handler)

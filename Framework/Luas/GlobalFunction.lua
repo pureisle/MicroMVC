@@ -45,7 +45,10 @@ function ucfirst(s)
 end
 -- 变量输出
 function var_dump(...)
-    recurse = function (o, indent)
+    local string = function (o)
+        return '"' .. tostring(o) .. '"'
+    end
+    local recurse = function (o, indent)
         if indent == nil then indent = '' end
         local indent2 = indent .. '  '
         if type(o) == 'table' then
@@ -67,9 +70,6 @@ function var_dump(...)
         else
             return o
         end
-    end
-    string = function (o)
-        return '"' .. tostring(o) .. '"'
     end
     local args = {...}
     if #args > 1 then

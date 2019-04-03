@@ -10,7 +10,7 @@ CONFIG_PACKAGE_PATH = package.path
 package.path = FRAMEWORK.."/Luas/?.lua;"..ROOT_PATH.."/?.lua;"..CONFIG_PACKAGE_PATH
 MODULE_PREFIX = 'lua_'
 require "GlobalFunction" --加载自定义公共库
-require "Application"
+Application = require "Application"
 local app = Application:new(REQUEST_URI)
 app:run()
 

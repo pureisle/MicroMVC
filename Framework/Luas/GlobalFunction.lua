@@ -2,9 +2,14 @@
 -- 全局公共函数
 -- 
 -- function list:
---  my_string (s)   转化为可以用下标的字符串    @author zhiyuan 
---  ucfirst(s)      首字母大写   @author zhiyuan 
---  var_dump(...)   变量输出    @author zhiyuan
+--  my_string (s)   转化为可以用下标的字符串 
+--  ucfirst(s)      首字母大写
+--  explode(symbol, s, limit)   拆分字符串为数组  
+--  implode(glue, pieces)   按指定分隔符聚合数组 
+--  strpos(s, pattern, offset)  查找目标字符位置    
+--  var_dump(...)   变量输出   
+--  empty(o)    与PHP empty() 同功能函数
+--  file_exists(path)   判断路径是否为文件是否存在   
 --]]
 -- 转化为可以用下标的字符串
 function my_string (s)
@@ -43,12 +48,45 @@ function ucfirst(s)
     ts[1] = string.upper(ts[1])
     return tostring(ts)
 end
+-- 按指定字符串分割成数组
+function explode(symbol, s, limit)
+    limit = limit or 9999
+    local pos = strpos(s, symbol)
+    local symbol_len = #(symbol)
+    local ret = {}
+    local count = 0
+    while (pos ~= nil or #(s) > 0) do
+        count = count + 1
+        if(limit <= count or pos == nil)then
+            ret[count] = s
+            break
+        end
+        ret[count] = string.sub(s, 1, pos - 1)
+        s = string.sub(s, pos + symbol_len)
+        pos = strpos(s, symbol)
+    end
+    return ret
+end
+-- 按指定分隔符聚合数组
+function implode(glue, pieces)
+    local ret = ''
+    for k, v in pairs(pieces) do
+        ret = ret ..glue ..v
+    end
+    return string.sub(ret, #(glue) + 1)
+end
+-- 无正则的匹配字符串
+function strpos(s, pattern, offset)
+    offset = offset or 1
+    return string.find(s, pattern, offset, true)
+end
 -- 变量输出
 function var_dump(...)
     local string = function (o)
         return '"' .. tostring(o) .. '"'
     end
-    local recurse = function (o, indent)
+    local recurse
+    recurse = function (o, indent)
         if indent == nil then indent = '' end
         local indent2 = indent .. '  '
         if type(o) == 'table' then
@@ -61,14 +99,14 @@ function var_dump(...)
                 first = false
             end
             return s .. '\n' .. indent .. '}'
-        elseif type(o) == 'userdata' then
-            return o
         elseif type(o) == 'string' then
             return string(o)
+        elseif type(o) == 'number' or type(o) == 'boolean' then
+            return o
         elseif type(o) == 'function' or type(o) == 'thread' or type(o) == 'nil' or type(o) == 'userdata' then
             return type(o)
         else
-            return o
+            return type(o)
         end
     end
     local args = {...}
@@ -79,5 +117,33 @@ function var_dump(...)
     else
         ngx.say(recurse(args[1]))
     end
-
+end
+-- 模拟PHP的emtpy()
+function empty(o)
+    if type(o) == 'table' and next(o) == nil then
+        return true
+    elseif type(o) == 'nil' then
+        return true
+    elseif type(o) == 'boolean' then
+        return o
+    elseif type(o) == 'number' and o == 0 then
+        return true
+    elseif type(o) == 'string' and (#(o) == 0 or o == '0' or o == 'false') then
+        return true
+    elseif type(o) == 'function' or type(o) == 'thread' or type(o) == 'userdata' then
+        return false
+    else
+        return false
+    end
+end
+-- 判断文件是否存在
+function file_exists(path)
+    if empty(path) then
+        return false
+    end
+    local file = io.open(path, "rb")
+    if file then
+        file:close()
+    end
+    return file ~= nil
 end

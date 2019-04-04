@@ -4,6 +4,10 @@
 --]]
 __FILE__ = 'index.lua'
 REQUEST_URI = ngx.var.request_uri
+DIRECTORY_SEPARATOR = '/'
+CONFIG_FOLDER = 'config/lua_config'
+IS_CLI = false
+CURRENT_ENV_NAME = 'dev' --当前环境名称
 ROOT_PATH = string.sub(debug.getinfo(1, 'S').short_src, 0, -string.len(__FILE__) - 9)
 FRAMEWORK = ROOT_PATH.."/Framework"
 CONFIG_PACKAGE_PATH = package.path

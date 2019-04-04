@@ -2,7 +2,9 @@
 -- MVC类
 -- @author zhiyuan <zhiyuan12@staff.weibo.com>
 --]]
-require "Class"
+require 'Class'
+require 'Tools'
+require 'ConfigTool'
 local Application = Class:new('Application')
 -- 构造方法
 function Application:new (uri)

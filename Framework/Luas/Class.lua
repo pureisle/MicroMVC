@@ -20,7 +20,9 @@ function Class:new (class_name, parent, ...)
     else
         o.parent = self
         parent = {
-            __index = self,
+            __index = function (table, key)
+                return function () error('index: '..key..' undefined') end
+            end,
             __tostring = function () return 'object' end
         }
     end

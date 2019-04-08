@@ -125,7 +125,7 @@ function empty(o)
     elseif type(o) == 'nil' then
         return true
     elseif type(o) == 'boolean' then
-        return o
+        return not o
     elseif type(o) == 'number' and o == 0 then
         return true
     elseif type(o) == 'string' and (#(o) == 0 or o == '0' or o == 'false') then

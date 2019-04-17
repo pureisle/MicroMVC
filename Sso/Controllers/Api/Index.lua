@@ -1,20 +1,28 @@
 -- 首先继承Controller基类
 local Sso_Controller = Controller:new()
-local sm = require 'Sso/Models/Sample'
-local Json = require 'Json'
-local Redis = require 'Redis'
 function Sso_Controller:indexAction()
+    -- local Json = require 'Json'
     -- var_dump(Json.encode({1, 2, 3, {x = 10}}))
+    Profiler = require 'Profiler'
+    Profiler:setGetTimeMethod(function () return microtime(true) end)
+    Profiler:start()
 
-    red = Redis:new()
-    -- Tools:setEnv('dev')
-    -- var_dump(Tools:getEnv())
-    -- var_dump(implode('1,1', explode( '..','asdf.sdf..sadf..wfe.f2f', 3)))
-    -- var_dump(ConfigTool:getFilePath('redis', 'Sso'))
-    -- var_dump(ConfigTool:getConfig('redis', 'Sso'))
-    var_dump(ConfigTool:loadByName('redis:session_read', 'Sso'))
-    -- var_dump(ngx.req.get_headers()['cookie'])
+    local Redis = require 'Redis'
+    local connect_time
+    local RedisTool = require 'RedisTool'
+    for i = 1, 5 do
+        rt = RedisTool:new('redis:session', 'Sso')
+        local reuse = rt:get_reused_times()
+        -- var_dump(rt:set('test_key','test_value'))
+        var_dump(rt:get('test_key'))
+        local times, er = rt:set_keepalive(600, 100)
+        ngx.say(times, '--', reuse)
+    end
+    local sm = require 'Sso/Models/Sample'
     -- sm:new()
+
+    Profiler:stop()
+    Profiler:writeReport("/tmp/profile.txt")
     return true
 end
 return Sso_Controller

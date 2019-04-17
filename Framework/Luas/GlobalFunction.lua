@@ -9,7 +9,9 @@
 --  strpos(s, pattern, offset)  查找目标字符位置    
 --  var_dump(...)   变量输出   
 --  empty(o)    与PHP empty() 同功能函数
---  file_exists(path)   判断路径是否为文件是否存在   
+--  file_exists(path)   判断路径是否为文件是否存在 
+--  printf(format, ...)   按指定格式输出数据
+--  microtime(get_as_float)   获取毫秒时间
 --]]
 -- 转化为可以用下标的字符串
 function my_string (s)
@@ -115,7 +117,11 @@ function var_dump(...)
             var_dump(v)
         end
     else
-        ngx.say(recurse(args[1]))
+        if IS_CLI then
+            io.write(recurse(args[1]))
+        else
+            ngx.say(recurse(args[1]))
+        end
     end
 end
 -- 模拟PHP的emtpy()
@@ -146,4 +152,29 @@ function file_exists(path)
         file:close()
     end
     return file ~= nil
+end
+-- 按指定格式输出数据
+function printf(format, ...)
+    local str = string.format (format, ...)
+    var_dump(str)
+    if IS_CLI then
+        io.write(recurse(args[1]))
+    else
+        ngx.say(recurse(args[1]))
+    end
+end
+-- 获取毫秒时间
+function microtime(get_as_float)
+    local ffi = require("FfiDefine")
+    local tm = ffi.new("struct timeval");
+    -- 返回微秒级时间戳
+    ffi.C.gettimeofday(tm, nil);
+    local sec = tonumber(tm.tv_sec);
+    local usec = tonumber(tm.tv_usec);
+    -- var_dump(os.time(), sec, usec)
+    if get_as_float then
+        return sec + usec * 10 ^- 6;
+    else
+        return usec.." "..sec
+    end
 end

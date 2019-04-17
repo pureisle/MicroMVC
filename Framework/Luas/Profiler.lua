@@ -55,7 +55,25 @@ local FORMAT_BANNER = [[
 -----------------------
 -- Public Methods:
 -----------------------
-
+--[[
+简单的记录一个开始时间和结束时间
+]]
+function ProFi:record(name)
+    if empty(self.record_table) then
+        self.record_table = {}
+    end
+    if empty(self.record_table.name) then
+        self.record_table.name = {}
+    end
+    if empty(self.record_table.name['begin']) then
+        self.record_table.name['begin'] = getTime()
+    else
+        self.record_table.name['end'] = getTime()
+    end
+end
+function ProFi:echoRecord(name)
+    var_dump(name..":" .. (self.record_table.name['end'] - self.record_table.name['begin']) * 1000)
+end
 --[[
 Starts profiling any method that is called between this and ProFi:stop().
 Pass the parameter 'once' to so that this methodis only run once.

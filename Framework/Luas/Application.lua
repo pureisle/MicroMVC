@@ -4,7 +4,6 @@
 --]]
 require 'Class'
 require 'Tools'
-require 'ConfigTool'
 local Application = Class:new('Application')
 -- 构造方法
 function Application:new (uri)
@@ -14,10 +13,7 @@ end
 function Application:run()
     local router_info = self:router()
     local require_path = router_info['module'] .. '/Controllers/'..router_info['controller']
-    error_handler = function (msg)
-        var_dump(msg)
-        var_dump(debug.traceback())
-    end
+    local error_handler = self.errorHandler
     require 'Controller'
     controller = self:autoLoad(require_path)
     xpcall(function ()
@@ -26,6 +22,10 @@ function Application:run()
     xpcall(function ()
         c_ret = controller[router_info['action'] .. 'Action']()
     end, error_handler)
+end
+function Application:errorHandler(msg)
+    var_dump(msg)
+    var_dump(debug.traceback())
 end
 function Application:autoLoad(file)
     local ok, c_obj = pcall(require, file)

@@ -62,19 +62,27 @@ function _M.set_timeout(self, timeout)
         error("not initialized", 2)
         return
     end
-
     return sock:settimeout(timeout)
 end
-
-function _M.connect(self, ...)
+-- connect函数改造
+function _M.connect(self, resource_name, module)
     local sock = rawget(self, "_sock")
     if not sock then
         return nil, "not initialized"
     end
-
     self._subscribed = false
 
-    return sock:connect(...)
+    if empty(resource_name) or empty(module) then
+        error('参数错误')
+    end
+    local ConfigTool = require 'ConfigTool'
+    local config = ConfigTool:loadByName(resource_name, module);
+    if empty(config['host']) or empty(config['port']) then
+        error('配置错误')
+    end
+    local timeout = config['timeout'] or 1
+    self:set_timeout(timeout * 1000) -- sec
+    return sock:connect(config['host'], config['port'])
 end
 
 function _M.set_keepalive(self, ...)

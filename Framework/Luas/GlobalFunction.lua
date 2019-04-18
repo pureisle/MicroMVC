@@ -113,11 +113,7 @@ function var_dump(...)
             var_dump(v)
         end
     else
-        if IS_CLI then
-            io.write(recurse(args[1]))
-        else
-            ngx.say(recurse(args[1]))
-        end
+        printf('%s', recurse(args[1]))
     end
 end
 -- 模拟PHP的emtpy()
@@ -162,22 +158,21 @@ end
 -- 按指定格式输出数据
 function printf(format, ...)
     local str = string.format (format, ...)
-    var_dump(str)
     if IS_CLI then
-        io.write(recurse(args[1]))
+        if str ~= nil then
+            io.write(str)
+        end
     else
-        ngx.say(recurse(args[1]))
+        ngx.say(str)
     end
 end
 -- 获取毫秒时间
 function microtime(get_as_float)
     local ffi = require("FfiDefine")
     local tm = ffi.new("struct timeval");
-    -- 返回微秒级时间戳
     ffi.C.gettimeofday(tm, nil);
     local sec = tonumber(tm.tv_sec);
     local usec = tonumber(tm.tv_usec);
-    -- var_dump(os.time(), sec, usec)
     if get_as_float then
         return sec + usec * 10 ^- 6;
     else

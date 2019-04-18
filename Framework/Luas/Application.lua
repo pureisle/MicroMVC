@@ -37,7 +37,12 @@ end
 function Application:router()
     local tmp = {}
     local i = 1
-    for k in string.gmatch(self.uri, "([^?/]*)") do
+    local uri = self.uri
+    local q_mark = string.find(uri, '?')
+    if(q_mark ~= nil)then
+        uri = string.sub(uri, 1, q_mark - 1)
+    end
+    for k in string.gmatch(uri, "([^?/]*)") do
         if(string.len(k) > 0)then
             tmp[i] = k
             i = i + 1

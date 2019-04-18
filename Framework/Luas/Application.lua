@@ -15,12 +15,12 @@ function Application:run()
     local require_path = router_info['module'] .. '/Controllers/'..router_info['controller']
     local error_handler = self.errorHandler
     require 'Controller'
-    controller = self:autoLoad(require_path)
+    local controller = self:autoLoad(require_path)
     xpcall(function ()
-        c_name = controller.classCheck()--检验是否继承父类
+        local c_name = controller.classCheck()--检验是否继承父类
     end, error_handler)
     xpcall(function ()
-        c_ret = controller[router_info['action'] .. 'Action']()
+        local c_ret = controller[router_info['action'] .. 'Action']()
     end, error_handler)
 end
 function Application:errorHandler(msg)

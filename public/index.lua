@@ -10,10 +10,9 @@ IS_CLI = false
 CURRENT_ENV_NAME = 'dev' --当前环境名称
 ROOT_PATH = string.sub(debug.getinfo(1, 'S').short_src, 0, -string.len(__FILE__) - 9)
 FRAMEWORK = ROOT_PATH.."/Framework"
-CONFIG_PACKAGE_PATH = package.path
-package.path = FRAMEWORK.."/Luas/?.lua;"..ROOT_PATH.."/?.lua;"..CONFIG_PACKAGE_PATH
+package.path = FRAMEWORK.."/Luas/?.lua;"..ROOT_PATH.."/?.lua;"..package.path
 MODULE_PREFIX = 'lua_'
 require "GlobalFunction" --加载自定义公共库
-Application = require "Application"
+local Application = require "Application"
 local app = Application:new(REQUEST_URI)
 app:run()

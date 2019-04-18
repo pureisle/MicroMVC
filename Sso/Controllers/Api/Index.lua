@@ -9,9 +9,9 @@ function Sso_Controller:indexAction()
 
     local Redis = require 'Redis'
     local connect_time
-    local RedisTool = require 'RedisTool'
     for i = 1, 5 do
-        rt = RedisTool:new('redis:session', 'Sso')
+        rt = Redis:new()
+        rt:connect('redis:session', 'Sso')
         local reuse = rt:get_reused_times()
         -- var_dump(rt:set('test_key','test_value'))
         var_dump(rt:get('test_key'))

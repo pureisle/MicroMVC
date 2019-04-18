@@ -2,7 +2,7 @@
 -- 配置读取类
 -- @author zhiyuan <zhiyuan12@staff.weibo.com>
 --]]
-ConfigTool = Class:new('ConfigTool')
+local ConfigTool = Class:new('ConfigTool')
 ConfigTool.FILE_SUFFIX = '.lua'
 -- 构造方法
 function ConfigTool:new ()

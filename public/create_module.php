@@ -3,6 +3,9 @@
  * 创建一个新module
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
+if (substr(php_sapi_name(), 0, 3) !== 'cli') {
+    die("This Programe can only be run in CLI mode");
+}
 $env = array(
     'module' => 'Framework'
 );
@@ -33,7 +36,7 @@ class Index extends Controller {
     );
     public function indexAction() {
         // \$this->useCORS();
-        \$this->usePolicy()->useXSS()->disableSniffing()->useFrame()->forceHTTPS();
+        //\$this->usePolicy()->useXSS()->disableSniffing()->useFrame()->forceHTTPS();
         \$params = \$this->getGetParams();
          \$this->getView()->assign(array("text" => 'hello,MicroMVC.'));
         //\$this->localtion(\$url);

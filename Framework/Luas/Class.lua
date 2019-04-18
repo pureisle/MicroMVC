@@ -11,7 +11,7 @@ function Class:new (class_name, parent, ...)
     if type(class_name) ~= 'string' then
         error("class name should be a string!", 2)
     end
-    o = {
+    local o = {
         class = class_name,
     }
     if parent then

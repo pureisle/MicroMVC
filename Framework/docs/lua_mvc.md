@@ -1,6 +1,7 @@
 ### Lua MVC框架
 代码相关只针对 Openresty 进行了测试 。  
-由于Lua代码相比较于PHP，开发效率确实太低，所以 Lua MVC建议只做一些简单业务逻辑。  
+由于Lua代码相比较于PHP，开发效率确实太低，所以 Lua MVC建议只做一些简单业务逻辑。
+提供了适合PHP程序员使用的函数库 [GlobalFunction.lua](https://github.com/pureisle/MicroMVC/blob/master/Framework/Luas/GlobalFunction.lua) ，内含一些常用的PHP函数  
 如从 Redis 获取指定 Key 并返回内容或用Nginx + Lua 构建生产机上的连接池，以便提升PHP利用资源的效率等。
 ### 相关文件
 ```

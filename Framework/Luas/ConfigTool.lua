@@ -50,7 +50,7 @@ function ConfigTool:loadByName(config_name, module_name)
     if strpos(file_name, ':') then
         local tmp_file = explode(':', file_name)
         file_name = tmp_file[1]
-        resource_name = tmp_file[2]
+        local resource_name = tmp_file[2]
     end
     local file_path
     if not empty(tmp) then

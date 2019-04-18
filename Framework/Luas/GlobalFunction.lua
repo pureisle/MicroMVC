@@ -71,11 +71,7 @@ function explode(symbol, s, limit)
 end
 -- 按指定分隔符聚合数组
 function implode(glue, pieces)
-    local ret = ''
-    for k, v in pairs(pieces) do
-        ret = ret ..glue ..v
-    end
-    return string.sub(ret, #(glue) + 1)
+    return table.concat (pieces, glue)
 end
 -- 无正则的匹配字符串
 function strpos(s, pattern, offset)
@@ -142,16 +138,26 @@ function empty(o)
         return false
     end
 end
--- 判断文件是否存在
-function file_exists(path)
-    if empty(path) then
-        return false
-    end
-    local file = io.open(path, "rb")
-    if file then
-        file:close()
-    end
-    return file ~= nil
+--判断文件是否存在 如果文件存在，返回true，不存在，返回false。
+--[[这个函数还可以检查其它文件属性：
+06     检查读写权限 
+04     检查读权限 
+02     检查写权限 
+01     检查执行权限 
+00     检查文件的存在性
+]]
+function file_exists(path, amode)
+    amode = amode or 0
+    local ffi = require("FfiDefine")
+    return ffi.C.access(path, amode) == 0
+    -- if empty(path) then
+    --     return false
+    -- end
+    -- local file = io.open(path, "rb")
+    -- if file then
+    --     file:close()
+    -- end
+    -- return file ~= nil
 end
 -- 按指定格式输出数据
 function printf(format, ...)

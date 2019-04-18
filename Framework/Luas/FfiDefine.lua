@@ -5,5 +5,7 @@ ffi.cdef[[
         long int tv_usec;
     };
     int gettimeofday(struct timeval *tv, void *tz);
+    int access(const char *filename,int amode);  
 ]]; 
+
 return ffi

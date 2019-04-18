@@ -13,6 +13,7 @@
 ### 使用方法
 1. 配置Nginx入口:
 ```
+    root /data1/www/htdocs/MicroMVC/public/;
     set $flag 0;
     if ( $uri ~ ^/lua_.* ) {
         set $flag "${flag}1";

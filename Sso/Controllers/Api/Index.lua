@@ -1,15 +1,13 @@
 -- 首先继承Controller基类
 local Sso_Controller = Controller:new()
 function Sso_Controller:indexAction()
-    -- local Json = require 'Json'
-    -- var_dump(Json.encode({1, 2, 3, {x = 10}}))
-    Profiler = require 'Profiler'
-    Profiler:setGetTimeMethod(function () return microtime(true) end)
-    Profiler:start()
+    -- Profiler = require 'Profiler'
+    -- Profiler:setGetTimeMethod(function () return microtime(true) end)
+    -- Profiler:start()
 
     local Redis = require 'Redis'
     local connect_time
-    for i = 1, 5 do
+    for i = 1, 1 do
         rt = Redis:new()
         rt:connect('redis:session', 'Sso')
         local reuse = rt:get_reused_times()
@@ -19,10 +17,10 @@ function Sso_Controller:indexAction()
         ngx.say(times, '--', reuse)
     end
     local sm = require 'Sso/Models/Sample'
-    -- sm:new()
+    sm:new()
 
-    Profiler:stop()
-    Profiler:writeReport("/tmp/profile.txt")
+    -- Profiler:stop()
+    -- Profiler:writeReport("/tmp/profile.txt")
     return true
 end
 return Sso_Controller

@@ -34,6 +34,7 @@
         access_log off;
     }
     location /index.lua {
+        #resolver 10.13.xx.xx 172.16.xxx.xxx  valid=600;
         default_type 'text/plain';
         lua_code_cache off;
         content_by_lua_file "${document_root}/index.lua";
@@ -51,6 +52,10 @@
 ```
 另外最好在nginx.conf的配置里增加缓存配置：  lua_shared_dict micromvc_cache 64m;  
 此项配置后，框架会缓存配置文件，各个nginx进程共享使用，能有效提升效率。  
+
+有时候使用 Lua 的 reids 、mysql 用域名链接时（会报 no resolver defined to resolve  错误），  
+需要额外在 location /index.lua 语句块内配置DNS解析服务器地址，如：  
+resolver 10.13.xx.xx 172.16.xxx.xxx  valid=600;  
 1. 此后URL访问类似PHP MVC框架，Module部分含有 "lua_" 字符串的，则统一重定向到 index.lua 入口文件。  
 如：http://micromvc:8183/lua_sso/api/index/index?a=1&b=2
 则会解析为：  

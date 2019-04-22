@@ -179,3 +179,12 @@ function microtime(get_as_float)
         return usec.." "..sec
     end
 end
+-- json 编解码
+function json_encode(var)
+    local Json = require 'cjson'
+    return Json.encode(var)
+end
+function json_decode(str)
+    local Json = require 'cjson'
+    return Json.decode(str)
+end

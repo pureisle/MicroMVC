@@ -78,10 +78,11 @@ function Application:router()
         end
         ret['action'] = tmp[tmp_count]
     end
-    local sub_tmp = string.sub(ret['module'], 1, #(MODULE_PREFIX))
-    if(sub_tmp == MODULE_PREFIX)
+    local f_m_p = FRAMEWORK.MODULE_PREFIX
+    local sub_tmp = string.sub(ret['module'], 1, #(f_m_p))
+    if(sub_tmp == f_m_p)
         then
-        ret['module'] = ucfirst(string.sub(ret['module'], #(MODULE_PREFIX) + 1))
+        ret['module'] = ucfirst(string.sub(ret['module'], #(f_m_p) + 1))
     end
     return ret
 end

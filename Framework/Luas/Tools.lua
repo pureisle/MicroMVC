@@ -10,7 +10,7 @@ Tools.env_name = ''
 -- 获取代码执行环境
 function Tools:getEnv()
     --生产环境禁止变更设置
-    if (CURRENT_ENV_NAME == self.ENV_PRO) then
+    if (FRAMEWORK.CURRENT_ENV_NAME == self.ENV_PRO) then
         return self.ENV_PRO
     end
     local cookie = require 'Cookie'
@@ -21,7 +21,7 @@ function Tools:getEnv()
     elseif not empty(cookie[self.ENV_INDEX_NAME]) then
         env = cookie[self.ENV_INDEX_NAME]
     else
-        env = CURRENT_ENV_NAME
+        env = FRAMEWORK.CURRENT_ENV_NAME
     end
     return env;
 end
@@ -37,8 +37,8 @@ function Tools:setEnv(env)
 end
 -- 是否为cli方式运行
 function Tools:isCli()
-    if (type(IS_CLI) == 'boolean') then
-        return IS_CLI
+    if (type(FRAMEWORK.IS_CLI) == 'boolean') then
+        return FRAMEWORK.IS_CLI
     end
     return false;
 end

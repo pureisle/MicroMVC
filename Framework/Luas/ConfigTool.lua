@@ -4,6 +4,7 @@
 --]]
 local ConfigTool = Class:new('ConfigTool')
 ConfigTool.FILE_SUFFIX = '.lua'
+ConfigTool.CACHE_TIME = 600
 -- 构造方法
 function ConfigTool:new ()
     return self
@@ -12,20 +13,24 @@ function ConfigTool:getConfig(file_name, module_name)
     if empty(file_name) then
         return false
     end
+    local cache_key = "ConfigTool:"..file_name.."#"..module_name
+    if not empty(ngx.shared[FRAMEWORK.NGX_CACHE_KEY]) then
+        local value = ngx.shared[FRAMEWORK.NGX_CACHE_KEY]:get(cache_key)
+        if not empty(value) then
+            return json_decode(value)
+        end
+    end
     local file_path = self:getFilePath(file_name, module_name);
-    -- need to do
-    -- config cache
-    -- if ( ! isset(self::$_CONFIG_SET[$file_path])) {
-    --     if ( ! file_exists($file_path)) {
-    --         //配置文件不存在
-    --         return false;
-    --     } else {
-    --         self::$_CONFIG_SET[$file_path] = include $file_path;
-    --     }
-    -- }
-    return dofile(file_path)
+    local tmp = dofile(file_path)
+    if not empty(ngx.shared[FRAMEWORK.NGX_CACHE_KEY]) then
+        local succ, err, forcible = ngx.shared[FRAMEWORK.NGX_CACHE_KEY]:set(cache_key, json_encode(tmp), ConfigTool.CACHE_TIME)
+    end
+    return tmp
 end
 function ConfigTool:getFilePath(file_name, module_name)
+    local ROOT_PATH = FRAMEWORK.ROOT_PATH
+    local DIRECTORY_SEPARATOR = FRAMEWORK.DIRECTORY_SEPARATOR
+    local CONFIG_FOLDER = FRAMEWORK.CONFIG_FOLDER
     local path = ROOT_PATH .. DIRECTORY_SEPARATOR .. module_name .. DIRECTORY_SEPARATOR .. CONFIG_FOLDER .. DIRECTORY_SEPARATOR .. file_name .. self.FILE_SUFFIX;
     local env = Tools:getEnv();
     if Tools.ENV_PRO ~= env then
@@ -47,14 +52,15 @@ function ConfigTool:loadByName(config_name, module_name)
     end
     local tmp = explode('.', config_name)
     local file_name = table.remove(tmp)
+    local resource_name
     if strpos(file_name, ':') then
         local tmp_file = explode(':', file_name)
         file_name = tmp_file[1]
-        local resource_name = tmp_file[2]
+        resource_name = tmp_file[2]
     end
     local file_path
     if not empty(tmp) then
-        file_path = implode(DIRECTORY_SEPARATOR, tmp) .. DIRECTORY_SEPARATOR . file_name;
+        file_path = implode(FRAMEWORK.DIRECTORY_SEPARATOR, tmp) .. FRAMEWORK.DIRECTORY_SEPARATOR . file_name;
     else
         file_path = file_name;
     end

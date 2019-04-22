@@ -49,6 +49,8 @@
         include fastcgi/comm_fastcgi_params;
     }
 ```
+另外最好在nginx.conf的配置里增加缓存配置：  lua_shared_dict micromvc_cache 64m;  
+此项配置后，框架会缓存配置文件，各个nginx进程共享使用，能有效提升效率。  
 1. 此后URL访问类似PHP MVC框架，Module部分含有 "lua_" 字符串的，则统一重定向到 index.lua 入口文件。  
 如：http://micromvc:8183/lua_sso/api/index/index?a=1&b=2
 则会解析为：  

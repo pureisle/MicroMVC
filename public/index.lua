@@ -10,7 +10,9 @@ FRAMEWORK = {
     IS_CLI = false,
     CURRENT_ENV_NAME = 'dev', --当前环境名称
     MODULE_PREFIX = 'lua_',
-    NGX_CACHE_KEY = 'micromvc_cache'
+    NGX_CACHE_KEY = 'micromvc_cache',
+    ROOT_PATH = nil,
+    FRAMEWORK_ROOT = nil
 }
 FRAMEWORK.ROOT_PATH = string.sub(debug.getinfo(1, 'S').short_src, 0, -string.len(FRAMEWORK.__FILE__) - 9)
 FRAMEWORK.FRAMEWORK_ROOT = FRAMEWORK.ROOT_PATH.."/Framework"

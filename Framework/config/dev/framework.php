@@ -15,6 +15,7 @@ return array(
         'test'       => 'Tests',
         'controller' => 'Controllers',
         'view'       => 'Views',
+        'daemon'     => 'Daemons',
         'plugin'     => 'Plugins',
         'cache'      => 'Cache',
         'data'       => 'Data',
@@ -26,9 +27,9 @@ return array(
     ),
     //定义module，并控制是否开启
     'modules'        => array(
-        'Index'      => true,
-        'Sso'        => true,
-        'Xhprof'     => true,
+        'Index'  => true,
+        'Sso'    => true,
+        'Xhprof' => true
     ),
     'default_module' => 'Index'
 );

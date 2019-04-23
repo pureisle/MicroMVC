@@ -8,6 +8,7 @@ FRAMEWORK = {
     DIRECTORY_SEPARATOR = '/',
     CONFIG_FOLDER = 'config/lua_config',
     IS_CLI = false,
+    LOG_ROOT_PATH = '/tmp', -- 日志根目录
     CURRENT_ENV_NAME = 'dev', --当前环境名称
     MODULE_PREFIX = 'lua_',
     NGX_CACHE_KEY = 'micromvc_cache',

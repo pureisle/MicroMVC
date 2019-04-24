@@ -55,7 +55,11 @@
 
 有时候使用 Lua 的 reids 、mysql 用域名链接时（会报 no resolver defined to resolve  错误），  
 需要额外在 location /index.lua 语句块内配置DNS解析服务器地址，如：  
-resolver 10.13.xx.xx 172.16.xxx.xxx  valid=600;  
+resolver 10.13.xx.xx 172.16.xxx.xxx  valid=600;    
+
+类似PHP MVC里的运行环境配置，如果在nginx配置内设置： set $CURRENT_ENV_NAME dev;    未设置该值的话默认值为 pro  
+则框架会搜索加载配置路径 dev 路径下的配置，否则加载默认配置路径下的配置文件。  
+
 1. 此后URL访问类似PHP MVC框架，Module部分含有 "lua_" 字符串的，则统一重定向到 index.lua 入口文件。  
 如：http://micromvc:8183/lua_sso/api/index/index?a=1&b=2
 则会解析为：  

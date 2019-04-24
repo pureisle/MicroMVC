@@ -17,7 +17,6 @@ FRAMEWORK = {
         entity = 'Entities',
         model = 'Models'
     },
-    REQUEST_URI = ngx.var.request_uri,
     DIRECTORY_SEPARATOR = '/',
     CONFIG_FOLDER = 'config/lua_config',
     IS_CLI = false,
@@ -33,5 +32,5 @@ FRAMEWORK.FRAMEWORK_ROOT = FRAMEWORK.ROOT_PATH.."/Framework"
 package.path = FRAMEWORK.FRAMEWORK_ROOT.."/Luas/?.lua;"..FRAMEWORK.ROOT_PATH.."/?.lua;"..package.path
 require "GlobalFunction" --加载自定义公共库
 local Application = require "Application"
-local app = Application:new(FRAMEWORK.REQUEST_URI)
+local app = Application:new(ngx.var.request_uri)
 app:run()

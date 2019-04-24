@@ -18,19 +18,25 @@ function Application:run()
     local controller = self:autoLoad(require_path)
     xpcall(function ()
         local c_name = controller.classCheck()--检验是否继承父类
-    end, error_handler)
+    end, function (msg)
+        ngx.exit(ngx.HTTP_NOT_FOUND)
+    end)
+    local erro = false
     xpcall(function ()
         local c_ret = controller[router_info['action'] .. 'Action']()
-    end, error_handler)
-end
-function Application:errorHandler(msg)
-    var_dump(msg)
-    var_dump(debug.traceback())
+    end, function (msg)
+        erro = true
+        ngx.log(ngx.ERR, msg, "\n", debug.traceback())
+    end)
+    if erro then
+        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    end
+    ngx.exit(ngx.HTTP_OK)
 end
 function Application:autoLoad(file)
     local ok, c_obj = pcall(require, file)
     if not ok then
-        var_dump(c_obj)
+        ngx.exit(ngx.HTTP_NOT_FOUND)
     end
     return c_obj
 end

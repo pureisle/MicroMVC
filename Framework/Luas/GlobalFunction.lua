@@ -12,6 +12,9 @@
 --  file_exists(path)   判断路径是否为文件是否存在 
 --  printf(format, ...)   按指定格式输出数据
 --  microtime(get_as_float)   获取毫秒时间
+--  json_encode(var)    json编码
+--  json_decode(str)    json解码
+--  sleep(sec)          非阻塞sleep
 --]]
 -- 转化为可以用下标的字符串
 function my_string (s)
@@ -80,27 +83,26 @@ function strpos(s, pattern, offset)
 end
 -- 变量输出
 function var_dump(...)
-    local string = function (o)
-        return '"' .. tostring(o) .. '"'
-    end
-    local recurse
-    recurse = function (o, indent)
-        if indent == nil then indent = '' end
+    local _recurse
+    _recurse = function (o, indent, deep)
         local indent2 = indent .. '  '
         if type(o) == 'table' then
-            local s = indent .. '{' .. '\n'
+            local s = '{' .. '\n'
+            if deep > 10 then --防止递归层级过深
+                return s .. indent2 .. '...\n' .. indent .. '}'
+            end
             local first = true
             for k, v in pairs(o) do
                 if first == false then s = s .. ', \n' end
-                if type(k) ~= 'number' then k = string(k) end
-                s = s .. indent2 .. '[' .. k .. '] = ' .. recurse(v, indent2)
+                if type(k) ~= 'number' then k = '"'..tostring(k) .. '"' end
+                s = s .. indent2 .. '[' .. k .. '] = ' .. _recurse(v, indent2, deep + 1)
                 first = false
             end
             return s .. '\n' .. indent .. '}'
         elseif type(o) == 'string' then
-            return string(o)
+            return '"'..tostring(o) .. '"'
         elseif type(o) == 'number' or type(o) == 'boolean' then
-            return o
+            return tostring(o)
         elseif type(o) == 'function' or type(o) == 'thread' or type(o) == 'nil' or type(o) == 'userdata' then
             return type(o)
         else
@@ -113,7 +115,7 @@ function var_dump(...)
             var_dump(v)
         end
     else
-        printf('%s', recurse(args[1]))
+        printf('%s', _recurse(args[1], '', 1))
     end
 end
 -- 模拟PHP的emtpy()
@@ -187,4 +189,7 @@ end
 function json_decode(str)
     local Json = require 'cjson'
     return Json.decode(str)
+end
+function sleep(sec)
+    ngx.sleep(sec)
 end

@@ -15,30 +15,23 @@ function Application:run()
     local require_path = router_info['module'] .. '/Controllers/'..router_info['controller']
     local error_handler = self.errorHandler
     require 'Controller'
-    local controller = self:autoLoad(require_path)
+    local controller
+    local http_code = ngx.HTTP_OK
     xpcall(function ()
+        controller = require(require_path)
         local c_name = controller.classCheck()--检验是否继承父类
     end, function (msg)
-        ngx.exit(ngx.HTTP_NOT_FOUND)
+        http_code = ngx.HTTP_NOT_FOUND
     end)
-    local erro = false
-    xpcall(function ()
-        local c_ret = controller[router_info['action'] .. 'Action']()
-    end, function (msg)
-        erro = true
-        ngx.log(ngx.ERR, msg, "\n", debug.traceback())
-    end)
-    if erro then
-        ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+    if http_code == ngx.HTTP_OK then
+        xpcall(function ()
+            local c_ret = controller[router_info['action'] .. 'Action']()
+        end, function (msg)
+            http_code = ngx.HTTP_INTERNAL_SERVER_ERROR
+            ngx.log(ngx.ERR, msg, "\n", debug.traceback())
+        end)
     end
-    ngx.exit(ngx.HTTP_OK)
-end
-function Application:autoLoad(file)
-    local ok, c_obj = pcall(require, file)
-    if not ok then
-        ngx.exit(ngx.HTTP_NOT_FOUND)
-    end
-    return c_obj
+    ngx.exit(http_code)
 end
 function Application:router()
     local tmp = {}

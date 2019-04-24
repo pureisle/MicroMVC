@@ -15,18 +15,18 @@ function Class:new (class_name, parent, ...)
         class = class_name,
     }
     if parent then
-        parent.__index = parent
+        p = {__index = parent}
         o.parent = parent
     else
-        o.parent = self
-        parent = {
+        p = {
             __index = function (table, key)
                 return function () error('index: '..key..' undefined') end
             end,
             __tostring = function () return 'object' end
         }
+        o.parent = p
     end
-    setmetatable(o, parent)
+    setmetatable(o, p)
     return o
 end
 function Class:type(class_obj)

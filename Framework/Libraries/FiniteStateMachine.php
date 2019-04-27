@@ -52,6 +52,14 @@ class FiniteStateMachine {
         return $this->_state_objs;
     }
     /**
+     * 获取指定状态
+     * @param  int   $state
+     * @return obj
+     */
+    public function getStateObj(int $state) {
+        return $this->_state_objs[$state];
+    }
+    /**
      * 状态转移
      * @param    int $state
      * @return

@@ -1,5 +1,5 @@
 --[[
--- 全局公共函数
+-- 全局公共函数 , 主要是为了方便PHP程序员做的一些迁移函数，尽可能保持名称和参数一致
 -- 
 -- function list:
 --  my_string (s)   转化为可以用下标的字符串 
@@ -15,6 +15,8 @@
 --  json_encode(var)    json编码
 --  json_decode(str)    json解码
 --  sleep(sec)          非阻塞sleep
+--  current_file()      获取当前文件名称，类似 php __FILE__
+--  dirname(path, levels)   获取文件路径
 --]]
 -- 转化为可以用下标的字符串
 function my_string (s)
@@ -192,4 +194,15 @@ function json_decode(str)
 end
 function sleep(sec)
     ngx.sleep(sec)
+end
+function current_file()
+    return debug.getinfo(2, "S").source:sub(2)
+end
+function dirname(path, levels)
+    local path_arr = explode('/', path)
+    levels = levels or 1
+    for i = 1, levels do
+        table.remove(path_arr)
+    end
+    return table.concat(path_arr, '/')
 end

@@ -25,7 +25,7 @@ function Application:run()
     end)
     if http_code == ngx.HTTP_OK then
         xpcall(function ()
-            local c_ret = controller[router_info['action'] .. 'Action']()
+            local c_ret = controller[router_info['action'] .. 'Action'](controller)
         end, function (msg)
             http_code = ngx.HTTP_INTERNAL_SERVER_ERROR
             ngx.log(ngx.ERR, msg, "\n", debug.traceback())

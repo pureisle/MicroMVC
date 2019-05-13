@@ -23,19 +23,23 @@ local setmetatable = setmetatable
 local error = error
 local tonumber = tonumber
 
+
 if not ngx.config
-    or not ngx.config.ngx_lua_version
-    or ngx.config.ngx_lua_version < 9011
-    then
+   or not ngx.config.ngx_lua_version
+   or ngx.config.ngx_lua_version < 9011
+then
     error("ngx_lua 0.9.11+ required")
 end
+
 
 local ok, new_tab = pcall(require, "table.new")
 if not ok then
     new_tab = function (narr, nrec) return {} end
 end
 
-local _M = {_VERSION = '0.21'}
+
+local _M = { _VERSION = '0.21' }
+
 
 -- constants
 
@@ -56,51 +60,52 @@ local FULL_PACKET_SIZE = 16777215
 --   FROM information_schema.collations
 --   WHERE IS_DEFAULT = 'Yes' ORDER BY id;
 local CHARSET_MAP = {
-    _default = 0,
-    big5 = 1,
-    dec8 = 3,
-    cp850 = 4,
-    hp8 = 6,
-    koi8r = 7,
-    latin1 = 8,
-    latin2 = 9,
-    swe7 = 10,
-    ascii = 11,
-    ujis = 12,
-    sjis = 13,
-    hebrew = 16,
-    tis620 = 18,
-    euckr = 19,
-    koi8u = 22,
-    gb2312 = 24,
-    greek = 25,
-    cp1250 = 26,
-    gbk = 28,
-    latin5 = 30,
-    armscii8 = 32,
-    utf8 = 33,
-    ucs2 = 35,
-    cp866 = 36,
-    keybcs2 = 37,
-    macce = 38,
-    macroman = 39,
-    cp852 = 40,
-    latin7 = 41,
-    utf8mb4 = 45,
-    cp1251 = 51,
-    utf16 = 54,
-    utf16le = 56,
-    cp1256 = 57,
-    cp1257 = 59,
-    utf32 = 60,
-    binary = 63,
-    geostd8 = 92,
-    cp932 = 95,
-    eucjpms = 97,
-    gb18030 = 248
+    _default  = 0,
+    big5      = 1,
+    dec8      = 3,
+    cp850     = 4,
+    hp8       = 6,
+    koi8r     = 7,
+    latin1    = 8,
+    latin2    = 9,
+    swe7      = 10,
+    ascii     = 11,
+    ujis      = 12,
+    sjis      = 13,
+    hebrew    = 16,
+    tis620    = 18,
+    euckr     = 19,
+    koi8u     = 22,
+    gb2312    = 24,
+    greek     = 25,
+    cp1250    = 26,
+    gbk       = 28,
+    latin5    = 30,
+    armscii8  = 32,
+    utf8      = 33,
+    ucs2      = 35,
+    cp866     = 36,
+    keybcs2   = 37,
+    macce     = 38,
+    macroman  = 39,
+    cp852     = 40,
+    latin7    = 41,
+    utf8mb4   = 45,
+    cp1251    = 51,
+    utf16     = 54,
+    utf16le   = 56,
+    cp1256    = 57,
+    cp1257    = 59,
+    utf32     = 60,
+    binary    = 63,
+    geostd8   = 92,
+    cp932     = 95,
+    eucjpms   = 97,
+    gb18030   = 248
 }
 
-local mt = {__index = _M}
+local mt = { __index = _M }
+
 
 -- mysql field value type converters
 local converters = new_tab(0, 9)
@@ -109,26 +114,30 @@ for i = 0x01, 0x05 do
     -- tiny, short, long, float, double
     converters[i] = tonumber
 end
-converters[0x00] = tonumber -- decimal
+converters[0x00] = tonumber  -- decimal
 -- converters[0x08] = tonumber  -- long long
-converters[0x09] = tonumber -- int24
-converters[0x0d] = tonumber -- year
-converters[0xf6] = tonumber -- newdecimal
+converters[0x09] = tonumber  -- int24
+converters[0x0d] = tonumber  -- year
+converters[0xf6] = tonumber  -- newdecimal
+
 
 local function _get_byte2(data, i)
     local a, b = strbyte(data, i, i + 1)
     return bor(a, lshift(b, 8)), i + 2
 end
 
+
 local function _get_byte3(data, i)
     local a, b, c = strbyte(data, i, i + 2)
     return bor(a, lshift(b, 8), lshift(c, 16)), i + 3
 end
 
+
 local function _get_byte4(data, i)
     local a, b, c, d = strbyte(data, i, i + 3)
     return bor(a, lshift(b, 8), lshift(c, 16), lshift(d, 24)), i + 4
 end
+
 
 local function _get_byte8(data, i)
     local a, b, c, d, e, f, g, h = strbyte(data, i, i + 7)
@@ -139,25 +148,29 @@ local function _get_byte8(data, i)
     return lo + hi * 4294967296, i + 8
 
     -- return bor(a, lshift(b, 8), lshift(c, 16), lshift(d, 24), lshift(e, 32),
-    -- lshift(f, 40), lshift(g, 48), lshift(h, 56)), i + 8
+               -- lshift(f, 40), lshift(g, 48), lshift(h, 56)), i + 8
 end
+
 
 local function _set_byte2(n)
     return strchar(band(n, 0xff), band(rshift(n, 8), 0xff))
 end
 
+
 local function _set_byte3(n)
     return strchar(band(n, 0xff),
-        band(rshift(n, 8), 0xff),
-    band(rshift(n, 16), 0xff))
+                   band(rshift(n, 8), 0xff),
+                   band(rshift(n, 16), 0xff))
 end
+
 
 local function _set_byte4(n)
     return strchar(band(n, 0xff),
-        band(rshift(n, 8), 0xff),
-        band(rshift(n, 16), 0xff),
-    band(rshift(n, 24), 0xff))
+                   band(rshift(n, 8), 0xff),
+                   band(rshift(n, 16), 0xff),
+                   band(rshift(n, 24), 0xff))
 end
+
 
 local function _from_cstring(data, i)
     local last = strfind(data, "\0", i, true)
@@ -168,13 +181,16 @@ local function _from_cstring(data, i)
     return sub(data, i, last - 1), last + 1
 end
 
+
 local function _to_cstring(data)
     return data .. "\0"
 end
 
+
 local function _to_binary_coded_string(data)
     return strchar(#data) .. data
 end
+
 
 local function _dump(data)
     local len = #data
@@ -185,6 +201,7 @@ local function _dump(data)
     return concat(bytes, " ")
 end
 
+
 local function _dumphex(data)
     local len = #data
     local bytes = new_tab(len, 0)
@@ -193,6 +210,7 @@ local function _dumphex(data)
     end
     return concat(bytes, " ")
 end
+
 
 local function _compute_token(password, scramble)
     if password == "" then
@@ -205,11 +223,12 @@ local function _compute_token(password, scramble)
     local n = #stage1
     local bytes = new_tab(n, 0)
     for i = 1, n do
-        bytes[i] = strchar(bxor(strbyte(stage3, i), strbyte(stage1, i)))
+         bytes[i] = strchar(bxor(strbyte(stage3, i), strbyte(stage1, i)))
     end
 
     return concat(bytes)
 end
+
 
 local function _send_packet(self, req, size)
     local sock = self.sock
@@ -226,6 +245,7 @@ local function _send_packet(self, req, size)
 
     return sock:send(packet)
 end
+
 
 local function _recv_packet(self)
     local sock = self.sock
@@ -282,6 +302,7 @@ local function _recv_packet(self)
     return data, typ
 end
 
+
 local function _from_length_coded_bin(data, pos)
     local first = strbyte(data, pos)
 
@@ -317,6 +338,7 @@ local function _from_length_coded_bin(data, pos)
     return nil, pos + 1
 end
 
+
 local function _from_length_coded_str(data, pos)
     local len
     len, pos = _from_length_coded_bin(data, pos)
@@ -326,6 +348,7 @@ local function _from_length_coded_str(data, pos)
 
     return sub(data, pos, pos + len - 1), pos + len
 end
+
 
 local function _parse_ok_packet(packet)
     local res = new_tab(0, 5)
@@ -357,6 +380,7 @@ local function _parse_ok_packet(packet)
     return res
 end
 
+
 local function _parse_eof_packet(packet)
     local pos = 2
 
@@ -365,6 +389,7 @@ local function _parse_eof_packet(packet)
 
     return warning_count, status_flags
 end
+
 
 local function _parse_err_packet(packet)
     local errno, pos = _get_byte2(packet, 2)
@@ -381,6 +406,7 @@ local function _parse_err_packet(packet)
     return errno, message, sqlstate
 end
 
+
 local function _parse_result_set_header_packet(packet)
     local field_count, pos = _from_length_coded_bin(packet, 1)
 
@@ -389,6 +415,7 @@ local function _parse_result_set_header_packet(packet)
 
     return field_count, extra
 end
+
 
 local function _parse_field_packet(data)
     local col = new_tab(0, 2)
@@ -415,9 +442,12 @@ local function _parse_field_packet(data)
 
     --[[
     pos = pos + 1
+
     col.flags, pos = _get_byte2(data, pos)
+
     col.decimals = strbyte(data, pos)
     pos = pos + 1
+
     local default = sub(data, pos + 2)
     if default and default ~= "" then
         col.default = default
@@ -426,6 +456,7 @@ local function _parse_field_packet(data)
 
     return col
 end
+
 
 local function _parse_row_data_packet(data, cols, compact)
     local pos = 1
@@ -463,6 +494,7 @@ local function _parse_row_data_packet(data, cols, compact)
     return row
 end
 
+
 local function _recv_field_packet(self)
     local packet, typ, err = _recv_packet(self)
     if not packet then
@@ -483,13 +515,15 @@ local function _recv_field_packet(self)
     return _parse_field_packet(packet)
 end
 
+
 function _M.new(self)
     local sock, err = tcp()
     if not sock then
         return nil, err
     end
-    return setmetatable({sock = sock}, mt)
+    return setmetatable({ sock = sock }, mt)
 end
+
 
 function _M.set_timeout(self, timeout)
     local sock = self.sock
@@ -499,6 +533,7 @@ function _M.set_timeout(self, timeout)
 
     return sock:settimeout(timeout)
 end
+
 
 function _M.connect(self, opts)
     local sock = self.sock
@@ -533,7 +568,7 @@ function _M.connect(self, opts)
             pool = user .. ":" .. database .. ":" .. host .. ":" .. port
         end
 
-        ok, err = sock:connect(host, port, {pool = pool})
+        ok, err = sock:connect(host, port, { pool = pool })
 
     else
         local path = opts.path
@@ -545,7 +580,7 @@ function _M.connect(self, opts)
             pool = user .. ":" .. database .. ":" .. path
         end
 
-        ok, err = sock:connect("unix:" .. path, {pool = pool})
+        ok, err = sock:connect("unix:" .. path, { pool = pool })
     end
 
     if not ok then
@@ -594,7 +629,7 @@ function _M.connect(self, opts)
     pos = pos + 9 -- skip filler
 
     -- two lower bytes
-    local capabilities -- server capabilities
+    local capabilities  -- server capabilities
     capabilities, pos = _get_byte2(packet, pos)
 
     -- print(format("server capabilities: %#x", capabilities))
@@ -642,9 +677,9 @@ function _M.connect(self, opts)
 
         -- send a SSL Request Packet
         local req = _set_byte4(bor(client_flags, CLIENT_SSL))
-        .. _set_byte4(self._max_packet_size)
-        .. strchar(charset)
-        .. strrep("\0", 23)
+                    .. _set_byte4(self._max_packet_size)
+                    .. strchar(charset)
+                    .. strrep("\0", 23)
 
         local packet_len = 4 + 4 + 1 + 23
         local bytes, err = _send_packet(self, req, packet_len)
@@ -665,15 +700,15 @@ function _M.connect(self, opts)
     --print("token: ", _dump(token))
 
     local req = _set_byte4(client_flags)
-    .. _set_byte4(self._max_packet_size)
-    .. strchar(charset)
-    .. strrep("\0", 23)
-    .. _to_cstring(user)
-    .. _to_binary_coded_string(token)
-    .. _to_cstring(database)
+                .. _set_byte4(self._max_packet_size)
+                .. strchar(charset)
+                .. strrep("\0", 23)
+                .. _to_cstring(user)
+                .. _to_binary_coded_string(token)
+                .. _to_cstring(database)
 
     local packet_len = 4 + 4 + 1 + 23 + #user + 1
-    + #token + 1 + #database + 1
+        + #token + 1 + #database + 1
 
     -- print("packet content length: ", packet_len)
     -- print("packet content: ", _dump(concat(req, "")))
@@ -708,6 +743,7 @@ function _M.connect(self, opts)
     return 1
 end
 
+
 function _M.set_keepalive(self, ...)
     local sock = self.sock
     if not sock then
@@ -716,12 +752,13 @@ function _M.set_keepalive(self, ...)
 
     if self.state ~= STATE_CONNECTED then
         return nil, "cannot be reused in the current connection state: "
-        .. (self.state or "nil")
+                    .. (self.state or "nil")
     end
 
     self.state = nil
     return sock:setkeepalive(...)
 end
+
 
 function _M.get_reused_times(self)
     local sock = self.sock
@@ -731,6 +768,7 @@ function _M.get_reused_times(self)
 
     return sock:getreusedtimes()
 end
+
 
 function _M.close(self)
     local sock = self.sock
@@ -748,14 +786,16 @@ function _M.close(self)
     return sock:close()
 end
 
+
 function _M.server_ver(self)
     return self._server_ver
 end
 
+
 local function send_query(self, query)
     if self.state ~= STATE_CONNECTED then
         return nil, "cannot send query in the current context: "
-        .. (self.state or "nil")
+                    .. (self.state or "nil")
     end
 
     local sock = self.sock
@@ -781,10 +821,11 @@ local function send_query(self, query)
 end
 _M.send_query = send_query
 
+
 local function read_result(self, est_nrows)
     if self.state ~= STATE_COMMAND_SENT then
         return nil, "cannot read result in the current context: "
-        .. (self.state or "nil")
+                    .. (self.state or "nil")
     end
 
     local sock = self.sock
@@ -845,7 +886,7 @@ local function read_result(self, est_nrows)
 
     if typ ~= 'EOF' then
         return nil, "unexpected packet type " .. typ .. " while eof packet is "
-        .. "expected"
+            .. "expected"
     end
 
     -- typ == 'EOF'
@@ -875,7 +916,7 @@ local function read_result(self, est_nrows)
         end
 
         -- if typ ~= 'DATA' then
-        -- return nil, 'bad row packet type: ' .. typ
+            -- return nil, 'bad row packet type: ' .. typ
         -- end
 
         -- typ == 'DATA'
@@ -891,6 +932,7 @@ local function read_result(self, est_nrows)
 end
 _M.read_result = read_result
 
+
 function _M.query(self, query, est_nrows)
     local bytes, err = send_query(self, query)
     if not bytes then
@@ -900,8 +942,10 @@ function _M.query(self, query, est_nrows)
     return read_result(self, est_nrows)
 end
 
+
 function _M.set_compact_arrays(self, value)
     self.compact = value
 end
+
 
 return _M

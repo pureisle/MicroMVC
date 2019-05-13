@@ -1,5 +1,5 @@
 --https://github.com/ledgetech/lua-resty-http/blob/master/lib/resty/http.lua
-local http_headers = require "HttpHeaders"
+local http_headers = require "resty.http_headers"
 
 local ngx = ngx
 local ngx_socket_tcp = ngx.socket.tcp

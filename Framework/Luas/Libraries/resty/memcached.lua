@@ -1,5 +1,6 @@
 -- Copyright (C) Yichun Zhang (agentzh), CloudFlare Inc.
 -- https://github.com/openresty/lua-resty-memcached
+
 local sub = string.sub
 local escape_uri = ngx.escape_uri
 local unescape_uri = ngx.unescape_uri
@@ -11,11 +12,14 @@ local setmetatable = setmetatable
 local type = type
 local error = error
 
+
 local _M = {
     _VERSION = '0.13'
 }
 
-local mt = {__index = _M}
+
+local mt = { __index = _M }
+
 
 function _M.new(self, opts)
     local sock, err = tcp()
@@ -27,15 +31,15 @@ function _M.new(self, opts)
     local unescape_key = unescape_uri
 
     if opts then
-        local key_transform = opts.key_transform
+       local key_transform = opts.key_transform
 
-        if key_transform then
-            escape_key = key_transform[1]
-            unescape_key = key_transform[2]
-            if not escape_key or not unescape_key then
-                return nil, "expecting key_transform = { escape, unescape } table"
-            end
-        end
+       if key_transform then
+          escape_key = key_transform[1]
+          unescape_key = key_transform[2]
+          if not escape_key or not unescape_key then
+             return nil, "expecting key_transform = { escape, unescape } table"
+          end
+       end
     end
 
     return setmetatable({
@@ -44,6 +48,7 @@ function _M.new(self, opts)
         unescape_key = unescape_key,
     }, mt)
 end
+
 
 function _M.set_timeout(self, timeout)
     local sock = self.sock
@@ -55,6 +60,7 @@ function _M.set_timeout(self, timeout)
     return 1
 end
 
+
 function _M.connect(self, ...)
     local sock = self.sock
     if not sock then
@@ -63,6 +69,7 @@ function _M.connect(self, ...)
 
     return sock:connect(...)
 end
+
 
 local function _multi_get(self, keys)
     local sock = self.sock
@@ -139,6 +146,7 @@ local function _multi_get(self, keys)
     return results
 end
 
+
 function _M.get(self, key)
     if type(key) == "table" then
         return _multi_get(self, key)
@@ -192,6 +200,7 @@ function _M.get(self, key)
     return data, flags
 end
 
+
 local function _multi_gets(self, keys)
     local sock = self.sock
     if not sock then
@@ -238,7 +247,7 @@ local function _multi_gets(self, keys)
         end
 
         local key, flags, len, cas_uniq =
-        match(line, '^VALUE (%S+) (%d+) (%d+) (%d+)$')
+                match(line, '^VALUE (%S+) (%d+) (%d+) (%d+)$')
 
         -- print("key: ", key, "len: ", len, ", flags: ", flags)
 
@@ -267,6 +276,7 @@ local function _multi_gets(self, keys)
 
     return results
 end
+
 
 function _M.gets(self, key)
     if type(key) == "table" then
@@ -321,6 +331,7 @@ function _M.gets(self, key)
     return data, flags, cas_uniq
 end
 
+
 local function _expand_table(value)
     local segs = {}
     local nelems = #value
@@ -336,6 +347,7 @@ local function _expand_table(value)
     end
     return concat(segs)
 end
+
 
 local function _store(self, cmd, key, value, exptime, flags)
     if not exptime then
@@ -356,8 +368,8 @@ local function _store(self, cmd, key, value, exptime, flags)
     end
 
     local req = cmd .. " " .. self.escape_key(key) .. " " .. flags .. " "
-    .. exptime .. " " .. strlen(value) .. "\r\n" .. value
-    .. "\r\n"
+                .. exptime .. " " .. strlen(value) .. "\r\n" .. value
+                .. "\r\n"
     local bytes, err = sock:send(req)
     if not bytes then
         return nil, err
@@ -378,25 +390,31 @@ local function _store(self, cmd, key, value, exptime, flags)
     return nil, data
 end
 
+
 function _M.set(self, ...)
     return _store(self, "set", ...)
 end
+
 
 function _M.add(self, ...)
     return _store(self, "add", ...)
 end
 
+
 function _M.replace(self, ...)
     return _store(self, "replace", ...)
 end
+
 
 function _M.append(self, ...)
     return _store(self, "append", ...)
 end
 
+
 function _M.prepend(self, ...)
     return _store(self, "prepend", ...)
 end
+
 
 function _M.cas(self, key, value, cas_uniq, exptime, flags)
     if not exptime then
@@ -413,8 +431,8 @@ function _M.cas(self, key, value, cas_uniq, exptime, flags)
     end
 
     local req = "cas " .. self.escape_key(key) .. " " .. flags .. " "
-    .. exptime .. " " .. strlen(value) .. " " .. cas_uniq
-    .. "\r\n" .. value .. "\r\n"
+                .. exptime .. " " .. strlen(value) .. " " .. cas_uniq
+                .. "\r\n" .. value .. "\r\n"
 
     -- local cjson = require "cjson"
     -- print("request: ", cjson.encode(req))
@@ -440,6 +458,7 @@ function _M.cas(self, key, value, cas_uniq, exptime, flags)
 
     return nil, line
 end
+
 
 function _M.delete(self, key)
     local sock = self.sock
@@ -471,6 +490,7 @@ function _M.delete(self, key)
     return 1
 end
 
+
 function _M.set_keepalive(self, ...)
     local sock = self.sock
     if not sock then
@@ -480,6 +500,7 @@ function _M.set_keepalive(self, ...)
     return sock:setkeepalive(...)
 end
 
+
 function _M.get_reused_times(self)
     local sock = self.sock
     if not sock then
@@ -488,6 +509,7 @@ function _M.get_reused_times(self)
 
     return sock:getreusedtimes()
 end
+
 
 function _M.flush_all(self, time)
     local sock = self.sock
@@ -522,6 +544,7 @@ function _M.flush_all(self, time)
     return 1
 end
 
+
 local function _incr_decr(self, cmd, key, value)
     local sock = self.sock
     if not sock then
@@ -550,13 +573,16 @@ local function _incr_decr(self, cmd, key, value)
     return line
 end
 
+
 function _M.incr(self, key, value)
     return _incr_decr(self, "incr", key, value)
 end
 
+
 function _M.decr(self, key, value)
     return _incr_decr(self, "decr", key, value)
 end
+
 
 function _M.stats(self, args)
     local sock = self.sock
@@ -603,6 +629,7 @@ function _M.stats(self, args)
     return lines
 end
 
+
 function _M.version(self)
     local sock = self.sock
     if not sock then
@@ -630,6 +657,7 @@ function _M.version(self)
     return ver
 end
 
+
 function _M.quit(self)
     local sock = self.sock
     if not sock then
@@ -643,6 +671,7 @@ function _M.quit(self)
 
     return 1
 end
+
 
 function _M.verbosity(self, level)
     local sock = self.sock
@@ -670,6 +699,7 @@ function _M.verbosity(self, level)
     return 1
 end
 
+
 function _M.touch(self, key, exptime)
     local sock = self.sock
     if not sock then
@@ -677,7 +707,7 @@ function _M.touch(self, key, exptime)
     end
 
     local bytes, err = sock:send("touch " .. self.escape_key(key) .. " "
-    .. exptime .. "\r\n")
+                                 .. exptime .. "\r\n")
     if not bytes then
         return nil, err
     end
@@ -691,11 +721,12 @@ function _M.touch(self, key, exptime)
     end
 
     -- moxi server from couchbase returned stored after touching
-    if line == "TOUCHED" or line == "STORED" then
+    if line == "TOUCHED" or line =="STORED" then
         return 1
     end
     return nil, line
 end
+
 
 function _M.close(self)
     local sock = self.sock
@@ -705,5 +736,6 @@ function _M.close(self)
 
     return sock:close()
 end
+
 
 return _M

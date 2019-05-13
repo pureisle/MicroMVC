@@ -1,3 +1,4 @@
+-- https://github.com/ledgetech/lua-resty-http/blob/master/lib/resty/http_headers.lua
 local rawget, rawset, setmetatable =
     rawget, rawset, setmetatable
 

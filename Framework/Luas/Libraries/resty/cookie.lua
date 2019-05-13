@@ -1,6 +1,7 @@
 -- Copyright (C) 2013-2016 Jiale Zhi (calio), CloudFlare Inc.
 -- See RFC6265 http://tools.ietf.org/search/rfc6265
 -- https://github.com/cloudflare/lua-resty-cookie/blob/master/README.md
+-- require "luacov"
 
 local type          = type
 local byte          = string.byte
@@ -117,7 +118,7 @@ function _M.get(self, key)
     return self.cookie_table[key]
 end
 
-function _M.getAll(self)
+function _M.get_all(self)
     if not self._cookie then
         return nil, "no cookie found in the current request"
     end

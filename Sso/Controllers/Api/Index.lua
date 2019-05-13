@@ -1,23 +1,39 @@
 -- 首先继承Controller基类
 local Sso_Controller = Controller:new()
-local sm = require 'Sso/Models/Sample'
+-- local sm = require 'Sso/Models/Sample'
 function Sso_Controller:indexAction()
     -- Profiler = require 'Profiler'
     -- Profiler:setGetTimeMethod(function () return microtime(true) end)
     -- Profiler:start()
-    
-    local Redis = require 'Redis'
+    local Http = require "resty.http"
+    local http = Http.new()
+    local res, err = http:request_uri("http://example.com/helloworld", {
+        method = "POST",
+        body = "a=1&b=2",
+        headers = {
+            ["Content-Type"] = "application/x-www-form-urlencoded",
+        },
+        keepalive_timeout = 60,
+        keepalive_pool = 10
+    })
+    var_dump(res,err)
+    -- var_dump(package.path);
+    ngx.say('hello,world')
+    -- Tools:require('Sso.Models.Sample')
+    -- var_dump(self,self.parent)
+    -- var_dump(self:getPostParams())
+    -- local Redis = require 'resty.redis'
     -- var_dump(package.loaded)
-    for i = 1, 1 do
-        local rt = Redis:new()
-        rt:connect('redis:test', 'Sso')
-        local reuse = rt:get_reused_times()
-        -- var_dump(rt:set('test_key','test_value'))
-        var_dump(rt:hgetall('Vote\\Data:Vote:Count:2019_172'))
-        local times, er = rt:set_keepalive(600, 100)
-        -- ngx.say(times, '--', reuse)
-    end
-    sm:new()
+    -- for i = 1, 1 do
+    -- local rt = Redis:new()
+    -- rt:connect('redis:test', 'Sso')
+    -- local reuse = rt:get_reused_times()
+    -- var_dump(rt:set('test_key','test_value'))
+    -- var_dump(rt:hgetall('Vote\\Data:Vote:Count:2019_172'))
+    -- local times, er = rt:set_keepalive(600, 100)
+    -- ngx.say(times, '--', reuse)
+    -- end
+    -- sm:new()
 
     -- Profiler:stop()
     -- Profiler:writeReport("/tmp/profile.txt")

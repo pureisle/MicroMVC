@@ -28,9 +28,7 @@ FRAMEWORK = {
     FRAMEWORK_ROOT = nil
 }
 FRAMEWORK.ROOT_PATH = string.sub(debug.getinfo(1, "S").source:sub(2), 1, -string.len('/public/'..FRAMEWORK.__FILE__) - 1)
-FRAMEWORK.FRAMEWORK_ROOT = FRAMEWORK.ROOT_PATH.."/Framework"
-package.path = FRAMEWORK.FRAMEWORK_ROOT.."/Luas/?.lua;"..FRAMEWORK.ROOT_PATH.."/?.lua;"..package.path
-require "GlobalFunction" --加载自定义公共库
-local Application = require "Application"
+FRAMEWORK.FRAMEWORK_ROOT = FRAMEWORK.ROOT_PATH.."/Framework/Luas"
+local Application = require(FRAMEWORK.FRAMEWORK_ROOT.."/Application")
 local app = Application:new(ngx.var.request_uri)
 app:run()

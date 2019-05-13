@@ -2,7 +2,9 @@
 -- MVC类
 -- @author zhiyuan <zhiyuan12@staff.weibo.com>
 --]]
-require 'Class'
+package.path = FRAMEWORK.FRAMEWORK_ROOT.."/?.lua;"..FRAMEWORK.FRAMEWORK_ROOT.."/Libraries/?.lua;"..FRAMEWORK.ROOT_PATH.."/?.lua;"..package.path
+require "GlobalFunction" --加载自定义公共库
+require 'Libraries.Class'
 require 'Tools'
 local Application = Class:new('Application')
 -- 构造方法

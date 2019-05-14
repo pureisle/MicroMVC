@@ -2,6 +2,8 @@
 -- 配置读取类
 -- @author zhiyuan <zhiyuan12@staff.weibo.com>
 --]]
+local string_sub = string.sub
+local table_remove = table.remove
 local ConfigTool = Class:new('ConfigTool')
 ConfigTool.FILE_SUFFIX = '.lua'
 ConfigTool.CACHE_TIME = 600
@@ -13,20 +15,9 @@ function ConfigTool:getConfig(file_name, module_name)
     if empty(file_name) then
         return false
     end
-    local ngx_cache_key = FRAMEWORK.NGX_CACHE_KEY
-    local cache_key = "ConfigTool:"..file_name.."#"..module_name
-    if not empty(ngx.shared[ngx_cache_key]) then
-        local value = ngx.shared[ngx_cache_key]:get(cache_key)
-        if not empty(value) then
-            return json_decode(value)
-        end
-    end
-    local file_path = self:getFilePath(file_name, module_name);
-    local tmp = dofile(file_path)
-    if not empty(ngx.shared[ngx_cache_key]) then
-        local succ, err, forcible = ngx.shared[ngx_cache_key]:set(cache_key, json_encode(tmp), ConfigTool.CACHE_TIME)
-    end
-    return tmp
+    local file_path = self:getFilePath(file_name, module_name, '');
+    return require(string_sub(file_path, 1, -#(self.FILE_SUFFIX) - 1))
+
 end
 function ConfigTool:getFilePath(file_name, module_name)
     local ROOT_PATH = FRAMEWORK.ROOT_PATH
@@ -52,7 +43,7 @@ function ConfigTool:loadByName(config_name, module_name)
         return {}
     end
     local tmp = explode('.', config_name)
-    local file_name = table.remove(tmp)
+    local file_name = table_remove(tmp)
     local resource_name
     if strpos(file_name, ':') then
         local tmp_file = explode(':', file_name)

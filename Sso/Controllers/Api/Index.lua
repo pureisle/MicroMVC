@@ -1,25 +1,28 @@
 -- 首先继承Controller基类
 local Sso_Controller = Controller:new()
--- local sm = require 'Sso/Models/Sample'
 function Sso_Controller:indexAction()
     -- Profiler = require 'Profiler'
     -- Profiler:setGetTimeMethod(function () return microtime(true) end)
     -- Profiler:start()
-    local Http = require "resty.http"
-    local http = Http.new()
-    local res, err = http:request_uri("http://example.com/helloworld", {
-        method = "POST",
-        body = "a=1&b=2",
-        headers = {
-            ["Content-Type"] = "application/x-www-form-urlencoded",
-        },
-        keepalive_timeout = 60,
-        keepalive_pool = 10
-    })
-    var_dump(res,err)
+    -- local Http = require "resty.http"
+    -- local http = Http.new()
+    -- local res, err = http:request_uri("http://example.com/helloworld", {
+    --     method = "POST",
+    --     body = "a=1&b=2",
+    --     headers = {
+    --         ["Content-Type"] = "application/x-www-form-urlencoded",
+    --     },
+    --     keepalive_timeout = 60,
+    --     keepalive_pool = 10
+    -- })
+    -- var_dump(res,err)
     -- var_dump(package.path);
+    -- local ConfigTool = require 'ConfigTool'
+    -- var_dump(ConfigTool:loadByName('redis','Sso'))
     ngx.say('hello,world')
-    -- Tools:require('Sso.Models.Sample')
+    -- Tools:require('Test')
+    -- local sm=  Tools:require('Sso.Models.Sample')
+    -- sm:new()
     -- var_dump(self,self.parent)
     -- var_dump(self:getPostParams())
     -- local Redis = require 'resty.redis'

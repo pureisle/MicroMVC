@@ -18,6 +18,26 @@
 --  current_file()      获取当前文件名称，类似 php __FILE__
 --  dirname(path, levels)   获取文件路径
 --]]
+local ffi = require("FfiDefine")
+local Json = require('cjson')
+local string_upper = string.upper
+local string_sub = string.sub
+local table_concat = table.concat
+local string_find = string.find
+local string_format = string.format
+local debug_getinfo = debug.getinfo
+local table_remove = table.remove
+local io_write = io.write
+local ngx_sleep = ngx.sleep
+local ngx_say = ngx.say
+local type = type
+local assert = assert
+local tonumber = tonumber
+local pairs = pairs
+local next = next
+local tostring = tostring
+local getmetatable = getmetatable
+local newproxy = newproxy
 -- 转化为可以用下标的字符串
 function my_string (s)
     assert(type(s) == "string", "string expected")
@@ -52,7 +72,7 @@ end
 -- 首字母大写
 function ucfirst(s)
     local ts = my_string(s);
-    ts[1] = string.upper(ts[1])
+    ts[1] = string_upper(ts[1])
     return tostring(ts)
 end
 -- 按指定字符串分割成数组
@@ -68,20 +88,20 @@ function explode(symbol, s, limit)
             ret[count] = s
             break
         end
-        ret[count] = string.sub(s, 1, pos - 1)
-        s = string.sub(s, pos + symbol_len)
+        ret[count] = string_sub(s, 1, pos - 1)
+        s = string_sub(s, pos + symbol_len)
         pos = strpos(s, symbol)
     end
     return ret
 end
 -- 按指定分隔符聚合数组
 function implode(glue, pieces)
-    return table.concat (pieces, glue)
+    return table_concat(pieces, glue)
 end
 -- 无正则的匹配字符串
 function strpos(s, pattern, offset)
     offset = offset or 1
-    return string.find(s, pattern, offset, true)
+    return string_find(s, pattern, offset, true)
 end
 -- 变量输出
 function var_dump(...)
@@ -148,7 +168,6 @@ end
 ]]
 function file_exists(path, amode)
     amode = amode or 0
-    local ffi = require("FfiDefine")
     return ffi.C.access(path, amode) == 0
     -- if empty(path) then
     --     return false
@@ -161,18 +180,17 @@ function file_exists(path, amode)
 end
 -- 按指定格式输出数据
 function printf(format, ...)
-    local str = string.format (format, ...)
+    local str = string_format(format, ...)
     if IS_CLI then
         if str ~= nil then
-            io.write(str)
+            io_write(str)
         end
     else
-        ngx.say(str)
+        ngx_say(str)
     end
 end
 -- 获取毫秒时间
 function microtime(get_as_float)
-    local ffi = require("FfiDefine")
     local tm = ffi.new("struct timeval");
     ffi.C.gettimeofday(tm, nil);
     local sec = tonumber(tm.tv_sec);
@@ -185,24 +203,22 @@ function microtime(get_as_float)
 end
 -- json 编解码
 function json_encode(var)
-    local Json = require 'cjson'
     return Json.encode(var)
 end
 function json_decode(str)
-    local Json = require 'cjson'
     return Json.decode(str)
 end
 function sleep(sec)
-    ngx.sleep(sec)
+    ngx_sleep(sec)
 end
 function current_file()
-    return debug.getinfo(2, "S").source:sub(2)
+    return debug_getinfo(2, "S").source:sub(2)
 end
 function dirname(path, levels)
     local path_arr = explode('/', path)
     levels = levels or 1
     for i = 1, levels do
-        table.remove(path_arr)
+        table_remove(path_arr)
     end
-    return table.concat(path_arr, '/')
+    return table_concat(path_arr, '/')
 end

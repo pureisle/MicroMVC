@@ -2,6 +2,9 @@
 -- Class基类
 -- @author zhiyuan <zhiyuan12@staff.weibo.com>
 --]]
+local error = error
+local type = type
+local setmetatable = setmetatable
 Class = {}
 -- 构造方法
 function Class:new (class_name, parent, ...)

@@ -13,42 +13,55 @@
 ### 使用方法
 1. 配置Nginx入口:
 ```
-    root /data1/www/htdocs/MicroMVC/public/;
-    set $flag 0;
-    if ( $uri ~ ^/lua_.* ) {
-        set $flag "${flag}1";
-    }
-    if ( !-f $request_filename ) {
-        set $flag "${flag}2";
-    }
-    if ( $flag = "012" ) {
-        rewrite "^/(.*)" /index.lua last;
-    }
-    if ( $flag = "02" ) {
-        rewrite "^/(.*)" /index.php/$1 last;
-    }
+...
+http{
+    ...
+    #lua_shared_dict micromvc_cache 64m;
+    init_by_lua_file /data1/www/htdocs/MicroMVC/public/init.lua;
+    ...
+    server{
+        ...
 
-    location ~* \.(?:ico|css|js|gif|jpe?g|png)$ {
-        expires 30d;
-        add_header Vary Accept-Encoding;
-        access_log off;
-    }
-    location /index.lua {
-        #resolver 10.13.xx.xx 172.16.xxx.xxx  valid=600;
-        default_type 'text/plain';
-        lua_code_cache off;
-        content_by_lua_file "${document_root}/index.lua";
-        #content_by_lua 'ngx.say("hello, lua")';
-    }
-    location / {
-        set $script_uri "";
-        if ( $request_uri ~* "([^?]*)?" ) {
-            set $script_uri $1;
+        root /data1/www/htdocs/MicroMVC/public/;
+        set $flag 0;
+        if ( $uri ~ ^/lua_.* ) {
+            set $flag "${flag}1";
         }
-        fastcgi_pass 127.0.0.1:9183;
-        fastcgi_param SCRIPT_URL $script_uri;
-        include fastcgi/comm_fastcgi_params;
+        if ( !-f $request_filename ) {
+            set $flag "${flag}2";
+        }
+        if ( $flag = "012" ) {
+            rewrite "^/(.*)" /index.lua last;
+        }
+        if ( $flag = "02" ) {
+            rewrite "^/(.*)" /index.php/$1 last;
+        }
+
+        location ~* \.(?:ico|css|js|gif|jpe?g|png)$ {
+            expires 30d;
+            add_header Vary Accept-Encoding;
+            access_log off;
+        }
+        location /index.lua {
+            #resolver 10.13.xx.xx 172.16.xxx.xxx  valid=600;
+            default_type 'text/plain';
+            lua_code_cache off; #生产环境注意修改为 on
+            content_by_lua_file "${document_root}/index.lua";
+            #content_by_lua 'ngx.say("hello, lua")';
+        }
+        location / {
+            set $script_uri "";
+            if ( $request_uri ~* "([^?]*)?" ) {
+                set $script_uri $1;
+            }
+            fastcgi_pass 127.0.0.1:9183;
+            fastcgi_param SCRIPT_URL $script_uri;
+            include fastcgi/comm_fastcgi_params;
+        }
+        ...
     }
+    ...
+}
 ```
 另外最好在nginx.conf的配置里增加缓存配置：  lua_shared_dict micromvc_cache 64m;  
 此项配置后，框架会缓存配置文件，各个nginx进程共享使用，能有效提升效率。  

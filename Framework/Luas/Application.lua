@@ -8,6 +8,7 @@ local string_find = string.find
 local string_gmatch = string.gmatch
 local xpcall = xpcall
 local Application = Class:new('Application')
+
 -- 构造方法
 function Application:new (uri)
     self.uri = uri
@@ -17,7 +18,6 @@ function Application:run()
     local router_info = self:router()
     local require_path = router_info['module'] .. '/Controllers/'..router_info['controller']
     local error_handler = self.errorHandler
-    require 'Controller'
     local controller
     local http_code = ngx.HTTP_OK
     xpcall(function ()
@@ -44,7 +44,7 @@ function Application:router()
     if(q_mark ~= nil)then
         uri = string_sub(uri, 1, q_mark - 1)
     end
-    for k in string_gmatch(uri, "([^?/]*)") do
+    for k in string_gmatch(uri, "([^?#/]*)") do
         if(#(k) > 0)then
             tmp[i] = k
             i = i + 1

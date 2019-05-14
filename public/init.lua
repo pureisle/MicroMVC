@@ -33,3 +33,4 @@ package.path = FRAMEWORK.FRAMEWORK_ROOT.."/?.lua;"..FRAMEWORK.FRAMEWORK_ROOT.."/
 require "GlobalFunction" --加载自定义公共库
 require 'Libraries.Class'
 require 'Tools'
+require 'Controller'

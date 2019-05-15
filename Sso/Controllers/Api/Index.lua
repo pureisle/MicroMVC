@@ -42,4 +42,7 @@ function Sso_Controller:indexAction()
     -- Profiler:writeReport("/tmp/profile.txt")
     return true
 end
+function Sso_Controller:testAction()
+    var_dump('testAction')
+end
 return Sso_Controller

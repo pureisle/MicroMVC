@@ -23,7 +23,7 @@ function Class:new (class_name, parent, ...)
     else
         p = {
             __index = function (table, key)
-                return function () error('index: '..key..' undefined') end
+                error(table.class..' index: '..key..' undefined')
             end,
             __tostring = function () return 'object' end
         }

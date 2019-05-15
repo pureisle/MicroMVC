@@ -7,6 +7,8 @@ local string_sub = string.sub
 local string_find = string.find
 local string_gmatch = string.gmatch
 local xpcall = xpcall
+local empty = empty
+local ucfirst = ucfirst
 local Application = Class:new('Application')
 
 -- 构造方法
@@ -17,7 +19,6 @@ end
 function Application:run()
     local router_info = self:router()
     local require_path = router_info['module'] .. '/Controllers/'..router_info['controller']
-    local error_handler = self.errorHandler
     local controller
     local http_code = ngx.HTTP_OK
     xpcall(function ()
@@ -30,8 +31,12 @@ function Application:run()
         xpcall(function ()
             local c_ret = controller[router_info['action'] .. 'Action'](controller)
         end, function (msg)
-            http_code = ngx.HTTP_INTERNAL_SERVER_ERROR
-            ngx.log(ngx.ERR, msg, "\n", debug.traceback())
+            if(empty(rawget(controller, router_info['action'] .. 'Action'))) then
+                http_code = ngx.HTTP_NOT_FOUND
+            else
+                http_code = ngx.HTTP_INTERNAL_SERVER_ERROR
+                ngx.log(ngx.ERR, msg, "\n", debug.traceback())
+            end
         end)
     end
     ngx_exit(http_code)

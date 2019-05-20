@@ -6,7 +6,10 @@
 --  ucfirst(s)      首字母大写
 --  explode(symbol, s, limit)   拆分字符串为数组  
 --  implode(glue, pieces)   按指定分隔符聚合数组 
---  strpos(s, pattern, offset)  查找目标字符位置    
+--  strpos(s, pattern, offset)  查找目标字符位置 
+--  trim(s, character_mask)     消除开始和结尾的空字符或指定字符
+--  ltrim(s, character_mask)
+--  rtrim(s, character_mask)   
 --  var_dump(...)   变量输出   
 --  empty(o)    与PHP empty() 同功能函数
 --  file_exists(path)   判断路径是否为文件是否存在 
@@ -20,6 +23,7 @@
 --]]
 local ffi = require("FfiDefine")
 local Json = require('cjson')
+local string_gsub = string.gsub
 local string_upper = string.upper
 local string_sub = string.sub
 local table_concat = table.concat
@@ -102,6 +106,23 @@ end
 function strpos(s, pattern, offset)
     offset = offset or 1
     return string_find(s, pattern, offset, true)
+end
+-- 消除空字符
+function trim(s, character_mask)
+    local ret = rtrim(ltrim(s, character_mask), character_mask)
+    return ret
+end
+function ltrim(s, character_mask)
+    if(empty(character_mask)) then
+        character_mask = '%s'
+    end
+    return string_gsub(s, "^"..character_mask.."+", "")
+end
+function rtrim(s, character_mask)
+    if(empty(character_mask)) then
+        character_mask = '%s'
+    end
+    return string_gsub(s, character_mask.."+$", "")
 end
 -- 变量输出
 function var_dump(...)

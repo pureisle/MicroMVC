@@ -2,7 +2,6 @@
 -- 框架工具类
 -- @author zhiyuan <zhiyuan12@staff.weibo.com>
 --]]
-local cookie = require 'resty.cookie'
 local type = type
 local debug_getinfo = debug.getinfo
 local dirname = dirname
@@ -19,12 +18,9 @@ function Tools:getEnv()
     if (FRAMEWORK.CURRENT_ENV_NAME == self.ENV_PRO) then
         return self.ENV_PRO
     end
-    cookie = cookie:new()
     local env
     if empty(self.env_name) == false then
         env = self.env_name
-    elseif not empty(cookie[self.ENV_INDEX_NAME]) then
-        env = cookie[self.ENV_INDEX_NAME]
     else
         env = FRAMEWORK.CURRENT_ENV_NAME
     end
@@ -33,11 +29,6 @@ end
 -- 设置代码执行环境
 function Tools:setEnv(env)
     self.env_name = env;
-    if not self:isCli() then
-        cookie = cookie:new()
-        local host = ngx.req.get_headers()['host']
-        local ok, err = cookie:set({key = self.ENV_INDEX_NAME, value = env, domain = host, expires = os_time() + 3600})
-    end
 end
 -- 是否为cli方式运行
 function Tools:isCli()

@@ -148,6 +148,10 @@ class Dispatcher {
             }
             $class->setView($this->_view);
             $action_name = $action . self::ACTION_SUFFIX;
+            if ( ! method_exists($class, $action_name)) {
+                http_response_code(404);
+                return $this;
+            }
             $action_ret = $class->$action_name();
         } catch (ExitException $e) {
             $action_ret = false;

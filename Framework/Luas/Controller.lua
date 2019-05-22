@@ -5,7 +5,7 @@
 Controller = Class:new('Controller')
 -- 构造方法
 function Controller:new ()
-    return self
+    return setmetatable({}, {__index = self})
 end
 function Controller:classCheck()
     return 'Controller'

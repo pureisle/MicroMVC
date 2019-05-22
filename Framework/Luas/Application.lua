@@ -89,8 +89,9 @@ function Application:router()
     local sub_tmp = string_sub(ret['module'], 1, #(f_m_p))
     if(sub_tmp == f_m_p)
         then
-        ret['module'] = ucfirst(string_sub(ret['module'], #(f_m_p) + 1))
+        ret['module'] = string_sub(ret['module'], #(f_m_p) + 1)
     end
+    ret['module'] = ucfirst(ret['module'])
     return ret
 end
 

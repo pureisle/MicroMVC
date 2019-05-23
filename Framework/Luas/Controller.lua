@@ -8,7 +8,7 @@ function Controller:new ()
     return Class:new('Controller', self)
 end
 function Controller:classCheck()
-    return 'Controller'
+    return self.class
 end
 function Controller:getGetParams()
     return ngx.req.get_uri_args()

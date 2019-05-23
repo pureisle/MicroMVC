@@ -23,7 +23,7 @@ function Application:run()
     local http_code = ngx.HTTP_OK
     xpcall(function ()
         controller = require(require_path)
-        local c_name = controller.classCheck()--检验是否继承父类
+        local c_name = controller:classCheck()--检验是否继承父类
     end, function (msg)
         http_code = ngx.HTTP_NOT_FOUND
     end)

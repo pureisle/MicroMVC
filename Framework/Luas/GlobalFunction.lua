@@ -20,6 +20,8 @@
 --  sleep(sec)          非阻塞sleep
 --  current_file()      获取当前文件名称，类似 php __FILE__
 --  dirname(path, levels)   获取文件路径
+--  file_get_contents(filename) 读取文件 
+--  file_put_contents (filename, data) 写文件
 --]]
 local ffi = require("FfiDefine")
 local Json = require('cjson')
@@ -32,6 +34,8 @@ local string_format = string.format
 local debug_getinfo = debug.getinfo
 local table_remove = table.remove
 local io_write = io.write
+local io_open = io.open
+local io_close = io.close
 local ngx_sleep = ngx.sleep
 local ngx_say = ngx.say
 local type = type
@@ -229,12 +233,15 @@ end
 function json_decode(str)
     return Json.decode(str)
 end
+-- 休眠指定时间
 function sleep(sec)
     ngx_sleep(sec)
 end
+-- 获取当前文件路径
 function current_file()
     return debug_getinfo(2, "S").source:sub(2)
 end
+-- 获取路径
 function dirname(path, levels)
     local path_arr = explode('/', path)
     levels = levels or 1
@@ -242,4 +249,28 @@ function dirname(path, levels)
         table_remove(path_arr)
     end
     return table_concat(path_arr, '/')
+end
+-- 读取文件    ps: filename 后边的参数暂无支持
+function file_get_contents(filename, use_include_path, context, offset, maxlen)
+    local file = io_open (filename, 'r')
+    if not file then
+        return false
+    end
+    if not empty(offset) then
+        file:seek('set', offset)
+    end
+    local tmp = file:read("*a")
+    io_close(file)
+    return tmp
+end
+-- 写文件   ps: data 后边的参数暂无支持
+function file_put_contents (filename, data, flags, context)
+    local file = io_open(filename, "w")
+    local tmp = file:write(data)
+    io_close(file)
+    if tmp then
+        return #data
+    else
+        return tmp
+    end
 end

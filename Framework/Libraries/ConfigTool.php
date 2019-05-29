@@ -2,29 +2,41 @@
 /**
  * 配置读取类
  *
+ * 支持配置文件格式 php \ ini \ 文本文件
+ *
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
 namespace Framework\Libraries;
 class ConfigTool {
     private static $_CONFIG_SET = array();
     const FILE_SUFFIX           = '.php';
+    const INI_SUFFIX            = '.ini';
     /**
      * 获取配置内容
      * @param  string  $file_name
      * @param  string  $module_name
      * @return array
      */
-    public static function getConfig(string $file_name, string $module_name) {
+    public static function getConfig(string $file_name, string $module_name, string $file_suffix = self::FILE_SUFFIX) {
         if (empty($file_name)) {
             return false;
         }
-        $file_path = self::getFilePath($file_name, $module_name);
+        $file_path = self::getFilePath($file_name, $module_name, $file_suffix);
         if ( ! isset(self::$_CONFIG_SET[$file_path])) {
             if ( ! file_exists($file_path)) {
                 //配置文件不存在
                 return false;
-            } else {
-                self::$_CONFIG_SET[$file_path] = include $file_path;
+            }
+            switch ($file_suffix) {
+                case self::FILE_SUFFIX:
+                    self::$_CONFIG_SET[$file_path] = include $file_path;
+                    break;
+                case self::INI_SUFFIX:
+                    self::$_CONFIG_SET[$file_path] = IniParser::decodeByFile($file_path);
+                    break;
+                default:
+                    self::$_CONFIG_SET[$file_path] = file_get_contents($file_path);
+                    break;
             }
         }
         return self::$_CONFIG_SET[$file_path];
@@ -35,11 +47,11 @@ class ConfigTool {
      * @param  string   $module_name
      * @return string
      */
-    public static function getFilePath(string $file_name, string $module_name) {
-        $path = ROOT_PATH . DIRECTORY_SEPARATOR . $module_name . DIRECTORY_SEPARATOR . CONFIG_FOLDER . DIRECTORY_SEPARATOR . $file_name . self::FILE_SUFFIX;
+    public static function getFilePath(string $file_name, string $module_name, string $file_suffix = self::FILE_SUFFIX) {
+        $path = ROOT_PATH . DIRECTORY_SEPARATOR . $module_name . DIRECTORY_SEPARATOR . CONFIG_FOLDER . DIRECTORY_SEPARATOR . $file_name . $file_suffix;
         $env  = Tools::getEnv();
         if (Tools::ENV_PRO != $env) {
-            $test_path = ROOT_PATH . DIRECTORY_SEPARATOR . $module_name . DIRECTORY_SEPARATOR . CONFIG_FOLDER . DIRECTORY_SEPARATOR . $env . DIRECTORY_SEPARATOR . $file_name . self::FILE_SUFFIX;
+            $test_path = ROOT_PATH . DIRECTORY_SEPARATOR . $module_name . DIRECTORY_SEPARATOR . CONFIG_FOLDER . DIRECTORY_SEPARATOR . $env . DIRECTORY_SEPARATOR . $file_name . $file_suffix;
             if (file_exists($test_path)) {
                 $path = $test_path;
             }
@@ -54,7 +66,7 @@ class ConfigTool {
      * @param  string  $config_name 字符串解析规则：配置文件名_配置名
      * @return array
      */
-    public static function loadByName(string $config_name, string $module_name) {
+    public static function loadByName(string $config_name, string $module_name, string $file_suffix = self::FILE_SUFFIX) {
         if (empty($config_name)) {
             return array();
         }
@@ -68,7 +80,7 @@ class ConfigTool {
         } else {
             $file_path = $file_name;
         }
-        $config_array = self::getConfig($file_path, $module_name);
+        $config_array = self::getConfig($file_path, $module_name, $file_suffix);
         if (empty($resource_name) || ! isset($config_array[$resource_name])) {
             return $config_array;
         }

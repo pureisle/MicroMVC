@@ -58,7 +58,7 @@ abstract class ControllMysql {
     private $_table_name        = '';
     private $_last_params       = array();
     private $_placeholder_id    = 0;
-
+    private $_config_suffix     = ConfigTool::FILE_SUFFIX;
     public function __construct(string $table_name, string $module = null) {
         $this->setTableName($table_name);
         if (empty($module)) {
@@ -66,6 +66,14 @@ abstract class ControllMysql {
             list($module, $null) = explode('\\', $tmp, 2);
         }
         $this->_module = $module;
+    }
+    /**
+     * 设置配置文件后缀，默认为  .php  , 需要加 . 号
+     * @param string $suffix = .php
+     */
+    protected function setConfigSuffix(string $suffix) {
+        $this->_config_suffix = $suffix;
+        return $this;
     }
     /**
      * 执行构造的sql
@@ -265,23 +273,23 @@ abstract class ControllMysql {
     protected function getLastSql() {
         return array('sql' => $this->_last_sql, 'params' => $this->_last_params);
     }
-
     private function _connectPdo($resource_name) {
         if (empty($resource_name)) {
             throw new ControllMysqlException(ControllMysqlException::ERROR_DB_POOL_EMPTY);
         }
-        if(isset(self::$_static_pdo[$resource_name])){
-            $this->_pdo[$resource_name]  = self::$_static_pdo[$resource_name];
+        if (isset(self::$_static_pdo[$resource_name])) {
+            $this->_pdo[$resource_name] = self::$_static_pdo[$resource_name];
             return $this->_pdo[$resource_name];
         }
         if ( ! isset($this->_pdo[$resource_name])) {
-            $db_conf                    = ConfigTool::loadByName($resource_name, $this->_module);
+            $db_conf                    = ConfigTool::loadByName($resource_name, $this->_module, $this->_config_suffix);
             $pdo_config                 = new PDOConfig();
             $pdo_config->host           = $db_conf['host'];
             $pdo_config->port           = $db_conf['port'];
             $pdo_config->username       = $db_conf['username'];
             $pdo_config->password       = $db_conf['password'];
             $pdo_config->dbname         = $db_conf['dbname'];
+            $pdo_config->charset        = $db_conf['charset'];
             $this->_db_conf             = $pdo_config;
             $this->_pdo[$resource_name] = new PDOManager($pdo_config);
         }

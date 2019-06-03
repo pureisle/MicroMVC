@@ -1,5 +1,6 @@
 --[[
 -- 全局公共函数 , 主要是为了方便PHP程序员做的一些迁移函数，尽可能保持名称和参数一致
+--  @author zhiyuan <zhiyuan12@staff.weibo.com>
 -- 
 -- function list:
 --  my_string (s)   转化为可以用下标的字符串 
@@ -14,6 +15,7 @@
 --  empty(o)    与PHP empty() 同功能函数
 --  file_exists(path)   判断路径是否为文件是否存在 
 --  printf(format, ...)   按指定格式输出数据
+--  date(format, time)  获取时间
 --  microtime(get_as_float)   获取毫秒时间
 --  json_encode(var)    json编码
 --  json_decode(str)    json解码
@@ -22,6 +24,8 @@
 --  dirname(path, levels)   获取文件路径
 --  file_get_contents(filename) 读取文件 
 --  file_put_contents (filename, data) 写文件
+--  in_array(needle, haystack, strict)  数组内搜索   ps : strict参数暂无支持
+--  array_keys(array, search_value, strict)   获取数组的key   ps : strict参数暂无支持
 --]]
 local ffi = require("FfiDefine")
 local Json = require('cjson')
@@ -29,6 +33,7 @@ local string_gsub = string.gsub
 local string_upper = string.upper
 local string_sub = string.sub
 local table_concat = table.concat
+local table_insert = table.insert
 local string_find = string.find
 local string_format = string.format
 local debug_getinfo = debug.getinfo
@@ -36,6 +41,7 @@ local table_remove = table.remove
 local io_write = io.write
 local io_open = io.open
 local io_close = io.close
+local os_date = os.date
 local ngx_sleep = ngx.sleep
 local ngx_say = ngx.say
 local type = type
@@ -46,6 +52,7 @@ local next = next
 local tostring = tostring
 local getmetatable = getmetatable
 local newproxy = newproxy
+
 -- 转化为可以用下标的字符串
 function my_string (s)
     assert(type(s) == "string", "string expected")
@@ -214,6 +221,10 @@ function printf(format, ...)
         ngx_say(str)
     end
 end
+-- 获取时间
+function date(format, time)
+    return os_date(format, time)
+end
 -- 获取毫秒时间
 function microtime(get_as_float)
     local tm = ffi.new("struct timeval");
@@ -273,4 +284,35 @@ function file_put_contents (filename, data, flags, context)
     else
         return tmp
     end
+end
+-- 数组内搜索   ps : strict参数暂无支持
+function in_array(needle, haystack, strict)
+    if(empty(haystack) or type(haystack) ~= 'table') then
+        return false;
+    end
+    for k, v in pairs(haystack) do
+        if(needle == v)then
+            return true
+        end
+    end
+    return false
+end
+-- 获取数组的key   ps : strict参数暂无支持
+function array_keys(haystack, search_value, strict)
+    local ret = {}
+    if(empty(haystack))then
+        return ret
+    end
+    if(empty(search_value))then
+        for k, v in pairs(haystack) do
+            table_insert(ret, k)
+        end
+    else
+        for k, v in pairs(haystack) do
+            if(v == search_value)then
+                table_insert(ret, k)
+            end
+        end
+    end
+    return ret
 end

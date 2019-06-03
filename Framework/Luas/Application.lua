@@ -14,7 +14,7 @@ local Application = Class:new('Application')
 -- 构造方法
 function Application:new (uri)
     self.uri = uri
-    return self
+    return Class:new('Application', self)
 end
 function Application:run()
     local router_info = self:router()

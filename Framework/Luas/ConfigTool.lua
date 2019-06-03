@@ -4,6 +4,7 @@
 --]]
 local string_sub = string.sub
 local table_remove = table.remove
+local ngx_cache = ngx.shared[FRAMEWORK.NGX_CACHE_KEY]
 local ini = require 'IniParser'
 local DIRECTORY_SEPARATOR = FRAMEWORK.DIRECTORY_SEPARATOR
 local ROOT_PATH = FRAMEWORK.ROOT_PATH
@@ -18,6 +19,10 @@ function ConfigTool:getConfig(file_name, module_name, file_suffix)
     end
     file_suffix = file_suffix or self.FILE_SUFFIX
     local file_path = self:getFilePath(file_name, module_name, file_suffix);
+    local cache_key = 'ConfigTool:'..file_path
+    if not empty(ngx_cache:get(cache_key)) then
+        return json_decode(ngx_cache:get(cache_key), true)
+    end
     if not empty(_ConfigTool_CACHE[file_path]) then
         return _ConfigTool_CACHE[file_path]
     end
@@ -32,6 +37,7 @@ function ConfigTool:getConfig(file_name, module_name, file_suffix)
     else
         config = file_get_contents(file_path)
     end
+    ngx_cache:set(cache_key, json_encode(config))
     _ConfigTool_CACHE[file_path] = config
     return config
 end

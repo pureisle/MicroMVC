@@ -25,6 +25,8 @@ return array(
     'template'       => array(
         'suffix' => 'phtml'
     ),
+    //是否使用composer包管理
+    "composer"       => false,
     //定义module，并控制是否开启
     'modules'        => array(
         'Index'  => true,

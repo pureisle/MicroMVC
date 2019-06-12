@@ -6,6 +6,7 @@
  */
 namespace Framework\Models;
 class AutoLoad {
+    private static $_load_set  = array();
     private $_load_path_prefix = '';
     public function __construct($load_path_prefix = '') {
         $this->_load_path_prefix = $load_path_prefix;
@@ -15,7 +16,11 @@ class AutoLoad {
      * @return void
      */
     public function register() {
+        if (isset(self::$_load_set[$this->_load_path_prefix])) {
+            return;
+        }
         spl_autoload_register(array($this, 'loadClass'));
+        self::$_load_set[$this->_load_path_prefix] = true;
     }
     /**
      * 设置加载路径前缀

@@ -41,29 +41,29 @@ local _LOG_FIELD_KEY = {
 	'log_text'
 }
 
-Logger._buffer_cache       = {}
-Logger._UNIQUE_ID          = ''
-Logger._config             = {}
 
 local function uniqid()
 	return microtime(1)
 end
 
 function Logger:new( config_name, module )
+	local Logger_tmp = Class:new('Logger', self)
+	Logger_tmp._buffer_cache       = {}
+	Logger_tmp._UNIQUE_ID          = ''
 	local conf = ConfigTool:loadByName(config_name, module)
-	self._config = LogConfig:new(conf)
-	if (empty(self._UNIQUE_ID) and _LOG_FIELD ['uniqid']) then
-		self._UNIQUE_ID = uniqid()
+	Logger_tmp._config = LogConfig:new(conf)
+	if (empty(Logger_tmp._UNIQUE_ID) and _LOG_FIELD ['uniqid']) then
+		Logger_tmp._UNIQUE_ID = uniqid()
 	end
-	return self
+	return Logger_tmp
 end
 
-local function _write( msg )
-	local fp = Logger._config:getHandle('a')
+local function _write(Logger_obj, msg )
+	local fp = Logger_obj._config:getHandle('a')
 	return fp:write(msg)
 end
 
-local function _buildLogText( params )
+local function _buildLogText(Logger_obj, params )
 	local tmp = {}
 	local switch = {
 		["time"] = function ()
@@ -77,7 +77,7 @@ local function _buildLogText( params )
 			return ngx_var.hostname 
 		end,
 		['uniqid'] = function()
-			return Logger._UNIQUE_ID 
+			return Logger_obj._UNIQUE_ID 
 		end,
 		['level']  = function ( msg )
 			return msg 
@@ -144,8 +144,8 @@ function Logger:log( level,  message,   context ,  business_name  )
     params ['level'] 		= level
     params ['b_name']		= business_name
     params ['log_text']		= message --换行符转换
-    local log_str = _buildLogText(params)
-    return _write(log_str);
+    local log_str = _buildLogText(self,params)
+    return _write(self,log_str);
 end
 
 function Logger:interpolate( message, context )

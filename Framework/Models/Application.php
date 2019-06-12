@@ -163,8 +163,15 @@ class Application {
     private function _loadFramework() {
         $this->_iniConfig();
         $this->_iniException();
+        $this->_iniComposer();
         include "GlobalFunctions.php"; //加载框架全局函数
         return $this;
+    }
+    private function _iniComposer() {
+        $f_config = $this->getConfig();
+        if ($f_config['composer']) {
+            require ROOT_PATH . '/vendor/autoload.php';
+        }
     }
     /**
      * 加载应用总配置

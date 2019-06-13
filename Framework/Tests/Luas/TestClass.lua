@@ -1,5 +1,5 @@
 -- lua Framework/Tests/Luas/TestClass.lua
-require "../../Framework/Luas/Class"
+require "../../Framework/Luas/Libraries/Class"
 Geometry = Class:new('Geometry')
 function Geometry:new(name)
     self.name = name

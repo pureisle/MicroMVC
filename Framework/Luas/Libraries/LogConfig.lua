@@ -4,9 +4,11 @@
 
 local error = error
 local os_execute = os.execute
+local empty  = empty
 local os_date = os.date
 local io = io
 local LogConfig = Class:new('LogConfig')
+local lfs = require "LfsFfi"
 
 
 function LogConfig:new( config )
@@ -28,7 +30,8 @@ function LogConfig:new( config )
 	logconfig_tmp._last_file            = ''
 	--判断目录是不是存在
 	if(not file_exists(logconfig_tmp._root_path)) then
-		os_execute("mkdir -p " .. logconfig_tmp._root_path)
+		--os_execute("mkdir -p " .. logconfig_tmp._root_path)
+		lfs.mkdir(logconfig_tmp._root_path)
 	end
 	if(empty(config['file_name'])) then
 		error('config.file_name empty')

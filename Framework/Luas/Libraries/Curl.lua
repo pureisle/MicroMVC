@@ -15,6 +15,7 @@ httpcode = curl_obj:httpCode() --返回code码
 --]]
 
 local str_find = string.find
+local empty  = empty
 local ngx_encode_args = ngx.encode_args
 local xpcall = xpcall
 local http = require "resty.http"

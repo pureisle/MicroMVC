@@ -9,6 +9,7 @@ local spent_info = RunTime:spent('test1')
 @author huaqing1
 --]]
 local string = string
+local empty  = empty
 local RunTime = Class:new('RunTime')
 local start_time = {}
 local stop_time  = {}

@@ -22,7 +22,7 @@ var_dump ( $manager->header () );
 var_dump ( $manager->body () );
 ```
 通过以上方式可以方便的发起一个 POST 请求，并且可以记录返回的 Cookie。
-如果想要获取命令行的转化，可以在发起 get() 或 post() 等方法之前的任意位置调用 delayExec() 方法，然后在 get() 或 post() 方法之后调用 getSheelCurl() 即可。  
+如果想要获取命令行的转化，可以在发起 get() 或 post() 等方法之前的任意位置调用 delayExec() 方法，然后在 get() 或 post() 方法之后调用 getShellCurl() 即可。  
 其他如 SSL 、跳转递归访问等特性请看代码提供的方法列表。
 1. MultiCurl 类的使用样例如下：
 ```

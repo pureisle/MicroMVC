@@ -97,7 +97,7 @@ class Curl {
      * 帮助调试
      * @return string
      */
-    public function getSheelCurl() {
+    public function getShellCurl() {
         $end = $this->_curl_shell['end'];
         unset($this->_curl_shell['end']);
         $tmp = implode(' ', $this->_curl_shell);

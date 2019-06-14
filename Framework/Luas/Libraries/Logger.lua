@@ -62,7 +62,6 @@ function Logger:new( config_name, module )
 end
 
 local function _write(Logger_obj, msg )
-	var_dump(msg)
 	local fp = Logger_obj._config:getHandle('a')
 	return fp:write(msg)
 end

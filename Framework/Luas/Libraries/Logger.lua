@@ -6,6 +6,7 @@
 local os_date = os.date
 local ngx_var = ngx.var
 local string  = string
+local math    = math
 local ConfigTool = require 'ConfigTool';
 local LogConfig  = require 'LogConfig'
 local Logger = Class:new('Logger')
@@ -43,7 +44,9 @@ local _LOG_FIELD_KEY = {
 
 
 local function uniqid()
-	return microtime(1)
+	local time_now = microtime(1)
+	math.randomseed(time_now)
+	return time_now .. math.random(1,10000)
 end
 
 function Logger:new( config_name, module )

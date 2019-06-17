@@ -184,6 +184,8 @@ class Tools {
             $result = shell_exec("/sbin/ifconfig eth0");
             if (preg_match_all("/addr:(\d+\.\d+\.\d+\.\d+)/", $result, $match) !== 0) {
                 $ip = $match[1][0];
+            }elseif (preg_match_all("/net (\d+\.\d+\.\d+\.\d+)/", $result, $match) !== 0) {
+               $ip = $match[1][0];
             }
         }
         return $ip;

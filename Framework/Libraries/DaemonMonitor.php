@@ -148,8 +148,6 @@ class DaemonMonitor extends ProcessManager {
             $module = $this->_module;
         } else {
             return true;            //没设置日志路径的不记录
-            $config = 'log.daemon'; //默认日志配置
-            $module = 'Framework';
         }
         $logger = SingletonManager::$SINGLETON_POOL->getInstance('\Framework\Libraries\Logger', $config, $module);
         $logger->info('{info}', array('info' => json_encode($info)), $class_name);

@@ -10,7 +10,7 @@ local xpcall = xpcall
 local empty = empty
 local ucfirst = ucfirst
 local Application = Class:new('Application')
-
+Application.FRAMEWORK_VERSION = '1.1.4'
 -- 构造方法
 function Application:new (uri)
     self.uri = uri

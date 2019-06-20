@@ -86,9 +86,10 @@ function my_string (s)
 end
 -- 首字母大写
 function ucfirst(s)
-    local ts = my_string(s);
-    ts[1] = string_upper(ts[1])
-    return tostring(ts)
+    if type(s) ~= 'string' then
+        return ''
+    end
+    return string_upper(s:sub(1, 1))..s:sub(2)
 end
 -- 按指定字符串分割成数组
 function explode(symbol, s, limit)
@@ -275,7 +276,7 @@ function file_get_contents(filename, use_include_path, context, offset, maxlen)
     return tmp
 end
 -- 写文件   ps: data 后边的参数暂无支持
-function file_put_contents (filename, data, flags, context)
+function file_put_contents(filename, data, flags, context)
     local file = io_open(filename, "w")
     local tmp = file:write(data)
     io_close(file)

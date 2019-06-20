@@ -31,7 +31,7 @@ function ConfigTool:getConfig(file_name, module_name, file_suffix)
     end
     local config
     if file_suffix == self.FILE_SUFFIX then
-        config = require(string_sub(file_path, 1, -#(self.FILE_SUFFIX) - 1))
+        config = Tools:require_once(file_path)
     elseif file_suffix == self.INI_SUFFIX then
         config = ini:decodeByFile(file_path, true)
     else

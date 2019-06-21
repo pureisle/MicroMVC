@@ -4,8 +4,6 @@
 --]]
 local ngx_exit = ngx.exit
 local string_sub = string.sub
-local string_find = string.find
-local string_gmatch = string.gmatch
 local xpcall = xpcall
 local empty = empty
 local ucfirst = ucfirst
@@ -45,33 +43,35 @@ function Application:router()
     local tmp = {}
     local i = 1
     local uri = self.uri
-    local q_mark = string_find(uri, '?')
+    local q_mark, to, err = ngx.re.find(uri, "[?]", "jo")
     if(q_mark ~= nil)then
         uri = string_sub(uri, 1, q_mark - 1)
     end
-    for k in string_gmatch(uri, "([^?#/]*)") do
-        if(#(k) > 0)then
-            tmp[i] = k
-            i = i + 1
+    local it = ngx.re.gmatch(uri, "([^?#/]+)", "jo")
+    while true do
+        local m, err = it()
+        if err then
+            ngx.log(ngx.ERR, "error: ", err)
+            return
         end
+        if not m then
+            break
+        end
+        tmp[i] = m[1]
+        i = i + 1
     end
     local tmp_count = #(tmp)
-    local ret = {}
-    if(tmp_count == 0)
+    local ret = {['module'] = 'Index', ['controller'] = 'Index', ['action'] = 'index'}
+    local f_m_p = FRAMEWORK.MODULE_PREFIX
+    if(tmp_count == 1)
         then
-        ret['module'] = 'Index'
-        ret['controller'] = 'Index'
-        ret['action'] = 'index'
-    elseif(tmp_count == 1)
-        then
-        ret['module'] = tmp[1]
-        ret['controller'] = 'Index'
-        ret['action'] = 'index'
+        if tmp[1] ~= f_m_p then
+            ret['module'] = tmp[1]
+        end
     elseif(tmp_count == 2)
         then
         ret['module'] = tmp[1]
         ret['controller'] = ucfirst(tmp[2])
-        ret['action'] = 'index'
     elseif(tmp_count == 3)
         then
         ret['module'] = tmp[1]
@@ -85,7 +85,7 @@ function Application:router()
         end
         ret['action'] = tmp[tmp_count]
     end
-    local f_m_p = FRAMEWORK.MODULE_PREFIX
+
     local sub_tmp = string_sub(ret['module'], 1, #(f_m_p))
     if(sub_tmp == f_m_p)
         then

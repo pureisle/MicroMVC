@@ -28,6 +28,15 @@ function Application:run()
     if http_code == ngx.HTTP_OK then
         xpcall(function ()
             local c_ret = controller[router_info['action'] .. 'Action'](controller)
+            if c_ret then --返回结果为 true 则启用模板
+                local view_path = FRAMEWORK.ROOT_PATH.."/"..router_info['module'] .. '/Views/'..router_info['controller'] .. "/"..router_info['action'] .. ".lhtml"
+                if(file_exists(view_path)) then
+                    local template = require "resty.template"
+                    template.load = function(s) return file_get_contents(s) end
+                    ngx.header['Content-Type'] = 'text/html; charset=UTF-8'
+                    template.render(view_path, controller:getAssign())
+                end
+            end
         end, function (msg)
             if(empty(rawget(controller, router_info['action'] .. 'Action'))) then
                 http_code = ngx.HTTP_NOT_FOUND

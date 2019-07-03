@@ -24,9 +24,37 @@ abstract class ProcessManager {
     private $_jobs_exec_info = array();
     private $_job_ids        = array();
     private $_ppid           = 0;
+    private $_IPC_set        = array();
+    private $_heartbeat      = array();
+    const MSG_CODE_HEARTBEAT = 1;
     public function __construct() {
         $this->_ppid = getmypid();
         pcntl_signal(SIGCHLD, array($this, "_childSignalHandler"));
+    }
+    /**
+     * 用户程序发送心跳
+     * @return
+     */
+    public function heartbeat(int $pid = 0) {
+        $key = $this->getIPCQueue();
+        return msg_send($key, self::MSG_CODE_HEARTBEAT, array('code' => self::MSG_CODE_HEARTBEAT, 'pid' => getmypid(), 'time' => time()));
+    }
+    public function getHearbeatData() {
+        return $this->_heartbeat;
+    }
+    /**
+     * 获取消息队列key
+     */
+    public function getIPCQueue(string $path_name = __FILE__, int $proj = 1) {
+        if ($proj > 255) {
+            return false;
+        }
+        $key = $path_name . ":" . $proj;
+        if ( ! isset($this->_IPC_set[$key])) {
+            $id                   = ftok($path_name, $proj);
+            $this->_IPC_set[$key] = msg_get_queue($id);
+        }
+        return $this->_IPC_set[$key];
     }
     /**
      * run之前基类会初始化调用
@@ -122,6 +150,7 @@ abstract class ProcessManager {
     public function run() {
         $this->init();
         while (true) {
+            $this->_reviceHeartbeat();
             $this->_monitor();
             $job_id = $this->popJobId();
             if (null === $job_id) {
@@ -294,6 +323,7 @@ abstract class ProcessManager {
             exit($exit_code);
         }
         $this->_current_jobs[$pid] = $job_id;
+        $this->_heartbeat[$pid]    = 0;
         $this->_addJobExecInfo($pid, $job_id);
         //处理已经提前结束的子进程队列
         if (isset($this->_signal_queue[$pid])) {
@@ -346,10 +376,12 @@ abstract class ProcessManager {
         } else {
             $this->_jobs_exec_info[$pid]['status'] = $status;
         }
-        if ( ! is_null($exit_code)) {
+        // !isset( $this->_jobs_exec_info[$pid]['exit_code'] ) 判断是为了避免多次产生退出信号
+        if ( ! is_null($exit_code) && ! isset($this->_jobs_exec_info[$pid]['exit_code'])) {
             $this->_jobs_exec_info[$pid]['exit_code'] = $exit_code;
             $this->_jobs_exec_info[$pid]['end_time']  = self::getMicrotime();
             unset($this->_current_jobs[$pid]);                                                  //删除当前任务
+            unset($this->_heartbeat[$pid]);                                                     // 删除心跳数据
             $this->onJobExit($job_id, array('pid' => $pid, 'status' => SIGKILL, 'code' => -1)); //通知子类
         }
         return $this;
@@ -366,6 +398,9 @@ abstract class ProcessManager {
         $pids_info     = self::getResourceInfo($pid_list);
         $job_exec_info = $this->getJobExecInfo();
         foreach ($pids_info as $pid => $pid_info) {
+            if ( ! isset($this->_jobs_exec_info[$pid])) {
+                continue;
+            }
             $job_id = $this->_jobs_exec_info[$pid]['job_id'];
             //资源监控记录日志
             $this->resourceLog($job_id, $pid_info);
@@ -378,6 +413,22 @@ abstract class ProcessManager {
                     unset($this->_signal_queue[$pid]);
                 }
             }
+        }
+    }
+    /**
+     * 采集心跳
+     */
+    private function _reviceHeartbeat() {
+        $key         = $this->getIPCQueue();
+        $queue_state = msg_stat_queue($key);
+        if ($queue_state['msg_qnum'] <= 0) {
+            return;
+        }
+        $num = $queue_state['msg_qnum'];
+        while ($num > 0) {
+            $tmp                              = msg_receive($key, self::MSG_CODE_HEARTBEAT, $msg_type, 1024, $messge);
+            $this->_heartbeat[$messge['pid']] = $messge['time'];
+            $num--;
         }
     }
 }

@@ -40,7 +40,7 @@ class DaemonMonitor extends ProcessManager {
         if (empty($config)) {
             throw new \Exception($moudle . ' DaemonMonitor config [ ' . $config_name . '] empty');
         }
-        $this->_restart_file .= $config_name . ".lock";
+        $this->_restart_file .= $module . "." . $config_name . ".lock";
         $this->_config = $config;
         parent::__construct();
     }
@@ -60,12 +60,14 @@ class DaemonMonitor extends ProcessManager {
         }
         $this->_job_list = $job_list;
         //清理原有的相同监控程序
-        $ppid       = $this->getParentPid();
-        $pinfo      = $this->getResourceInfo(array($ppid));
-        $pinfo      = $pinfo[$ppid];
-        $cmd        = $pinfo['CMD'][0];
-        $sh_str     = 'ps -eo pid,cmd  | grep -v grep | grep "' . $cmd . '"';
-        $sh_ret     = trim(shell_exec($sh_str));
+        $ppid   = $this->getParentPid();
+        $pinfo  = $this->getResourceInfo(array($ppid));
+        $pinfo  = $pinfo[$ppid];
+        $cmd    = $pinfo['CMD'][0];
+        $sh_str = 'ps -eo pid,cmd  | grep -v grep | grep "' . $cmd . '"';
+        // 这里的 trim(shell_exec($sh_str)); 不知道为啥会报这个Warning。 看不懂
+        // PHP Warning:  Invalid callback Framework\Libraries\DaemonMonitor::_childSignalHandler, cannot access private method Framework\Libraries\DaemonMonitor::_childSignalHandler() in /home/www/webroot/MicroMVC/Framework/Libraries/DaemonMonitor.php on line 68
+        $sh_ret     = @trim(shell_exec($sh_str));
         $sh_ret_arr = explode("\n", $sh_ret);
         if (count($sh_ret_arr) > 1) {
             $content = trim(file_get_contents($this->_restart_file));
@@ -147,7 +149,7 @@ class DaemonMonitor extends ProcessManager {
             $config = $this->_config[$class_name]['log_config_name'];
             $module = $this->_module;
         } else {
-            return true;            //没设置日志路径的不记录
+            return true; //没设置日志路径的不记录
         }
         $logger = SingletonManager::$SINGLETON_POOL->getInstance('\Framework\Libraries\Logger', $config, $module);
         $logger->info('{info}', array('info' => json_encode($info)), $class_name);
@@ -176,6 +178,11 @@ class DaemonMonitor extends ProcessManager {
             safe_exit();
         }
         $obj = new $class_name(array('id' => $this->_job_list[$job_id]['id'], 'restart_num' => $this->_restart_count[$job_id], 'params' => $this->_job_list[$job_id]['params']));
+        if ($obj instanceof Daemon === false) {
+            throw new \Exception("Error : need extends Framework\Libraries\Daemon");
+        }
+        //设置管理类，以便采集父类心跳
+        $obj->setProcessManager($this);
         $obj->run();
     }
     /**

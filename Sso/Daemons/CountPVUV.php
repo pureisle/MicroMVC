@@ -7,7 +7,7 @@ use Framework\Libraries\Daemon;
 
 class CountPVUV extends Daemon {
     public function __construct($params) {
-        var_dump($params);
+        // var_dump($params);
         parent::__construct($params);
     }
     public function init() {
@@ -20,8 +20,9 @@ class CountPVUV extends Daemon {
         echo "CountPVUV init\n";
     }
     public function doJob() {
-        echo "CountPVUV run\n";
+        echo  getmypid()."CountPVUV run\n";
+        $this->heartbeat(); //向父类报告心跳
         sleep(8);
-        echo "CountPVUV finished\n";
+        echo   getmypid()."CountPVUV finished\n";
     }
 }

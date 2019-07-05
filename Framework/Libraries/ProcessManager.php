@@ -376,13 +376,13 @@ abstract class ProcessManager {
         } else {
             $this->_jobs_exec_info[$pid]['status'] = $status;
         }
-        // !isset( $this->_jobs_exec_info[$pid]['exit_code'] ) 判断是为了避免多次产生退出信号
-        if ( ! is_null($exit_code) && ! isset($this->_jobs_exec_info[$pid]['exit_code'])) {
+        // isset($this->_current_jobs[$pid]) 判断是为了避免多次产生退出信号
+        if ( ! is_null($exit_code) && isset($this->_current_jobs[$pid])) {
             $this->_jobs_exec_info[$pid]['exit_code'] = $exit_code;
             $this->_jobs_exec_info[$pid]['end_time']  = self::getMicrotime();
-            unset($this->_current_jobs[$pid]);                                                  //删除当前任务
-            unset($this->_heartbeat[$pid]);                                                     // 删除心跳数据
-            $this->onJobExit($job_id, array('pid' => $pid, 'status' => SIGKILL, 'code' => -1)); //通知子类
+            unset($this->_current_jobs[$pid]);                                                          //删除当前任务
+            unset($this->_heartbeat[$pid]);                                                             // 删除心跳数据
+            $this->onJobExit($job_id, array('pid' => $pid, 'status' => SIGKILL, 'code' => $exit_code)); //通知子类
         }
         return $this;
     }

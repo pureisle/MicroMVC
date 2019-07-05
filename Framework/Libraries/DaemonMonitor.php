@@ -70,12 +70,15 @@ class DaemonMonitor extends ProcessManager {
         $sh_ret     = @trim(shell_exec($sh_str));
         $sh_ret_arr = explode("\n", $sh_ret);
         if (count($sh_ret_arr) > 1) {
-            $content = trim(file_get_contents($this->_restart_file));
-            $content = json_decode($content, true);
-            $cmd     = $content['cmd'];
+            $content  = trim(file_get_contents($this->_restart_file));
+            $content  = json_decode($content, true);
+            $old_ppid = $content['ppid'];
+            $cmd      = $content['cmd'];
             //任务一致性检查，不一致则重启程序
-            if ((count($sh_ret_arr) - 2) !== count($job_list)) {
-                //(count($sh_ret_arr) - 2 减去当前进程和之前监控任务主进程后，应该与job_list数量一致
+            //(count($sh_ret_arr) - 2 减去当前进程和之前监控任务主进程后，应该与job_list数量一致
+            // if ((count($sh_ret_arr) - 2) !== count($job_list)) {
+            if ($this->_checkLastPpidIsExit($old_ppid, $sh_ret_arr)) {
+                //已退出
                 $cmd = 'restart';
             } else {
                 $last_job_list = $content['job_list'];
@@ -111,7 +114,7 @@ class DaemonMonitor extends ProcessManager {
         }
         $this->addJobIdList(array_keys($job_list));
         //记录本次任务
-        file_put_contents($this->_restart_file, json_encode(array('cmd' => '', 'job_list' => $job_list)));
+        file_put_contents($this->_restart_file, json_encode(array('cmd' => '', 'ppid' => $ppid, 'job_list' => $job_list)));
     }
     /**
      * 退出任务的时候重新添加
@@ -204,5 +207,21 @@ class DaemonMonitor extends ProcessManager {
         } else {
             return false;
         }
+    }
+    /**
+     * 检查上一次父进程是否退出
+     */
+    private function _checkLastPpidIsExit($old_ppid, $cur_pidlist) {
+        if (empty($old_ppid)) {
+            return true; //为空，表示进程尚未启动
+        }
+        foreach ($cur_pidlist as $key => $value) {
+            $tmp = explode(' ', trim($value));
+            $pid = $tmp[0];
+            if ($pid == $old_ppid) {
+                return false;
+            }
+        }
+        return true;
     }
 }

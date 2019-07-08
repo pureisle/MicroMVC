@@ -8,8 +8,8 @@
 // )
 return array(
     'CountPVUV' => array(
-        'count'           => 1,
-        'time_out'        => 3.5,
+        'count'           => 3,
+        // 'time_out'        => 3.5,
         'log_config_name' => '',
         'params'          => array('param1' => 'asdf', 'param2' => '234')
     )

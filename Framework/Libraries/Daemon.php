@@ -10,11 +10,14 @@
 namespace Framework\Libraries;
 abstract class Daemon {
     protected $p_pm_obj = null;
+    private $_is_stop   = false;
     /**
      * 构造函数
      * @param array $params 脚本运行时传入的参数列表
      */
-    public function __construct($params) {}
+    public function __construct($params) {
+        pcntl_signal(SIGTERM, array($this, "_termSignalHandler")); //进程停止信号
+    }
     /**
      * 设置进程管理类
      * @param $parent_obj
@@ -32,6 +35,13 @@ abstract class Daemon {
             return false;
         }
         return $this->p_pm_obj->heartbeat();
+    }
+    /**
+     * 进程时候要停止，建议在 doJob()方法内时常检测该值，该值一旦为true时，需要尽快清理或保存数据退出。
+     * @return boolean
+     */
+    public function isStop() {
+        return $this->_is_stop;
     }
     /**
      * 初始化钩子
@@ -64,5 +74,14 @@ abstract class Daemon {
         $sh_ret      = @trim(shell_exec($sh_str));
         $sh_ret_arr  = explode("\n", $sh_ret);
         return $sh_ret_arr;
+    }
+    /**
+     * 进程退出信号
+     * @param    int   $signo
+     * @param    array $siginfo
+     * @return
+     */
+    protected function _termSignalHandler($signo, $siginfo = null) {
+        $this->_is_stop = true;
     }
 }

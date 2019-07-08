@@ -20,9 +20,12 @@ class CountPVUV extends Daemon {
         echo "CountPVUV init\n";
     }
     public function doJob() {
-        echo  getmypid()."CountPVUV run\n";
-        $this->heartbeat(); //向父类报告心跳
-        sleep(8);
-        echo   getmypid()."CountPVUV finished\n";
+        //时刻检查是否被要求退出任务
+        while ( ! $this->isStop()) {
+            echo getmypid() . "CountPVUV run\n";
+            $this->heartbeat(); //向父类报告心跳
+            sleep(4);
+        }
+        echo getmypid() . "CountPVUV finished\n";
     }
 }

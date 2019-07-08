@@ -18,18 +18,25 @@ if (version_compare(PHP_VERSION, '7.1') >= 0) {
     declare (ticks = 1);
 }
 abstract class ProcessManager {
-    private $_max_processes  = 999;
-    private $_current_jobs   = array();
-    private $_signal_queue   = array();
-    private $_jobs_exec_info = array();
-    private $_job_ids        = array();
-    private $_ppid           = 0;
-    private $_IPC_set        = array();
-    private $_heartbeat      = array();
-    const MSG_CODE_HEARTBEAT = 1;
+    private $_max_processes    = 999;
+    private $_current_jobs     = array();
+    private $_signal_queue     = array();
+    private $_jobs_exec_info   = array();
+    private $_job_ids          = array();
+    private $_ppid             = 0;
+    private $_IPC_set          = array();
+    private $_heartbeat        = array();
+    private $_is_stop          = false;
+    private $_stop_delay       = 10; //接收到退出信号后，延迟退出时间,单位 s
+    const MSG_CODE_HEARTBEAT   = 1;
+    const MSG_RETURN_CODE_FAIL = 0;
+    const MSG_RETURN_CODE_SUC  = 1;
+    const MSG_RETURN_CODE_EXIT = 2;
     public function __construct() {
         $this->_ppid = getmypid();
-        pcntl_signal(SIGCHLD, array($this, "_childSignalHandler"));
+        pcntl_signal(SIGTERM, array($this, "_termSignalHandler"));    //进程停止信号
+        pcntl_signal(SIGUSR1, array($this, "_restartSignalHandler")); //自定义进程重启信号
+        pcntl_signal(SIGCHLD, array($this, "_childSignalHandler"));   //子进程退出信号
     }
     /**
      * 用户程序发送心跳
@@ -150,6 +157,12 @@ abstract class ProcessManager {
     public function run() {
         $this->init();
         while (true) {
+            if ($this->_is_stop) {
+                $this->_stop_delay--;
+                if ($this->_stop_delay <= 0) {
+                    break;
+                }
+            }
             $this->_reviceHeartbeat();
             $this->_monitor();
             $job_id = $this->popJobId();
@@ -161,7 +174,9 @@ abstract class ProcessManager {
                     continue;
                 }
             } else {
-                $launched = $this->_forkJob($job_id);
+                if ( ! $this->_is_stop) {
+                    $launched = $this->_forkJob($job_id);
+                }
                 while (count($this->_current_jobs) >= $this->_max_processes) {
                     sleep(1);
                 }
@@ -275,6 +290,9 @@ abstract class ProcessManager {
         }
         $children_pidlist = array();
         foreach ($pid_list as $pid) {
+            if (empty($pid)) {
+                continue;
+            }
             $queue                  = array($pid);
             $children_pidlist[$pid] = array();
             while (count($queue) > 0) {
@@ -295,6 +313,9 @@ abstract class ProcessManager {
     public static function killProcessAndChilds($pid_list = array(), $signal = SIGKILL, &$error_pid = array()) {
         $children_pids = self::getAllChildrenPidList($pid_list);
         foreach ($children_pids as $pid => $children_array) {
+            if (empty($pid)) {
+                continue;
+            }
             $error_pid[$pid] = array();
             foreach ($children_array as $cid) {
                 $tmp = posix_kill($cid, $signal);
@@ -366,6 +387,27 @@ abstract class ProcessManager {
         }
         return true;
     }
+    /**
+     * 进程退出信号
+     * @param    int   $signo
+     * @param    array $siginfo
+     * @return
+     */
+    protected function _termSignalHandler($signo, $siginfo = null) {
+        $this->_is_stop = true;
+        foreach ($this->_current_jobs as $pid => $job_id) {
+            posix_kill($pid, SIGTERM);
+        }
+    }
+    /**
+     * 进程重启信号
+     * @param    int   $signo
+     * @param    array $siginfo
+     * @return
+     */
+    protected function _restartSignalHandler($signo, $siginfo = null) {
+        // posix_kill(posix_getpid(),SIGTERM);
+    }
     private function _addJobExecInfo($pid, $job_id, $status = null, $exit_code = null) {
         if (is_null($status)) {
             $this->_jobs_exec_info[$pid] = array(
@@ -380,9 +422,14 @@ abstract class ProcessManager {
         if ( ! is_null($exit_code) && isset($this->_current_jobs[$pid])) {
             $this->_jobs_exec_info[$pid]['exit_code'] = $exit_code;
             $this->_jobs_exec_info[$pid]['end_time']  = self::getMicrotime();
-            unset($this->_current_jobs[$pid]);                                                          //删除当前任务
-            unset($this->_heartbeat[$pid]);                                                             // 删除心跳数据
-            $this->onJobExit($job_id, array('pid' => $pid, 'status' => SIGKILL, 'code' => $exit_code)); //通知子类
+            unset($this->_current_jobs[$pid]); //删除当前任务
+            unset($this->_heartbeat[$pid]);    // 删除心跳数据
+            $this->onJobExit($job_id,
+                array(
+                    'pid'       => $pid, 'status' => SIGKILL, 'code' => $exit_code,
+                    'exec_info' => $this->_jobs_exec_info[$pid]
+                )
+            ); //通知子类
         }
         return $this;
     }

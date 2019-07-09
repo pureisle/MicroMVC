@@ -23,6 +23,9 @@ abstract class Daemon {
      * @param $parent_obj
      */
     public function setProcessManager($parent_obj) {
+        if ($parent_obj instanceof ProcessManager === false) {
+            throw new \Exception("Error : need extends Framework\Libraries\ProcessManager");
+        }
         $this->p_pm_obj = $parent_obj;
         return $this;
     }

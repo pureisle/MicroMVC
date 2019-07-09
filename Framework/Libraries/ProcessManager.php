@@ -43,6 +43,9 @@ abstract class ProcessManager {
      * @return
      */
     public function heartbeat(int $pid = 0) {
+        if ( ! extension_loaded('sysvmsg')) {
+            return false;
+        }
         $key = $this->getIPCQueue();
         return msg_send($key, self::MSG_CODE_HEARTBEAT, array('code' => self::MSG_CODE_HEARTBEAT, 'pid' => getmypid(), 'time' => time()));
     }
@@ -466,6 +469,9 @@ abstract class ProcessManager {
      * 采集心跳
      */
     private function _reviceHeartbeat() {
+        if ( ! extension_loaded('sysvmsg')) {
+            return;
+        }
         $key         = $this->getIPCQueue();
         $queue_state = msg_stat_queue($key);
         if ($queue_state['msg_qnum'] <= 0) {

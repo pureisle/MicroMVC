@@ -85,7 +85,7 @@ class DaemonMonitor extends ProcessManager {
                 //只需要比较value是否相同。由于前序逻辑上能确保数组数量一致的时候，两个数组的key也一致,见job_id生成方法
                 foreach ($job_list as $job_id => $value) {
                     //有任意任务不一致就重启
-                    if ( ! empty(array_diff_assoc($last_job_list[$job_id], $value)) || ! empty(array_diff_assoc($value, $last_job_list[$job_id]))) {
+                    if ( ! @empty(array_diff_assoc($last_job_list[$job_id], $value)) || ! @empty(array_diff_assoc($value, $last_job_list[$job_id]))) {
                         $cmd = 'restart';
                         break;
                     }

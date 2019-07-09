@@ -14,7 +14,7 @@ class Memcached extends \Memcached {
         //判断是否为长链接
         if ( ! count($this->getServerList())) {
             $config = ConfigTool::loadByName($resource_name, $module);
-            if (empty($config['servers'])) {
+            if (empty($config['servers']) || empty($config['servers'][0]['host'])) {
                 throw new MemcachedException(MemcachedException::SERVERS_CONFIG_EMPTY);
             }
             $this->setOption(Memcached::OPT_LIBKETAMA_COMPATIBLE, true);
@@ -32,7 +32,7 @@ class MemcachedException extends Exception {
     public $ERROR_SET          = array(
         self::SERVERS_CONFIG_EMPTY => array(
             'code'    => self::SERVERS_CONFIG_EMPTY,
-            'message' => 'servers config empty'
+            'message' => 'Mc servers config empty'
         )
     );
     public function __construct($code = 0) {

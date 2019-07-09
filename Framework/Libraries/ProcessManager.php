@@ -452,7 +452,7 @@ abstract class ProcessManager {
             //资源监控记录日志
             $this->resourceLog($job_id, $pid_info);
             //超时kill
-            if ($this->timeOutCheck($job_id, $job_exec_info[$pid]['begin_time']) == true) {
+            if ($this->timeOutCheck($job_id, $job_exec_info[$pid]['begin_time']) === true) {
                 $tmp = self::killProcessAndChilds(array($pid), SIGKILL, $error_pid);
                 if (true == $tmp) {
                     //posix_kill 的信息量 没接收到,这里额外清理一下需要处理的数据

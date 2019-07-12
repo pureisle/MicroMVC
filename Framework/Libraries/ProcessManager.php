@@ -20,7 +20,7 @@ if (version_compare(PHP_VERSION, '7.1') >= 0) {
 abstract class ProcessManager {
     private $_max_processes    = 999;
     private $_current_jobs     = array();
-    private $_signal_queue     = array();
+    private $_exit_set         = array();
     private $_jobs_exec_info   = array();
     private $_job_ids          = array();
     private $_ppid             = 0;
@@ -167,12 +167,12 @@ abstract class ProcessManager {
                 }
             }
             $this->_reviceHeartbeat();
-            $this->_monitor();
             $job_id = $this->popJobId();
             if (null === $job_id) {
                 if (count($this->_current_jobs) <= 0) {
                     break;
                 } else {
+                    $this->_monitor();
                     sleep(1);
                     continue;
                 }
@@ -181,6 +181,7 @@ abstract class ProcessManager {
                     $launched = $this->_forkJob($job_id);
                 }
                 while (count($this->_current_jobs) >= $this->_max_processes) {
+                    $this->_monitor();
                     sleep(1);
                 }
             }
@@ -343,22 +344,23 @@ abstract class ProcessManager {
         if (-1 == $pid) {
             return false;
         } else if (0 == $pid) {
+            usleep(3000); //休息一下时间防止子进程过快退出,让父进程的_forkJob()先运行结束
             $exit_code = $this->childExec($job_id);
             exit($exit_code);
         }
         $this->_current_jobs[$pid] = $job_id;
         $this->_heartbeat[$pid]    = 0;
         $this->_addJobExecInfo($pid, $job_id);
-        //处理已经提前结束的子进程队列
-        if (isset($this->_signal_queue[$pid])) {
-            $this->_signal_queue[$pid]['initiative'] = true;
-            $this->_childSignalHandler(SIGCHLD, $this->_signal_queue[$pid]);
-            unset($this->_signal_queue[$pid]);
-        }
         return true;
     }
     /**
      * 子进程结束handler
+     *
+     * !!注意!! 在PHP 7.3.5 (cli) 版本下开发测试时（未验证其他版本），发现同一个PID的退出信号，在极短的时间内(大概0.1ms)
+     * 调用两次注册的钩子函数，这导致了并发情况下，重复通知子类退出信号( $this->onJobExit ) , 所以
+     * 目前临时的解决方法是设置一个全局变量存储退出信号，避开这两次极短时间内的相同信号量,之后再伺机处理退出信号。
+     * 暂时不知道为什么会偶发的在极短时间内出现相同的两次子进程退出信号通知。
+     *
      * @param  string    $signo
      * @param  array     $siginfo
      * @return boolean
@@ -374,17 +376,12 @@ abstract class ProcessManager {
         while ($pid > 0) {
             //在当前任务列表中，进行结束处理
             if (isset($this->_current_jobs[$pid])) {
+                $job_id = $this->_current_jobs[$pid];
+                unset($this->_current_jobs[$pid]); //删除当前任务
+                unset($this->_heartbeat[$pid]);    // 删除心跳数据
                 $exit_code = pcntl_wexitstatus($status);
-                $job_id    = $this->_current_jobs[$pid];
                 $this->_addJobExecInfo($pid, $job_id, $status, $exit_code);
-            } else {
-                //不在任务列表加入信号队列等待主进程调用时处理
-                if (empty($siginfo)) {
-                    //兼容有些低版本版本没有传第二个参数
-                    $siginfo['pid']    = $pid;
-                    $siginfo['status'] = $status;
-                }
-                $this->_signal_queue[$pid] = $siginfo;
+                $this->_exit_set[$pid] = $pid;
             }
             $pid = pcntl_waitpid(-1, $status, WNOHANG);
         }
@@ -421,18 +418,9 @@ abstract class ProcessManager {
         } else {
             $this->_jobs_exec_info[$pid]['status'] = $status;
         }
-        // isset($this->_current_jobs[$pid]) 判断是为了避免多次产生退出信号
-        if ( ! is_null($exit_code) && isset($this->_current_jobs[$pid])) {
+        if ( ! is_null($exit_code)) {
             $this->_jobs_exec_info[$pid]['exit_code'] = $exit_code;
             $this->_jobs_exec_info[$pid]['end_time']  = self::getMicrotime();
-            unset($this->_current_jobs[$pid]); //删除当前任务
-            unset($this->_heartbeat[$pid]);    // 删除心跳数据
-            $this->onJobExit($job_id,
-                array(
-                    'pid'       => $pid, 'status' => SIGKILL, 'code' => $exit_code,
-                    'exec_info' => $this->_jobs_exec_info[$pid]
-                )
-            ); //通知子类
         }
         return $this;
     }
@@ -441,6 +429,15 @@ abstract class ProcessManager {
      * @return boolean
      */
     private function _monitor() {
+        //这个while循环主要是为了处理 _childSignalHandler 函数上边注释的问题，是个补丁,极限情况下未必能完全有用...
+        while (true) {
+            $pid = array_shift($this->_exit_set);
+            if (empty($pid)) {
+                break;
+            }
+            //通知子类
+            $this->onJobExit($this->_jobs_exec_info[$pid]['job_id'], $this->_jobs_exec_info[$pid]);
+        }
         if (count($this->_current_jobs) <= 0) {
             return true;
         }
@@ -460,7 +457,6 @@ abstract class ProcessManager {
                 if (true == $tmp) {
                     //posix_kill 的信息量 没接收到,这里额外清理一下需要处理的数据
                     $this->_addJobExecInfo($pid, $job_id, SIGKILL, -1);
-                    unset($this->_signal_queue[$pid]);
                 }
             }
         }

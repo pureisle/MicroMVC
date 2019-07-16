@@ -116,6 +116,18 @@ class Curl {
         return $this;
     }
     /**
+     * 设置请求超时时间
+     *
+     * @param  int      $time
+     * @return object
+     */
+    public function timeOutForConnectMs($time) {
+        $this->setOpt(CURLOPT_NOSIGNAL, 1);
+        $this->setOpt(CURLOPT_CONNECTTIMEOUT_MS, $time);
+        $this->_curl_shell['--connect-timeout'] = '--connect-timeout ' . $time;
+        return $this;
+    }
+    /**
      * 设置curl执行超时时间
      *
      * @param  int      $time

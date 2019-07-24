@@ -2,15 +2,13 @@
 /**
  * 数据合法性验证
  *
- * $v        = new Validator();
  * $rule_set = array(
  * 'a' => 'requirement',
  * 'b' => 'number&max:15&min:10',
  * 'c' => 'timestamp',
  * 'd' => 'enum:a,1,3,5,b,12345'
  * );
- * $ret = $v->check($params, $rule_set);
- * $v->getErrorMsg();
+ * $ret = Validator::check($params, $rule_set,$error_msg);
  *
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
@@ -49,35 +47,62 @@ class Validator {
 
         'default'       => '' // 参数没有传递时，设置默认值。 如果参数传递了即便无值，也不会设置默认值，因为确实会有传递空字符串的情况。
     );
-    private $_err_msg = '';
-    public function __construct() {}
-    public function check(&$data, $rule_set) {
+    public static function check(array &$data, array $rule_set, &$error = '') {
         $ret = true;
         foreach ($rule_set as $key => $value) {
-            $error_rule  = '';
+            $error_msg   = '';
             $error_valid = '';
             if (isset($data[$key])) {
-                $ret       = $this->_parseRule($value, $data[$key], $error_rule, $error_valid);
+                $ret       = self::_parseRule($value, $data[$key], $error_rule, $error_valid);
                 $error_msg = @sprintf(self::$KEY_WORD[$error_rule], $key, $error_valid) . ' but value is ' . $data[$key];
-            } else if ($this->isDefault($value)) {
+            } else if (self::isDefault($value)) {
                 $tmp        = explode('default:', $value, 2);
                 $tmp        = explode('&', $tmp[1], 2);
                 $data[$key] = $tmp[0];
-            } else if ($this->isRequirement($value)) {
+            } else if (self::isRequirement($value)) {
                 $error_msg = sprintf(self::$KEY_WORD['requirement'], $key);
                 $ret       = false;
             }
             if (false === $ret) {
-                $this->_setErrorMsg($error_msg);
+                $error = $error_msg;
                 return false;
             }
         }
         return true;
     }
-    public function getErrorMsg() {
-        return $this->_err_msg;
+    public static function checkOne(&$data, string $rule, &$error = '', $key = 'check target') {
+        $error_msg = '';
+        if (isset($data)) {
+            $ret       = self::_parseRule($rule, $data, $error_rule, $error_valid);
+            $error_msg = @sprintf(self::$KEY_WORD[$error_rule], $key, $error_valid) . ' but value is ' . $data;
+        } else if (self::isDefault($rule)) {
+            $tmp        = explode('default:', $rule, 2);
+            $tmp        = explode('&', $tmp[1], 2);
+            $data[$key] = $tmp[0];
+        } else if (self::isRequirement($rule)) {
+            $error_msg = sprintf(self::$KEY_WORD['requirement'], $key);
+            $ret       = false;
+        }
+        if (false === $ret) {
+            $error = $error_msg;
+        }
+        return $ret;
     }
-    private function _parseRule($rule_string, $data, &$error_rule = '', &$error_valid = '') {
+    public static function isRequirement($rule_string) {
+        if (strpos($rule_string, 'requirement') !== false) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    public static function isDefault($rule_string) {
+        if (strpos($rule_string, 'default:') !== false) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    private static function _parseRule($rule_string, $data, &$error_rule = '', &$error_valid = '') {
         $len   = strlen($rule_string);
         $begin = 0;
         for ($i = 0; $i < $len; $i++) {
@@ -86,9 +111,9 @@ class Validator {
                 if ($i == $len - 1) {
                     $i++;
                 }
-                $tmp                = substr($rule_string, $begin, $i - $begin);
+                $tmp                 = substr($rule_string, $begin, $i - $begin);
                 @list($rule, $valid) = explode(':', $tmp, 2);
-                $check_ret          = $this->_runRuleCheck($rule, $valid, $data);
+                $check_ret           = self::_runRuleCheck($rule, $valid, $data);
                 if (false === $check_ret) {
                     $error_rule  = $rule;
                     $error_valid = $valid;
@@ -99,7 +124,7 @@ class Validator {
         }
         return true;
     }
-    private function _runRuleCheck($rule, $valid, $data) {
+    private static function _runRuleCheck($rule, $valid, $data) {
         switch ($rule) {
             case 'requirement':
                 $ret = isset($data);
@@ -131,7 +156,7 @@ class Validator {
                 $ret = ctype_digit((string) $data);
                 break;
             case 'bool':
-                $ret = $this->_runRuleCheck('boolean', $valid, $data) || $this->_runRuleCheck('enum', '0,1,true,false', $data);
+                $ret = self::_runRuleCheck('boolean', $valid, $data) || self::_runRuleCheck('enum', '0,1,true,false', $data);
                 break;
             case 'number':
                 $ret = is_numeric($data);
@@ -143,10 +168,10 @@ class Validator {
                 $ret = ctype_alnum($data);
                 break;
             case 'timestamp':
-                $ret = $this->_runRuleCheck('integer', $valid, $data) && date("Y-m-d H:i:s", $data) !== false;
+                $ret = self::_runRuleCheck('integer', $valid, $data) && date("Y-m-d H:i:s", $data) !== false;
                 break;
             case 'date':
-                $ret = $this->_runRuleCheck('date_format', 'Y-m-d H:i:s', $data);
+                $ret = self::_runRuleCheck('date_format', 'Y-m-d H:i:s', $data);
                 break;
             case 'date_format':
                 $timestamp = strtotime($data);
@@ -189,23 +214,5 @@ class Validator {
                 break;
         }
         return $ret;
-    }
-    public function isRequirement($rule_string) {
-        if (strpos($rule_string, 'requirement') !== false) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    public function isDefault($rule_string) {
-        if (strpos($rule_string, 'default:') !== false) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    private function _setErrorMsg($msg) {
-        $this->_err_msg = $msg;
-        return $this;
     }
 }

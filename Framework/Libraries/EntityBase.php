@@ -10,8 +10,11 @@
 namespace Framework\Libraries;
 abstract class EntityBase {
     public static $DATA_STRUCT_INFO = array();
+    private $_data_set              = array();
+    private $_is_altered            = false;
     public function __construct(array $data = array()) {
         $this->ini($data);
+        $this->setAltered(false);
     }
     public function ini(array $data = array()) {
         foreach ($data as $key => $value) {
@@ -19,11 +22,27 @@ abstract class EntityBase {
         }
         return $this;
     }
+    /**
+     * 检查实体是否变更
+     * @return boolean
+     */
+    public function isAltered() {
+        return $this->_is_altered;
+    }
+    /**
+     * 设置实体变更
+     * 例如：如果调用过实体save保存，就应该重置该值
+     * @param bool $bool
+     */
+    public function setAltered($bool) {
+        $this->_is_altered = $bool;
+        return $this;
+    }
     public function toArray() {
         $tmp        = array();
         $class_name = get_class($this);
         foreach ($class_name::$DATA_STRUCT_INFO as $key => $value) {
-            $tmp[$key] = $this->$key;
+            $tmp[$key] = $this->_data_set[$key];
         }
         return $tmp;
     }
@@ -36,13 +55,21 @@ abstract class EntityBase {
         if ( ! isset($class_name::$DATA_STRUCT_INFO[$name])) {
             return false;
         }
-        $this->$name = $value;
+        $this->setAltered(true);
+        $this->_data_set[$name] = $value;
     }
     public function __get(string $name) {
-        if ( ! isset($this->$name)) {
-            $class_name  = get_class($this);
-            $this->$name = $class_name::$DATA_STRUCT_INFO[$name];
+        if ( ! isset($this->_data_set[$name])) {
+            $class_name             = get_class($this);
+            $this->_data_set[$name] = $class_name::$DATA_STRUCT_INFO[$name];
         }
-        return $this->$name;
+        return $this->_data_set[$name];
+    }
+    public function __isset($name) {
+        return isset($this->_data_set[$name]);
+    }
+    public function __unset($name) {
+        $this->setAltered(true);
+        unset($this->_data_set[$name]);
     }
 }

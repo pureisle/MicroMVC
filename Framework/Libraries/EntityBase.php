@@ -12,9 +12,11 @@ abstract class EntityBase {
     public static $DATA_STRUCT_INFO = array();
     private $_data_set              = array();
     private $_is_altered            = false;
-    public function __construct(array $data = array()) {
-        $this->ini($data);
-        $this->setAltered(false);
+    public function __construct($data = null) {
+        if (isset($data)) {
+            $this->ini($data);
+            $this->setAltered(false);
+        }
     }
     public function ini(array $data = array()) {
         foreach ($data as $key => $value) {
@@ -54,6 +56,9 @@ abstract class EntityBase {
         $class_name = get_class($this);
         if ( ! isset($class_name::$DATA_STRUCT_INFO[$name])) {
             return false;
+        }
+        if ($this->_data_set[$name] === $value) {
+            return;
         }
         $this->setAltered(true);
         $this->_data_set[$name] = $value;

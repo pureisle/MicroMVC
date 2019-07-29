@@ -329,9 +329,10 @@ abstract class Controller {
         }
         $rule_set = $class_name::$$var_name;
         $v        = new Validator();
-        $ret      = $v->check($params, $rule_set);
+        $error    = '';
+        $ret      = $v->check($params, $rule_set, $error);
         if ( ! $ret) {
-            throw new ControllerException(ControllerException::ERROR_PARAM_CHECK, $v->getErrorMsg());
+            throw new ControllerException(ControllerException::ERROR_PARAM_CHECK, $error);
         }
         $result = array_intersect_key($params, $rule_set);
         return $result;

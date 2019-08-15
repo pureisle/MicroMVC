@@ -7,13 +7,14 @@
 namespace Framework\Tests;
 use Framework\Libraries\Debug;
 use Framework\Libraries\TestSuite;
-
+use Framework\Libraries\Tools;
 class TestDebug extends TestSuite {
     const TEST_CLASS_NAME = \Framework\Libraries\Debug::class;
     /**
      * 测试设置和获取方法
      */
     public function testSetDebug() {
+        Tools::setEnv(Tools::ENV_DEV);
         $ret = Debug::getDebug();
         $this->assertFalse($ret);
 

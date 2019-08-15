@@ -49,9 +49,9 @@ class Tools {
         return $env;
     }
     public static function setEnv(string $env) {
-        list($host, $port) = explode(':', $_SERVER['HTTP_HOST']);
-        self::$_env        = $env;
+        self::$_env = $env;
         if ( ! self::isCli()) {
+            list($host, $port) = explode(':', $_SERVER['HTTP_HOST']);
             @setcookie(self::ENV_INDEX_NAME, $env, time() + 288800, '/', $host, false, true);
         }
     }
@@ -184,8 +184,8 @@ class Tools {
             $result = shell_exec("/sbin/ifconfig eth0");
             if (preg_match_all("/addr:(\d+\.\d+\.\d+\.\d+)/", $result, $match) !== 0) {
                 $ip = $match[1][0];
-            }elseif (preg_match_all("/net (\d+\.\d+\.\d+\.\d+)/", $result, $match) !== 0) {
-               $ip = $match[1][0];
+            } else if (preg_match_all("/net (\d+\.\d+\.\d+\.\d+)/", $result, $match) !== 0) {
+                $ip = $match[1][0];
             }
         }
         return $ip;

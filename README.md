@@ -26,11 +26,19 @@ php public/create_module.php {module_name}
 	|- Models	框架逻辑
 	|- Tests	单元测试
 |- public  框架公开访问位置
+    |- xhprof       性能调优工具前端页面，任何的 Module 的静态文件都应该新建一个同名文件夹存放
 	|- index.php 	入口文件
-	|- cli.php 	命令行入口
-	|- run_test.php 	单元测试入口
-	|- run_daemon.php   后台任务执行入口
-|- Sso	样例应用,一个简单的Sso用户单点登录系统
+    |- index.lua    lua入口文件
+    |- init.lua     lua初始化文件
+|- bins
+    |- cli.php  命令行入口
+    |- create_module.php    创建一个空的Module
+    |- run_test.php     单元测试入口
+    |- run_daemon.php   后台任务执行入口
+    |- lua-releng   lua代码检测工具，方便检测全局变量、变量名等
+    |- grpc_php_plugin  grpc的php编译模块
+    |- update_framework.sh  框架更新工具
+|- Sso(可删除)	样例应用,一个简单的Sso用户单点登录系统
 	|- Cache	缓存管理文件
 	|- config	应用配置文件（mysql、redis等资源配置；api接口配置等;不能变动）
 	|- Controllers	控制器（不能变动）
@@ -43,6 +51,9 @@ php public/create_module.php {module_name}
 	|- Libraries	类库文件
 	|- Tests	单元测试文件（不能变动）
 	|- Bootstrap.php 	应用启动初始化文件（不能变动,可以没有）
+|- Index(可删除)   默认 Module
+|- Xhprof(可删除)  php性能调优工具
+|- vendor(可删除)  composer工具包文件夹，不使用的话可以删除
 ```
 文件结构也体现了 ["DMVC+C"](https://github.com/pureisle/MicroMVC/blob/master/Framework/docs/dmvc_c.md) 的分层思想。  
 * "D" 层为数据层，对应的文件夹为"Data"。该层主要解决数据结构的封装，对上层屏蔽底层的数据结构、存储工具等细节；  

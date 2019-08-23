@@ -26,18 +26,18 @@ php public/create_module.php {module_name}
 	|- Models	框架逻辑
 	|- Tests	单元测试
 |- public  框架公开访问位置
-    |- xhprof       性能调优工具前端页面，任何的 Module 的静态文件都应该新建一个同名文件夹存放
+|- xhprof       性能调优工具前端页面，任何的 Module 的静态文件都应该新建一个同名文件夹存放
 	|- index.php 	入口文件
-    |- index.lua    lua入口文件
-    |- init.lua     lua初始化文件
+	|- index.lua    lua入口文件
+	|- init.lua     lua初始化文件
 |- bins
-    |- cli.php  命令行入口
-    |- create_module.php    创建一个空的Module
-    |- run_test.php     单元测试入口
-    |- run_daemon.php   后台任务执行入口
-    |- lua-releng   lua代码检测工具，方便检测全局变量、变量名等
-    |- grpc_php_plugin  grpc的php编译模块
-    |- update_framework.sh  框架更新工具
+	|- cli.php  命令行入口
+	|- create_module.php    创建一个空的Module
+	|- run_test.php     单元测试入口
+	|- run_daemon.php   后台任务执行入口
+	|- lua-releng   lua代码检测工具，方便检测全局变量、变量名等
+	|- grpc_php_plugin  grpc的php编译模块
+	|- update_framework.sh  框架更新工具
 |- Sso(可删除)	样例应用,一个简单的Sso用户单点登录系统
 	|- Cache	缓存管理文件
 	|- config	应用配置文件（mysql、redis等资源配置；api接口配置等;不能变动）

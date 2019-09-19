@@ -47,8 +47,10 @@ class Validator {
 
         'default'       => '' // 参数没有传递时，设置默认值。 如果参数传递了即便无值，也不会设置默认值，因为确实会有传递空字符串的情况。
     );
+    public static $error_msg = '';
     public static function check(array &$data, array $rule_set, &$error = '') {
-        $ret = true;
+        $ret             = true;
+        self::$error_msg = '';
         foreach ($rule_set as $key => $value) {
             $error_msg   = '';
             $error_valid = '';
@@ -64,11 +66,15 @@ class Validator {
                 $ret       = false;
             }
             if (false === $ret) {
-                $error = $error_msg;
+                self::$error_msg = $error_msg;
+                $error           = $error_msg;
                 return false;
             }
         }
         return true;
+    }
+    public static function getErrorMsg() {
+        return self::$error_msg;
     }
     public static function checkOne(&$data, string $rule, &$error = '', $key = 'check target') {
         $error_msg = '';

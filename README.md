@@ -26,7 +26,7 @@ php public/create_module.php {module_name}
 	|- Models	框架逻辑
 	|- Tests	单元测试
 |- public  框架公开访问位置
-|- xhprof       性能调优工具前端页面，任何的 Module 的静态文件都应该新建一个同名文件夹存放
+	|- xhprof(可删除)       性能调优工具前端页面，任何的 Module 的静态文件都应该新建一个同名文件夹存放
 	|- index.php 	入口文件
 	|- index.lua    lua入口文件
 	|- init.lua     lua初始化文件

@@ -123,6 +123,14 @@ Controller 文件路径： MODULE_ROOT\Controllers\Demo\A.php
 View 文件路径：MODULE_ROOT\Views\Demo\A\index.phtml
 ```
 
+#### 老项目使用MicroMVC框架工具库
+```
+require FRAMEWORK_PATH . '/Models/Application.php';
+$app = new Framework\Models\Application();
+$app->execute('exec_function', $argv);
+```
+其中 exec_function 为要执行的函数， $argv 是参数列表,可以不传或为空。  
+
 #### 如何进行仿真环境配置文件加载重定向
 1. 在 config 下创建 {env_name} 文件夹, {env_name} 名字任意，'pro' 为保留的关键字，视为生产环境标志。文件夹内的配置文件命名同正式的配置文件名即可; 
 1. ConfigTool 加载配置文件时，会依次判断静态变量 $_env 、 $_COOKIE['VISIT_SERVER_ENV'] 和 $_SERVER['VISIT_SERVER_ENV']，如有设置环境名，则启用相应环境的配置文件夹下的同名配置文件。

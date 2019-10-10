@@ -17,6 +17,9 @@ class Context {
     public function mGet(array $names) {
         return array_intersect_key($this->_data_set, array_flip($names));
     }
+    public function mSet(array $data) {
+        $this->_data_set = array_merge($this->_data_set, $data);
+    }
     public function __set(string $name, $value) {
         $this->_data_set[$name] = $value;
     }

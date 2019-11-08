@@ -26,6 +26,14 @@
 --  file_put_contents (filename, data) 写文件
 --  in_array(needle, haystack, strict)  数组内搜索   ps : strict参数暂无支持
 --  array_keys(array, search_value, strict)   获取数组的key   ps : strict参数暂无支持
+--  array_unqiue(array, sort_flags)   给数组去重 ps:sort_flags没有实现
+--  array_column(array, column_key,index_key)   获取多维数组里的column_key的值
+--  array_sum(array)   一维数组求和
+--  strtr(input, replace_pairs) 对input进行字符串替换
+--  strtotime(date) 仅支持 Y-m-d H:i:s 或者 Y-m-d格式
+--  min(value1,value2) or   min(table) 求最大值 注意只支持数字 --后续待完善
+--  max(value1,value2) or   max(table) 求最小值 注意只支持数字
+--  sha1(string)  计算string 的sha1
 --]]
 local ffi = require("FfiDefine")
 local Json = require('cjson')
@@ -316,4 +324,148 @@ function array_keys(haystack, search_value, strict)
         end
     end
     return ret
+end
+-- 对table里的元素去重
+function array_unique(t,sort_flags) 
+    local check = {}
+    local new_table = {}
+    if type(t) ~= 'table' or #t ==1 then 
+        new_table = t
+        return new_table
+    end
+    for k,v in pairs(t) do
+        if not check[v] then
+            table.insert(new_table, v)
+            check[v] = 1
+        end
+    end
+    return new_table
+end
+-- 获取多维数组里的column_key的值
+function array_column(input, column_key, index_key) 
+    local ret = {}
+    if empty(input) then
+        return ret
+    end
+    for k,v in pairs(input) do
+        if type(v) == 'table' and rawget(v,column_key) ~= nil  then
+            if index_key ~=nil then
+                ret[rawget(v,index_key)] = rawget(v,column_key)
+            else
+            table.insert(ret, rawget(v,column_key))
+            end
+        end
+    end
+    return ret
+end
+-- 对数组里的值进行求和
+function array_sum(t)
+    local sum = 0
+    if type(t) ~= 'table' then
+        return sum
+    end
+    for k,v in pairs(t) do
+        sum = sum+tonumber(v)
+    end
+    return sum
+end
+-- 用数组的传入数组，用key=》value的形式进行替换 不支持from to的替换方式
+function strtr(input, replace_pairs) 
+    local ret = input
+    if type(input) ~= 'string' then
+        return input
+    end
+    if type(replace_pairs) ~= 'table' or empty(replace_pairs) then
+        return input
+    end
+    for k,v in pairs(replace_pairs) do
+        if type(v) == 'table' then
+            return input
+        else
+            ret = string.gsub(ret, k, v)
+        end
+    end
+    return ret
+end
+--- 仅支持 Y-m-d H:i:s 或者 Y-m-d格式
+function strtotime(date)
+    local time_arr = explode(' ',date)
+    local day_arr = explode('-', time_arr[1])
+    local hour_arr = {}
+    if time_arr[2] then
+        hour_arr = explode(':', time_arr[2])
+    end
+    local hour= hour_arr[1] or 0
+    local minute= hour_arr[2] or 0
+    local second= hour_arr[3] or 0
+    local time = os.time({
+        day=day_arr[3],
+        month=day_arr[2], 
+        year=day_arr[1],
+        hour= hour_arr[1] or 0,
+        min= hour_arr[2] or 0,
+        sec= hour_arr[3] or 0
+        }
+    )
+    return time
+end
+-- 求最小值
+function min(value, ...)
+    local to_sort = {...}
+    local min = 0
+    if (#to_sort ==0 ) then
+        if type(value) ~='table' then
+            to_sort = {value}
+        else 
+            to_sort = value
+        end
+    else
+        table.insert(to_sort, value)
+    end
+    min = table.remove(to_sort, 1)
+    for k,v in pairs(to_sort) do
+        repeat
+            if type(v) == 'table' then
+                break;
+            end
+            if v < min then
+                min = v
+            end
+        until true
+
+    end
+    return min
+end
+-- 求最大值
+function max(value, ...)
+    local to_sort = {...}
+    local max = 0
+    if (#to_sort ==0 ) then
+        if type(value) ~='table' then
+            to_sort = {value}
+        else 
+            to_sort = value
+        end
+    else
+        table.insert(to_sort, value)
+    end
+    max = table.remove(to_sort, 1)
+    for k,v in pairs(to_sort) do
+        repeat
+            if type(v) == 'table' then
+                break;
+            end
+            if v > max then
+                max = v
+            end
+        until true
+
+    end
+    return max
+end
+function to_hex(str)
+   return ({str:gsub(".", function(c) return string.format("%02X", c:byte(1)) end)})[1]
+end
+function sha1(str)
+    return string.lower(to_hex(ngx.sha1_bin(str))) --将用sha1_bin得到的二进制转成16进制然后转成小写
 end

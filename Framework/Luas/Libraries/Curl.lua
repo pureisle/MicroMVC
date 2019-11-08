@@ -28,7 +28,9 @@ function Curl:new( request_header )
 	if ( empty(request_header) or type(request_header) ~= 'table') then
 		request_header = {}
 	end
-	request_header ['User-Agent'] = 'Mozilla/5.0 (Windows; U; Windows NT 6.0; zh-CN; rv:1.8.1.20) Gecko/20081217 Firefox/2.0.0.20'
+	if empty(request_header['User-Agent']) then
+		request_header ['User-Agent'] = 'Mozilla/5.0 (Windows; U; Windows NT 6.0; zh-CN; rv:1.8.1.20) Gecko/20081217 Firefox/2.0.0.20'
+	end
 	curl_tmp:init(request_header)
 	return curl_tmp
 end
@@ -66,7 +68,10 @@ local function _setResponseData(curl_obj, res )
 	return curl_obj
 end
 local function _request(curl_obj, url, params )
-	curl_obj._httpc:set_timeouts(curl_obj._timeouts ['connect_timeout'], curl_obj._timeouts ['send_timeout'], curl_obj._timeouts ['read_timeout']);
+	local ok = pcall(function ( curl_obj )
+		curl_obj._httpc:set_timeouts(curl_obj._timeouts ['connect_timeout'], curl_obj._timeouts ['send_timeout'], curl_obj._timeouts ['read_timeout']);
+	end,curl_obj)
+	
 	local res,err
 	xpcall( 
 		function () 
@@ -120,8 +125,6 @@ function Curl:setKeepalive( keepalive, keepalive_timeout, keepalive_pool )
 	end
 	return self
 end
-
-
 
  -- get 请求
 function  Curl:get( action, query )

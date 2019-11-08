@@ -15,7 +15,12 @@ local start_time = {}
 local stop_time  = {}
 
 local function calc_cost( key )
-	local diff_time = (stop_time [key] - start_time [key]) * 1000
+	local diff_time
+	if stop_time [key] and start_time [key] then
+		diff_time = (stop_time [key] - start_time [key]) * 1000
+	else
+		diff_time = 0
+	end
 	return string.format("%.1f", diff_time)
 end
 

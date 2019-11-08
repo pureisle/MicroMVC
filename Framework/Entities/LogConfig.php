@@ -9,44 +9,33 @@
  * @author zhiyuan <zhiyuan12@staff.weibo.com>
  */
 namespace Framework\Entities;
-class LogConfig {
-    private $root_path          = '.';
-    private $file_name          = '';
-    private $suffix_date_format = 'Ymd';
-    private $_new_date          = '';
-    private $_last_date         = '';
-    private $_last_fp           = null;
-    private $_last_file         = null;
-    const LOCK_WAIT             = 0.3;  //文件写锁获取等待时间，单位秒
-    const BUFFER_LINE_NUM       = 20;   //内存缓冲行数。进程异常退出会丢失数据
-    const IS_USE_BUFFER         = true; // 是否启用缓冲模式
+use Framework\Libraries\EntityBase;
+
+class LogConfig extends EntityBase {
+    private $_new_date              = '';
+    private $_last_date             = '';
+    private $_last_fp               = null;
+    private $_last_file             = null;
+    const LOCK_WAIT                 = 0.3;  //文件写锁获取等待时间，单位秒
+    const BUFFER_LINE_NUM           = 20;   //内存缓冲行数。进程异常退出会丢失数据
+    const IS_USE_BUFFER             = true; // 是否启用缓冲模式
+    public static $DATA_STRUCT_INFO = array(
+        'root_path'          => '.',
+        'file_name'          => '',
+        'suffix_date_format' => 'Ymd',
+        'lock_wait'          => self::LOCK_WAIT,
+        'buffer_line_num'    => self::BUFFER_LINE_NUM,
+        'is_use_buffer'      => self::IS_USE_BUFFER
+    );
     public function __construct(array $config = array()) {
-        foreach ($config as $key => $value) {
-            $this->$key = $value;
-        }
-        //检查并设置关键默认值
-        if ( ! isset($this->lock_wait)) {
-            $this->lock_wait = self::LOCK_WAIT;
-        }
-        if ( ! isset($this->is_use_buffer)) {
-            $this->is_use_buffer = self::IS_USE_BUFFER;
-        }
-        if ( ! isset($this->buffer_line_num)) {
-            $this->buffer_line_num = self::BUFFER_LINE_NUM;
-        }
+        parent::__construct($config);
         if ( ! is_dir($this->root_path)) {
             $tmp = mkdir($this->root_path, 0777, true);
             if (false === $tmp) {
                 //很多时候日志记录并不造成致命错误，所以不再抛出异常
-                return false;
+                return;
             }
         }
-    }
-    public function __set($var_name, $value) {
-        $this->$var_name = $value;
-    }
-    public function __get($var_name) {
-        return $this->$var_name;
     }
     /**
      * 获取日志文件名

@@ -206,7 +206,11 @@ class Logger {
     }
     private function _write($msg) {
         if (PHP_SAPI === 'cli') {
-            $fp         = $this->_config->getHandle('a'); //追加打开
+            $fp = $this->_config->getHandle('a'); //追加打开
+            if (false == $fp) {
+                error_log('log file open fail.');
+                return;
+            }
             $begin_time = microtime(true);
             while (1) {
                 $is_get_lock = flock($fp, LOCK_EX); //加锁

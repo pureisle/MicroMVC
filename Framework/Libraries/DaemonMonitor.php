@@ -31,7 +31,7 @@ class DaemonMonitor extends ProcessManager {
     private $_job_list                = array();
     private $_module                  = '';
     private $_restart_count           = array();
-    private static $KEEP_ALIVE_DAEMON = array('job_id' => 0, 'id' => 0, 'name' => 'FRAMEWORK_KEEP_ALIVE_DAEMON');
+    private static $KEEP_ALIVE_DAEMON = array('job_id' => 0, 'id' => 0, 'v' => 0, 'name' => 'FRAMEWORK_KEEP_ALIVE_DAEMON');
     private $_config                  = array();
     private $_restart_file            = LOG_ROOT_PATH . "/DaemonMonitor.";
     public function __construct(string $module, $config_name = 'daemons') {
@@ -52,7 +52,7 @@ class DaemonMonitor extends ProcessManager {
         $job_id   = self::$KEEP_ALIVE_DAEMON['job_id'] + 1;
         foreach ($this->_config as $daemon_name => $config) {
             for ($i = 0; $i < $config['count']; $i++) {
-                $job_list[$job_id] = array('name' => $daemon_name, 'id' => $i, 'params' => $config['params']);
+                $job_list[$job_id] = array('name' => $daemon_name, 'id' => $i, 'v' => $config['version'], 'params' => $config['params']);
                 $this->_writeLog($job_id, array('job_info' => $job_list[$job_id]));
                 $this->_restart_count[$job_id] = 0;
                 $job_id++;
@@ -85,7 +85,7 @@ class DaemonMonitor extends ProcessManager {
                 //只需要比较value是否相同。由于前序逻辑上能确保数组数量一致的时候，两个数组的key也一致,见job_id生成方法
                 foreach ($job_list as $job_id => $value) {
                     //有任意任务不一致就重启
-                    if ( ! @empty(array_diff_assoc($last_job_list[$job_id], $value)) || ! @empty(array_diff_assoc($value, $last_job_list[$job_id]))) {
+                    if ($value['v'] != $last_job_list[$job_id]['v'] || ! @empty(array_diff_assoc($last_job_list[$job_id], $value)) || ! @empty(array_diff_assoc($value, $last_job_list[$job_id]))) {
                         $cmd = 'restart';
                         break;
                     }

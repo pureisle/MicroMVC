@@ -206,7 +206,8 @@ abstract class ProcessManager {
         if (empty($pid_list)) {
             return array();
         }
-        $all_pid_set = $pid_list;
+        $all_pid_set       = $pid_list;
+        $children_pid_list = array();
         if ($is_contain_child) {
             $children_pid_list = self::getAllChildrenPidList($pid_list);
             if ( ! empty($children_pid_list)) {
@@ -244,7 +245,7 @@ abstract class ProcessManager {
         foreach ($pid_list as $ppid) {
             $ret[$ppid] = array('pid' => 0, '%CPU' => 0, '%MEM' => 0, 'VSZ' => 0, 'RSS' => 0, 'SZ' => 0);
             $pid_array  = array($ppid);
-            if ($is_contain_child) {
+            if ($is_contain_child && isset($children_pid_list[$ppid])) {
                 $pid_array = array_merge($pid_array, $children_pid_list[$ppid]);
             }
             foreach ($pid_array as $pid) {

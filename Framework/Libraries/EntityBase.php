@@ -57,7 +57,7 @@ abstract class EntityBase {
         if ( ! isset($class_name::$DATA_STRUCT_INFO[$name])) {
             return false;
         }
-        if ($this->_data_set[$name] === $value) {
+        if (isset($this->_data_set[$name]) && $this->_data_set[$name] === $value) {
             return;
         }
         $this->setAltered(true);

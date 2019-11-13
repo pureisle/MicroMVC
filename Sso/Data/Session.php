@@ -14,10 +14,10 @@ class Session extends ControllMysql {
     const MYSQL_STRUCT      = <<<EOT
 CREATE TABLE `sso_session` (
   `sid` varchar(32) NOT NULL DEFAULT '',
-  `expire` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `expire` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `data` varchar(512) NOT NULL DEFAULT '',
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `update_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`sid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 EOT;

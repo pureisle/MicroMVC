@@ -488,7 +488,7 @@ class Curl {
      * @return string
      */
     private function _buildQuery($params) {
-        return http_build_query($params);
+        return is_string($params) ? $params : http_build_query($params);
 
         $o = '';
         foreach ($params as $k => $v) {

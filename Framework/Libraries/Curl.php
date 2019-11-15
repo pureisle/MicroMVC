@@ -315,7 +315,7 @@ class Curl {
         $url = $this->_url[$action];
         if ( ! empty($query)) {
             $url .= strpos($url, '?') === false ? '?' : '&';
-            $url .= is_array($query) ? http_build_query($query) : $query;
+            $url .= $this->_buildQuery($query);
         }
         curl_setopt($this->_ch, CURLOPT_HTTPGET, true);
         curl_setopt($this->_ch, CURLOPT_URL, $url);

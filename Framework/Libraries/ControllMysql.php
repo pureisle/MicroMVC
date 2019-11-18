@@ -289,7 +289,7 @@ abstract class ControllMysql {
      * @return boolean
      */
     protected function beginTransaction(string $resource_name) {
-        if ( ! isset(self::$_static_pdo[$resource_name])) {
+        if ($this->_is_force_reconnect || ! isset(self::$_static_pdo[$resource_name])) {
             $pdo                               = $this->_connectPdo($resource_name);
             self::$_static_pdo[$resource_name] = $pdo;
         }

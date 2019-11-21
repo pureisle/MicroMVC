@@ -181,11 +181,13 @@ class Tools {
             if ( ! is_null($ip)) {
                 return $ip;
             }
-            $result = shell_exec("/sbin/ifconfig eth0");
+            $result = @shell_exec("/sbin/ifconfig eth0");
             if (preg_match_all("/addr:(\d+\.\d+\.\d+\.\d+)/", $result, $match) !== 0) {
                 $ip = $match[1][0];
             } else if (preg_match_all("/net (\d+\.\d+\.\d+\.\d+)/", $result, $match) !== 0) {
                 $ip = $match[1][0];
+            } else {
+                $ip = '0.0.0.0';
             }
         }
         return $ip;

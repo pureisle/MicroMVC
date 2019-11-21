@@ -22,10 +22,21 @@ class CountPVUV extends Daemon {
     public function doJob() {
         //时刻检查是否被要求退出任务
         while ( ! $this->isStop()) {
-            echo getmypid() . "CountPVUV run\n";
+            echo getmypid() . '==' . $this->isStop() . "CountPVUV run\n";
             $this->heartbeat(); //向父类报告心跳
-            sleep(4);
+            sleep(5);
         }
+        sleep(3);
         echo getmypid() . "CountPVUV finished\n";
+    }
+    /**
+     * 接收到退出信号时，可以在这里做退出准备
+     * @param    $signo
+     * @param    $siginfo
+     * @return
+     */
+    protected function _termSignalHandler($signo, $siginfo = null) {
+        var_dump('_termSignalHandler CountPVUV', $signo, $siginfo);
+        parent::_termSignalHandler($signo, $siginfo);
     }
 }

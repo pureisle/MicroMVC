@@ -10,7 +10,7 @@
 namespace Framework\Libraries;
 abstract class Daemon {
     protected $p_pm_obj = null;
-    private $_is_stop   = false;
+    protected $_is_stop = false;
     /**
      * 构造函数
      * @param array $params 脚本运行时传入的参数列表

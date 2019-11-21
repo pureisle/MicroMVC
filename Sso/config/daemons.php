@@ -9,11 +9,11 @@
 // )
 return array(
     'CountPVUV' => array(
-        'version'         => 1,
-        'count'           => 3,
+        'version' => 1,
+        'count'   => 1,
         // 'time_out'        => 3.5,
-        'log_config_name' => '',
-        'params'          => array('param1' => 'asdf', 'param2' => '234')
+        //'log_config_name' => 'daemon_log',
+        'params'  => array('param1' => 'asdf', 'param2' => '234')
     )
     // 'DaemonName2' => array(
     //     'count'    => 5,

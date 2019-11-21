@@ -70,18 +70,19 @@ class DaemonMonitor extends ProcessManager {
         $sh_ret     = @trim(shell_exec($sh_str));
         $sh_ret_arr = explode("\n", $sh_ret);
         if (count($sh_ret_arr) > 1) {
-            $content  = trim(file_get_contents($this->_restart_file));
-            $content  = json_decode($content, true);
-            $old_ppid = $content['ppid'];
-            $cmd      = $content['cmd'];
-            //任务一致性检查，不一致则重启程序
-            //(count($sh_ret_arr) - 2 减去当前进程和之前监控任务主进程后，应该与job_list数量一致
-            // if ((count($sh_ret_arr) - 2) !== count($job_list)) {
-            if ($this->_checkLastPpidIsExit($old_ppid, $sh_ret_arr)) {
-                //已退出
+            //已有进程存在，进入检查是否重启流程
+            $content       = trim(file_get_contents($this->_restart_file));
+            $content       = json_decode($content, true);
+            $old_ppid      = $content['ppid'];
+            $cmd           = $content['cmd'];
+            $last_job_list = $content['job_list'];
+            if (count($job_list) != count($last_job_list)) {
+                //任务数量一致性检查，不一致则重启程序
+                $cmd = 'restart';
+            } else if ($this->_checkLastPpidIsExit($old_ppid, $sh_ret_arr)) {
+                //上次任务父进程已退出
                 $cmd = 'restart';
             } else {
-                $last_job_list = $content['job_list'];
                 //只需要比较value是否相同。由于前序逻辑上能确保数组数量一致的时候，两个数组的key也一致,见job_id生成方法
                 foreach ($job_list as $job_id => $value) {
                     //有任意任务不一致就重启
@@ -124,6 +125,9 @@ class DaemonMonitor extends ProcessManager {
      */
     public function onJobExit($job_id, $siginfo) {
         $this->_writeLog($job_id, array('siginfo' => $siginfo));
+        if ( ! isset($this->_restart_count[$job_id])) {
+            $this->_restart_count[$job_id] = 0;
+        }
         $this->_restart_count[$job_id]++;
         $exec_info = $this->getJobExecInfo();
         $exec_info = $exec_info[$siginfo['pid']];
@@ -142,17 +146,17 @@ class DaemonMonitor extends ProcessManager {
     }
     private function _writeLog($job_id, $info) {
         if ($job_id == self::$KEEP_ALIVE_DAEMON['job_id']) {
-            return true;
+            return;
         }
         if ( ! isset($this->_job_list[$job_id])) {
-            return false;
+            return;
         }
         $class_name = $this->_job_list[$job_id]['name'];
         if (isset($this->_config[$class_name]['log_config_name']) && ! empty($this->_config[$class_name]['log_config_name'])) {
             $config = $this->_config[$class_name]['log_config_name'];
             $module = $this->_module;
         } else {
-            return true; //没设置日志路径的不记录
+            return; //没设置日志路径的不记录
         }
         $logger = SingletonManager::$SINGLETON_POOL->getInstance('\Framework\Libraries\Logger', $config, $module);
         $logger->info('{info}', array('info' => json_encode($info)), $class_name);
@@ -166,7 +170,10 @@ class DaemonMonitor extends ProcessManager {
         if (self::$KEEP_ALIVE_DAEMON['job_id'] === $job_id) {
             //监控程序保活进程
             while (true) {
-                sleep(60);
+                if ($this->_is_stop) {
+                    break;
+                }
+                sleep(10);
                 $ret = $this->getResourceInfo(array($this->getParentPid()));
                 //防止父进程故障保活进程不退出
                 if ( ! isset($ret[$this->getParentPid()]['pid'])) {

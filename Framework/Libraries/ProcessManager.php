@@ -22,11 +22,12 @@ abstract class ProcessManager {
     private $_current_jobs     = array();
     private $_exit_set         = array();
     private $_jobs_exec_info   = array();
-    private $_job_ids          = array();
+    const P_JOB_ID             = -1;
+    private $_job_ids          = array(); // job_id=-1 为父进程保留任务id,用于告知父进程任务日志
     private $_ppid             = 0;
     private $_IPC_set          = array();
     private $_heartbeat        = array();
-    private $_is_stop          = false;
+    protected $_is_stop        = false;
     private $_stop_delay       = 10; //接收到退出信号后，延迟退出时间,单位 s
     const MSG_CODE_HEARTBEAT   = 1;
     const MSG_RETURN_CODE_FAIL = 0;
@@ -162,7 +163,9 @@ abstract class ProcessManager {
         while (true) {
             if ($this->_is_stop) {
                 $this->_stop_delay--;
+                $this->resourceLog(self::P_JOB_ID, $this->getParentPid() . ' will exit in ' . $this->_stop_delay . 's');
                 if ($this->_stop_delay <= 0) {
+                    $this->resourceLog(self::P_JOB_ID, $this->getParentPid() . ' delay exit');
                     break;
                 }
             }
@@ -170,6 +173,7 @@ abstract class ProcessManager {
             $job_id = $this->popJobId();
             if (null === $job_id) {
                 if (count($this->_current_jobs) <= 0) {
+                    $this->resourceLog(self::P_JOB_ID, $this->getParentPid() . ' all jobs done');
                     break;
                 } else {
                     $this->_monitor();
@@ -366,7 +370,7 @@ abstract class ProcessManager {
      * @param  array     $siginfo
      * @return boolean
      */
-    private function _childSignalHandler($signo, $siginfo = null) {
+    protected function _childSignalHandler($signo, $siginfo = null) {
         if (isset($siginfo['pid'])) {
             $pid    = $siginfo['pid'];
             $status = $siginfo['status'];
@@ -396,6 +400,7 @@ abstract class ProcessManager {
      */
     protected function _termSignalHandler($signo, $siginfo = null) {
         $this->_is_stop = true;
+        $this->resourceLog(self::P_JOB_ID, $this->getParentPid() . ' recive  SIGTERM signo and kill job process.');
         foreach ($this->_current_jobs as $pid => $job_id) {
             posix_kill($pid, SIGTERM);
         }

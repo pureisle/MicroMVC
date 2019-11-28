@@ -6,6 +6,42 @@
 namespace Framework\Libraries;
 class Tools {
     /**
+     * 重试代理
+     * @param  func        $closures                        重试执行函数
+     * @param  int|integer $retry_num                       重试次数
+     * @param  int         $retry_sleep                     错误重试时sleep时长,单位 ms；如果为负值，则为每次重试会增加的sleep间隔时间，每次多增加一倍的$retry_sleep值 。
+     * @param  [type]      $error_test_handler              结果非bool型时，验证返回值的匿名函数。该函数的返回值必须为bool,正确时为true
+     * @param  [type]      $exception_handler               执行函数内，有异常时执行的函数
+     * @return [type]      返回执行函数的返回值
+     */
+    public static function retryAgent($closures, int $retry_num = 3, int $retry_sleep = -1, $error_test_handler = null, $exception_handler = null) {
+        $i = 0;
+        while ($retry_num--) {
+            try {
+                $ret = $closures();
+            } catch (\Exception $e) {
+                if (null !== $error_test_handler) {
+                    $test = $exception_handler($e);
+                }
+            }
+            if (null !== $error_test_handler) {
+                $test = $error_test_handler($ret);
+            } else {
+                $test = $ret;
+            }
+            if (true === $test) {
+                break;
+            }
+            if ($retry_sleep < 0) {
+                usleep($i * abs($retry_sleep) * 1000);
+                $i++;
+            } else {
+                usleep($retry_sleep * 1000);
+            }
+        }
+        return $ret;
+    }
+    /**
      * base64 url encode
      * @param    array $data
      * @return

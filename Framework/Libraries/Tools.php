@@ -29,7 +29,7 @@ class Tools {
             } else {
                 $test = $ret;
             }
-            if (true === $test) {
+            if (false !== $test) {
                 break;
             }
             if ($retry_sleep < 0) {

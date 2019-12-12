@@ -20,8 +20,10 @@ class Tools {
             try {
                 $ret = $closures();
             } catch (\Exception $e) {
-                if (null !== $error_test_handler) {
+                if (null !== $exception_handler) {
                     $test = $exception_handler($e);
+                } else {
+                    throw $e;
                 }
             }
             if (null !== $error_test_handler) {

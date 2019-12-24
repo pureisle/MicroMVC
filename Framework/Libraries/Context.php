@@ -8,31 +8,31 @@
  */
 namespace Framework\Libraries;
 class Context {
-    private $_data_set = array();
+    private static $_data_set = array();
     /**
      * 获取多个变量值
      * @param  array   $names
      * @return array
      */
-    public function mGet(array $names) {
-        return array_intersect_key($this->_data_set, array_flip($names));
+    public static function mGet(array $names) {
+        return array_intersect_key(self::$_data_set, array_flip($names));
     }
-    public function mSet(array $data) {
-        $this->_data_set = array_merge($this->_data_set, $data);
+    public static function mSet(array $data) {
+        self::$_data_set = array_merge(self::$_data_set, $data);
     }
     public function __set(string $name, $value) {
-        $this->_data_set[$name] = $value;
+        self::$_data_set[$name] = $value;
     }
     public function __get(string $name) {
-        return $this->_data_set[$name];
+        return self::$_data_set[$name];
     }
     public function __isset($name) {
-        return isset($this->_data_set[$name]);
+        return isset(self::$_data_set[$name]);
     }
     public function __unset($name) {
-        unset($this->_data_set[$name]);
+        unset(self::$_data_set[$name]);
     }
     public function toArray() {
-        return $this->_data_set;
+        return self::$_data_set;
     }
 }

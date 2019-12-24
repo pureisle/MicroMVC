@@ -30,7 +30,7 @@ class TestContext extends TestSuite {
 
     }
     public function testmGet() {
-        $ret = $this->t->mGet(array('a', 'b'));
+        $ret = Context::mGet(array('a', 'b'));
         $this->assertEq(isset($ret['a']), true);
     }
 }

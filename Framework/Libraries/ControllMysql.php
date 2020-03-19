@@ -92,7 +92,7 @@ abstract class ControllMysql {
      */
     protected function exec(string $resource_name) {
         if (empty($resource_name)) {
-            throw new ControllMysqlException(ControllMysqlException::ERROR_DB_POOL_EMPTY);
+            throw new ControllMysqlException(ControllMysqlException::DB_POOL_EMPTY);
         }
         if (empty($this->_last_sql)) {
             throw new ControllMysqlException(ControllMysqlException::NO_SQL_TO_EXEC);
@@ -374,7 +374,7 @@ abstract class ControllMysql {
     }
     private function _connectPdo($resource_name) {
         if (empty($resource_name)) {
-            throw new ControllMysqlException(ControllMysqlException::ERROR_DB_POOL_EMPTY);
+            throw new ControllMysqlException(ControllMysqlException::DB_POOL_EMPTY);
         }
         if (false === $this->_is_force_reconnect && isset(self::$_static_pdo[$resource_name])) {
             $this->_pdo[$resource_name] = self::$_static_pdo[$resource_name];

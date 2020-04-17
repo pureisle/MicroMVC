@@ -16,7 +16,7 @@ class TestControllCache extends TestSuite {
     private $_value       = "444";
     private $t            = null;
     public function beginTest() {
-        $this->t = new TestCache('Sso');
+        $this->t = new TestCache();
         $this->t->getInstance('redis:session');
         $this->t->set($this->_key, $this->_value);
     }
@@ -32,6 +32,39 @@ class TestControllCache extends TestSuite {
         $this->t->enableCache();
         $ret = $this->t->get($this->_key);
         $this->assertEq($ret, $this->_value);
+    }
+    public function testMem() {
+        $this->t = new TestCache();
+        $mem     = $this->t->getInstance('test_mem', ControllCache::CACHE_TYPE_MEM);
+        $a       = '123';
+        $mem->set('a', $a);
+        $tmp = $mem->get('a');
+        $this->assertEq($tmp, $a);
+        $b = '456';
+        $mem->mSet(array('a' => $a, 'b' => $b));
+        $tmp = $mem->mGet(array('a', 'b'));
+        $this->assertEq($tmp['a'], $a);
+        $this->assertEq($tmp['b'], $b);
+    }
+    public function testFile() {
+        $this->t = new TestCache();
+        $mem     = $this->t->getInstance('test_file', ControllCache::CACHE_TYPE_LOCAL_FILE);
+        $a       = '123';
+        $mem->set('a', $a);
+        // $mem->disableCache();
+        // $mem->disableAllCache();
+        $tmp = $mem->get('a');
+        $this->assertEq($tmp, $a);
+        $b = '456';
+        $mem->mSet(array('a' => $a, 'b' => $b));
+        $tmp = $mem->mGet(array('a', 'b'));
+        $this->assertEq($tmp['a'], $a);
+        $this->assertEq($tmp['b'], $b);
+        $c = 5555;
+        $mem->set('c', $c, 1);
+        sleep(1);
+        $tmp = $mem->get('c');
+        $this->assertEq($tmp, false);
     }
 }
 

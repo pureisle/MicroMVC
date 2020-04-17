@@ -12,7 +12,7 @@ use Framework\Libraries\TestSuite;
 class TestContext extends TestSuite {
     const TEST_CLASS_NAME = \Framework\Libraries\Context::class;
     public function beginTest() {
-        $this->t = new Context();
+        $this->t = Context::$G;
     }
     public function testmSet() {
         $data = array(
@@ -27,10 +27,11 @@ class TestContext extends TestSuite {
         $tmp        = 5;
         $this->t->c = $tmp;
         $this->assertEq($this->t->c, $tmp);
+        // var_dump($this->t->toArray());
 
     }
     public function testmGet() {
-        $ret = Context::mGet(array('a', 'b'));
+        $ret = $this->t->mGet(array('a', 'b'));
         $this->assertEq(isset($ret['a']), true);
     }
 }

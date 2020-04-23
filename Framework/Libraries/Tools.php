@@ -16,7 +16,7 @@ class Tools {
      */
     public static function retryAgent($closures, int $retry_num = 3, int $retry_sleep = -1, $error_test_handler = null, $exception_handler = null) {
         $i = 0;
-        while ($retry_num--) {
+        while ($retry_num-- > 0) {
             try {
                 $ret = $closures();
             } catch (\Exception $e) {

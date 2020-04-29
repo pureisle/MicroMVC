@@ -15,7 +15,7 @@ use Framework\Libraries\ConfigTool;
 use Framework\Models\Request;
 use Framework\Models\Response;
 
-define('FRAMEWORK_VERSION', '1.4.17'); //框架版本号
+define('FRAMEWORK_VERSION', '1.4.29'); //框架版本号
 class Application {
     const BOOTSTRAP_NAME               = 'Bootstrap';
     const CONFIG_FILE_NAME             = 'framework';

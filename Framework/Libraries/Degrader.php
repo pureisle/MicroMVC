@@ -28,11 +28,7 @@ class Degrader {
         }
         if ($probability >= self::MAX_VALUE) {
             return;
-        } else if ($probability <= self::MIN_VALUE) {
-            //降级
-            $func();
-            safe_exit();
-        } else if ($probability <= mt_rand(self::MIN_VALUE, self::MAX_VALUE)) {
+        } else if ($probability <= self::MIN_VALUE || $probability <= mt_rand(self::MIN_VALUE, self::MAX_VALUE)) {
             //降级
             $func();
             safe_exit();
@@ -70,13 +66,13 @@ class Degrader {
             $time = time();
             foreach ($config['time'] as $key => $value) {
                 @list($tmp, $probability)            = explode('#', $value);
-                is_int($probability) || $probability = 0;
                 @list($begin, $end)                  = explode('~', $tmp);
                 $begin                               = strtotime($begin);
                 $end                                 = strtotime($end);
                 if ((empty($begin) && $time < $end)
                     || (empty($end) && $time > $begin)
                     || ($time >= $begin && $time <= $end)) {
+                    is_int($probability) || $probability = 0;
                     $key_set[$key] = $probability;
                 }
             }

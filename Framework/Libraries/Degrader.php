@@ -42,7 +42,9 @@ class Degrader {
     }
     private function _formatData($config) {
         $level_group = explode(',', $config['group_level']);
+        //group 优先级最低
         if ( ! empty($level_group)) {
+            //group 内 level越高优先级越高
             sort($level_group);
             $key_set = array();
             foreach ($level_group as $level) {
@@ -54,12 +56,29 @@ class Degrader {
                 }
             }
         }
+        //single 优先级中等
         if (isset($config['single']) && is_array($config['single'])) {
             foreach ($config['single'] as $key => $value) {
                 if ($value >= self::MAX_VALUE) {
                     continue;
                 }
                 $key_set[$key] = $value;
+            }
+        }
+        //time 优先级最高
+        if (isset($config['time'])) {
+            $time = time();
+            foreach ($config['time'] as $key => $value) {
+                @list($tmp, $probability)            = explode('#', $value);
+                is_int($probability) || $probability = 0;
+                @list($begin, $end)                  = explode('~', $tmp);
+                $begin                               = strtotime($begin);
+                $end                                 = strtotime($end);
+                if ((empty($begin) && $time < $end)
+                    || (empty($end) && $time > $begin)
+                    || ($time >= $begin && $time <= $end)) {
+                    $key_set[$key] = $probability;
+                }
             }
         }
         return $key_set;

@@ -11,52 +11,49 @@
 * 所有开发基于 PHP7 环境，未做低版本运行验证和兼容；
 
 #### 框架工具库说明
-* [ConfigTool]() 框架统一的配置文件读取类，限定了配置文件的存放路径，可支持 .php 或 .ini 或 自定义文件的配置读取。
-* [Context]() 环境变量类，可以使用全局的 Context::$G ，也可以自定义。主要用于层级较深的参数传递、全局变量存储等。
-* [Curl]() 发起HTTP协议请求的客户端类。
-* [MultiCurl]() 并行批量发起HTTP请求的客户端类。
-* [Daemon]() CLI模式下任务执行基类，一般配合 bins/run_daemon.php 或 ProcessManager 使用。
-* [DaemonMonitor]() 常驻进程的任务监控类，探测任务文件变化而重启任务、监控任务、超时任务kill、退出的任务重新拉起等。
-* [Debug]() 调试类，可以设置调试信息的输出和禁用。生产环境会强制禁用输出调试信息。
-* [Degrader]() 降级类，提供三种降级方式：1、按单个Key降级；2、按群组降级；3、按时间范围降级；
-* [Exception]() 异常管理基类，强制按静态数组的方式定义异常，统一管理。
-* [KeyBuilder]() 强制按一定方式定义和编码KEY值的工具类。
-* [PHPFunctionParser]() 针对PHP代码文件，利用 token_get_all 函数进行格式化解析。主要用来做单元测试时，计算测试覆盖率。
-* [ProcessManager]() 多进程管理类，可以控制一批任务执行并监控和记录任务执行过程中的状态、资源利用等。
-* [RunTime]() 计数器，主要提供了按Key记录运行时间的开始、停止和输出的方法。
-* [TestSuite]() 单元测试工具的基类，可以通过 bins/run_test.php 工具来执行单元测试。
-* [UnitTest]() 单元测试控制类，主要提供了单元测试控制的功能。
-* [UserAgentParser]() UA解析类，主要提供了客户端请求中携带UserAgent的分析方法。
-* [Validator]() 变量或参数合法性检验工具。提供了一些常用的检验方法。
-* [Tools]() 常用工具类
-    * [retryAgent]() 执行重试代理，可以方便的执行一段代码的多次重试。
-    * [base64UrlEncode]() [base64UrlDecode]() 64进制编解码
-    * [getEnv]() [setEnv]() 框架内比较重要的一个方法，可以设置代码运行环境标识，用以区分和使用不同的配置文件，方便多环境运行。
-    * [iniFuncEnabled]() 检验ini配置中的函数是否可以使用。
-    * [isCli]() 检查当前代码是否为CLI模式运行。
-    * [uniqid]() 生成指定长度的随机码，伪随机。
-    * [网络相关]()
-        * [cidrMatch]() 检查一个IP是否是在一个指定网络内
-        * [getClientIp]() 获取请求的客户端IP
-        * [getServerIp]() 获取代码运行环境的IP
-        * [getHostName]() 获取代码运行环境的hostname
-* [资源管理]() 一些常用的资源工具
-    * [IniParser]() INI 格式的配置文件的编码和解码工具。
-    * [Logger]() 日志类，符合PSR-3标准。额外提供进程内唯一标识码，方便一次性排查出一次请求的所有相关日志。
-    * [Memcached]() Memcached管理类，进行了简单封装，主要目的是强制统一资源配置文件的部署和格式。
-    * [ControllCache]() 统一的缓存管理基类，提供了三级缓存，分别为：1、内存缓存；2、本地文件缓存；3、远端缓存（redis、mc）。
-    * [ControllMysql]() SQL语句封装类，可以不写SQL构建数据库查询，同时提供了较为完善的安全防护。
-    * [PDOManager]() PDO管理类，强制了资源配置部署和格式；提供了基础方法的封装；
-    * [Redis]() Redis扩展的简单封装，主要是为了强制统一资源配置文件的部署和格式。
-    * []()
-* [设计模式]() 一些常用的设计模式工具
-    * [EntityBase]() 实体类基类，提供参数列表限制和参数校验等基础能力。
-    * [FiniteState]() 状态机的状态基类，主要是为配合状态机FiniteStateMachine使用。
-    * [FiniteStateMachine]() 状态机管理类，提供状态注册、管理、运行控制等功能，使用样例见[PHPFunctionParser]()。
-    * [HookManager]() 钩子管理类，通过配置文件定义钩子，在触发钩子时执行预定义的方法或函数。
-    * [SingletonManager]() 单例工厂，提供了进程内类的统一管理和复用。可以使用全局定义的单例工厂 SingletonManager::$SINGLETON_POOL，也可以自定义一个单例工厂。
-    * []()
-    * []()
+* [ConfigTool](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/ConfigTool.php) 框架统一的配置文件读取类，限定了配置文件的存放路径，可支持 .php 或 .ini 或 自定义文件的配置读取。
+* [Context](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Context.php) 环境变量类，可以使用全局的 Context::$G ，也可以自定义。主要用于层级较深的参数传递、全局变量存储等。
+* [Curl](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Curl.php) 发起HTTP协议请求的客户端类。
+* [MultiCurl](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/MultiCurl.php) 并行批量发起HTTP请求的客户端类。
+* [Daemon](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Daemon.php) CLI模式下任务执行基类，一般配合 bins/run_daemon.php 或 ProcessManager 使用。
+* [DaemonMonitor](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/DaemonMonitor.php) 常驻进程的任务监控类，探测任务文件变化而重启任务、监控任务、超时任务kill、退出的任务重新拉起等。
+* [Debug](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Debug.php) 调试类，可以设置调试信息的输出和禁用。生产环境会强制禁用输出调试信息。
+* [Degrader](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Degrader.php) 降级类，提供三种降级方式：1、按单个Key降级；2、按群组降级；3、按时间范围降级；
+* [Exception](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Exception.php) 异常管理基类，强制按静态数组的方式定义异常，统一管理。
+* [KeyBuilder](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/KeyBuilder.php) 强制按一定方式定义和编码KEY值的工具类。
+* [PHPFunctionParser](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/PHPFunctionParser.php) 针对PHP代码文件，利用 token_get_all 函数进行格式化解析。主要用来做单元测试时，计算测试覆盖率。
+* [ProcessManager](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/ProcessManager.php) 多进程管理类，可以控制一批任务执行并监控和记录任务执行过程中的状态、资源利用等。
+* [RunTime](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/RunTime.php) 计数器，主要提供了按Key记录运行时间的开始、停止和输出的方法。
+* [TestSuite](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/TestSuite.php) 单元测试工具的基类，可以通过 bins/run_test.php 工具来执行单元测试。
+* [UnitTest](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/UnitTest.php) 单元测试控制类，主要提供了单元测试控制的功能。
+* [UserAgentParser](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/UserAgentParser.php) UA解析类，主要提供了客户端请求中携带UserAgent的分析方法。
+* [Validator](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Validator.php) 变量或参数合法性检验工具。提供了一些常用的检验方法。
+* [Tools](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) 常用工具类
+    * [retryAgent](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) 执行重试代理，可以方便的执行一段代码的多次重试。
+    * [base64UrlEncode](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) [base64UrlDecode](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) 64进制编解码
+    * [getEnv](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) [setEnv](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) 框架内比较重要的一个方法，可以设置代码运行环境标识，用以区分和使用不同的配置文件，方便多环境运行。
+    * [iniFuncEnabled](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) 检验ini配置中的函数是否可以使用。
+    * [isCli](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) 检查当前代码是否为CLI模式运行。
+    * [uniqid](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) 生成指定长度的随机码，伪随机。
+    * [网络相关](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php)
+        * [cidrMatch](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) 检查一个IP是否是在一个指定网络内
+        * [getClientIp](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) 获取请求的客户端IP
+        * [getServerIp](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) 获取代码运行环境的IP
+        * [getHostName](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Tools.php) 获取代码运行环境的hostname
+* [资源管理] 一些常用的资源工具
+    * [IniParser](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/IniParser.php) INI 格式的配置文件的编码和解码工具。
+    * [Logger](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Logger.php) 日志类，符合PSR-3标准。额外提供进程内唯一标识码，方便一次性排查出一次请求的所有相关日志。
+    * [Memcached](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Memcached.php) Memcached管理类，进行了简单封装，主要目的是强制统一资源配置文件的部署和格式。
+    * [ControllCache](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/ControllCache.php) 统一的缓存管理基类，提供了三级缓存，分别为：1、内存缓存；2、本地文件缓存；3、远端缓存（redis、mc）。
+    * [ControllMysql](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/ControllMysql.php) SQL语句封装类，可以不写SQL构建数据库查询，同时提供了较为完善的安全防护。
+    * [PDOManager](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/PDOManager.php) PDO管理类，强制了资源配置部署和格式；提供了基础方法的封装；
+    * [Redis](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/Redis.php) Redis扩展的简单封装，主要是为了强制统一资源配置文件的部署和格式。
+* [设计模式] 一些常用的设计模式工具
+    * [EntityBase](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/EntityBase.php) 实体类基类，提供参数列表限制和参数校验等基础能力。
+    * [FiniteState](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/FiniteState.php) 状态机的状态基类，主要是为配合状态机FiniteStateMachine使用。
+    * [FiniteStateMachine](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/FiniteStateMachine.php) 状态机管理类，提供状态注册、管理、运行控制等功能，使用样例见[PHPFunctionParser](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/PHPFunctionParser.php)。
+    * [HookManager](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/HookManager.php) 钩子管理类，通过配置文件定义钩子，在触发钩子时执行预定义的方法或函数。
+    * [SingletonManager](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/SingletonManager.php) 单例工厂，提供了进程内类的统一管理和复用。可以使用全局定义的单例工厂 SingletonManager::$SINGLETON_POOL，也可以自定义一个单例工厂。
 ### 快速开始
 ```
 composer create-project pureisle/micro-mvc {project_name}

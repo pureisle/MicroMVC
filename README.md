@@ -23,7 +23,7 @@
 * [KeyBuilder](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/KeyBuilder.php) 强制按一定方式定义和编码KEY值的工具类。
 * [PHPFunctionParser](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/PHPFunctionParser.php) 针对PHP代码文件，利用 token_get_all 函数进行格式化解析。主要用来做单元测试时，计算测试覆盖率。
 * [ProcessManager](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/ProcessManager.php) 多进程管理类，可以控制一批任务执行并监控和记录任务执行过程中的状态、资源利用等。
-* [RunTime](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/RunTime.php) 计数器，主要提供了按Key记录运行时间的开始、停止和输出的方法。
+* [RunTime](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/RunTime.php) 计时器，主要提供了按Key记录运行时间的开始、停止和输出的方法。
 * [TestSuite](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/TestSuite.php) 单元测试工具的基类，可以通过 bins/run_test.php 工具来执行单元测试。
 * [UnitTest](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/UnitTest.php) 单元测试控制类，主要提供了单元测试控制的功能。
 * [UserAgentParser](https://github.com/pureisle/MicroMVC/blob/master/Framework/Libraries/UserAgentParser.php) UA解析类，主要提供了客户端请求中携带UserAgent的分析方法。

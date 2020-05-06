@@ -50,7 +50,7 @@ http{
             #content_by_lua 'ngx.say("hello, lua")';
         }
         location / {
-	    if ( $uri ~ ^/*.lua$ ) {
+	    if ( $uri ~ \.lua$ ) {
                 return 404;
             }
             set $script_uri "";

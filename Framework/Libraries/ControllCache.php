@@ -20,6 +20,7 @@ abstract class ControllCache extends KeyBuilder {
     const CACHE_TYPE_MC                 = 'mc';         //mc缓存
     const CACHE_TYPE_MEM                = 'mem';        //进程内缓存
     const CACHE_TYPE_LOCAL_FILE         = 'local_file'; //本地文件缓存
+    private $_config_suffix             = ConfigTool::FILE_SUFFIX;
     private $_config_name               = '';
     private $_module                    = '';
     private $_is_use_cache              = true;
@@ -38,6 +39,14 @@ abstract class ControllCache extends KeyBuilder {
         $tmp                 = get_class($this);
         list($module, $null) = explode('\\', $tmp, 2);
         $this->_module       = $module;
+    }
+    /**
+     * 设置配置文件后缀，默认为  .php  , 需要加 . 号
+     * @param string $suffix = .php
+     */
+    protected function setConfigSuffix(string $suffix) {
+        $this->_config_suffix = $suffix;
+        return $this;
     }
     /**
      * 启用cache
@@ -94,10 +103,10 @@ abstract class ControllCache extends KeyBuilder {
         }
         switch ($type) {
             case self::CACHE_TYPE_REDIS:
-                self::$INSTANCE[$cache_key] = new Redis($config_name, $this->_module);
+                self::$INSTANCE[$cache_key] = new Redis($config_name, $this->_module, $this->_config_suffix);
                 break;
             case self::CACHE_TYPE_MC:
-                self::$INSTANCE[$cache_key] = new Memcached($config_name, $this->_module);
+                self::$INSTANCE[$cache_key] = new Memcached($config_name, $this->_module, $this->_config_suffix);
                 break;
             case self::CACHE_TYPE_LOCAL_FILE:
                 self::$INSTANCE[$cache_key] = new FileCache($config_name, $this->_module);

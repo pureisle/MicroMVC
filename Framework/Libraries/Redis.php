@@ -8,8 +8,8 @@ namespace Framework\Libraries;
 class Redis extends \Redis {
     private $_persistent_id = '';
     private $_time_out      = 0.5;
-    public function __construct(string $resource_name, string $module) {
-        $config = ConfigTool::loadByName($resource_name, $module);
+    public function __construct(string $resource_name, string $module, string $file_suffix = ConfigTool::FILE_SUFFIX) {
+        $config = ConfigTool::loadByName($resource_name, $module, $file_suffix);
         if ( ! isset($config['host']) || ! isset($config['port'])) {
             throw new RedisException(RedisException::SERVERS_CONFIG_EMPTY);
         }

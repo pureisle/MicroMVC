@@ -47,8 +47,8 @@ class Logger {
     );
     private $_config            = null;
     private $_is_register_flush = false;
-    public function __construct(string $config_name, string $module) {
-        $conf          = ConfigTool::loadByName($config_name, $module);
+    public function __construct(string $config_name, string $module, string $file_suffix = ConfigTool::FILE_SUFFIX) {
+        $conf          = ConfigTool::loadByName($config_name, $module, $file_suffix);
         $this->_config = new LogConfig($conf);
         if (empty(self::$_UNIQUE_ID) && self::$_LOG_FIELD['uniqid']) {
             self::$_UNIQUE_ID = uniqid('', true);

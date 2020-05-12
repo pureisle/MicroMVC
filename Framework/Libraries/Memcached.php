@@ -8,12 +8,12 @@ namespace Framework\Libraries;
 
 class Memcached extends \Memcached {
     private $_persistent_id = null;
-    public function __construct(string $resource_name, string $module) {
+    public function __construct(string $resource_name, string $module, string $file_suffix = ConfigTool::FILE_SUFFIX) {
         $this->_persistent_id = $module . '_' . $resource_name;
         parent::__construct($this->_persistent_id);
         //判断是否为长链接
         if ( ! count($this->getServerList())) {
-            $config = ConfigTool::loadByName($resource_name, $module);
+            $config = ConfigTool::loadByName($resource_name, $module, $file_suffix);
             if (empty($config['servers']) || empty($config['servers'][0]['host'])) {
                 throw new MemcachedException(MemcachedException::SERVERS_CONFIG_EMPTY);
             }

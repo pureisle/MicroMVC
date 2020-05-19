@@ -19,6 +19,7 @@ abstract class ControllCache extends KeyBuilder {
     const CACHE_TYPE_REDIS              = 'redis';      //redis缓存
     const CACHE_TYPE_MC                 = 'mc';         //mc缓存
     const CACHE_TYPE_MEM                = 'mem';        //进程内缓存
+    const CACHE_TYPE_YAC                = 'yac';        //进程共享缓存,注意key长度不能超过： 48 - len($module) ,可以MD5一下
     const CACHE_TYPE_LOCAL_FILE         = 'local_file'; //本地文件缓存
     private $_config_suffix             = ConfigTool::FILE_SUFFIX;
     private $_config_name               = '';
@@ -113,6 +114,9 @@ abstract class ControllCache extends KeyBuilder {
                 break;
             case self::CACHE_TYPE_MEM:
                 self::$INSTANCE[$cache_key] = new Context();
+                break;
+            case self::CACHE_TYPE_YAC:
+                self::$INSTANCE[$cache_key] = new \Yac($this->_module);
                 break;
             default:
                 return false;

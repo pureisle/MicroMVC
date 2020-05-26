@@ -6,6 +6,28 @@
 namespace Framework\Libraries;
 class Tools {
     /**
+     * 获取当前调用位置的所在Module
+     * @param  int|integer $begin 栈深度探测起始位置
+     * @param  int|integer $end   栈深度探测结束位置
+     * @return string
+     */
+    public static function getModule(int $begin = 1, int $end = 1) {
+        $trace  = debug_backtrace();
+        $module = '';
+        for ($i = $begin; $i < count($trace); $i++) {
+            $current = $trace[$i];
+            if (isset($current['class'])) {
+                $module = explode('\\', $current['class'], 2)[0];
+            } else {
+                $module = explode('/', ltrim($current['file'], ROOT_PATH), 2)[0];
+            }
+            if ($i >= $end) {
+                break;
+            }
+        }
+        return $module;
+    }
+    /**
      * 重试代理
      * @param  func        $closures                        重试执行函数
      * @param  int|integer $retry_num                       重试次数
@@ -62,6 +84,13 @@ class Tools {
         $ret = array();
         parse_str($tmp, $ret);
         return $ret;
+    }
+    private static $_lang = '';
+    public static function setLang($lang) {
+        self::$_lang = $lang;
+    }
+    public static function getLang() {
+        return self::$_lang;
     }
     /**
      * 设置代码运行环境

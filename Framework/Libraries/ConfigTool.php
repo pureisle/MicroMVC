@@ -32,7 +32,7 @@ class ConfigTool {
                     self::$_CONFIG_SET[$file_path] = include $file_path;
                     break;
                 case self::INI_SUFFIX:
-                    self::$_CONFIG_SET[$file_path] = IniParser::decodeByFile($file_path,true);
+                    self::$_CONFIG_SET[$file_path] = IniParser::decodeByFile($file_path, true);
                     break;
                 default:
                     self::$_CONFIG_SET[$file_path] = file_get_contents($file_path);

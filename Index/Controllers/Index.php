@@ -13,6 +13,7 @@ class Index extends Controller {
         // safe_exit();//安全退出
     }
     public function indexAction() {
-        $this->getView()->assign(array("text" => 'Hello,MicroMVC~'));
+        $lang = \Framework\Libraries\Tools::setLang('cn');
+        $this->getView()->assign(array("text" => _('hello %s', 'MicroMVC~')));
     }
 }

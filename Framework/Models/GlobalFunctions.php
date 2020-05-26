@@ -28,3 +28,31 @@ function single_instance($class_name) {
 function safe_exit() {
     throw new \Framework\Models\ExitException();
 }
+/**
+ * 多语言转换
+ * @param  string   $str
+ * @param  mix      $params sprintf的参数列表
+ * @return string
+ */
+function _($str) {
+    $args = func_get_args();
+    array_shift($args);
+    $module           = \Framework\Libraries\Tools::getModule();
+    $lang             = \Framework\Libraries\Tools::getLang();
+    static $i18n_conf = null; //进程内缓存
+    if ( ! isset($i18n_conf[$module][$lang])) {
+        $yac = new \Yac($module);
+        $tmp = $yac->get($lang);
+        if (empty($tmp)) {
+            $i18n_conf[$module][$lang] = \Framework\Libraries\ConfigTool::loadByName('i18n.' . $lang, $module, \Framework\Libraries\ConfigTool::INI_SUFFIX);
+            //共享内存缓存,这里有30s的缓存
+            $sr = $yac->set($lang, $i18n_conf[$module][$lang], 30);
+        } else {
+            $i18n_conf[$module][$lang] = $tmp;
+        }
+    }
+    if (isset($i18n_conf[$module][$lang][$str])) {
+        $str = $i18n_conf[$module][$lang][$str];
+    }
+    return sprintf($str, ...$args);
+}

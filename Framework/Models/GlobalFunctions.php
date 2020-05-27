@@ -29,12 +29,12 @@ function safe_exit() {
     throw new \Framework\Models\ExitException();
 }
 /**
- * 多语言转换
+ * 多语言转换 (双下划线)
  * @param  string   $str
  * @param  mix      $params sprintf的参数列表
  * @return string
  */
-function _($str) {
+function __($str) {
     $args = func_get_args();
     array_shift($args);
     $module           = \Framework\Libraries\Tools::getModule();

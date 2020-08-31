@@ -26,10 +26,11 @@ FRAMEWORK = {
     ROOT_PATH = nil,
     FRAMEWORK_ROOT = nil
 }
-FRAMEWORK.ROOT_PATH = string_sub(debug_getinfo(1, "S").source:sub(2), 1, -string_len('/public/'..FRAMEWORK.INIT_FILE) - 1)
-FRAMEWORK.FRAMEWORK_ROOT = FRAMEWORK.ROOT_PATH.."/Framework/Luas"
-package.path = FRAMEWORK.FRAMEWORK_ROOT.."/?.lua;"..FRAMEWORK.FRAMEWORK_ROOT.."/Libraries/?.lua;"..FRAMEWORK.ROOT_PATH.."/?.lua;"..'?.lua;'..package.path
-require "GlobalFunction" --加载自定义公共库
+FRAMEWORK.FRAMEWORK_ROOT = string_sub(debug_getinfo(1, "S").source:sub(2), 1, -string_len('/Plugins/'..FRAMEWORK.INIT_FILE) - 1)
+FRAMEWORK.ROOT_PATH = string_sub(FRAMEWORK.FRAMEWORK_ROOT,1,-string_len('/Framework/Luas/'))
+print(FRAMEWORK.ROOT_PATH)
+package.path = FRAMEWORK.FRAMEWORK_ROOT.."/?.lua;"..FRAMEWORK.FRAMEWORK_ROOT.."/Libraries/?.lua;"..FRAMEWORK.ROOT_PATH.."/?.lua;" .. '?.lua;'..package.path
+require "Models.GlobalFunction" --加载自定义公共库
 require 'Libraries.Class'
-require 'Tools'
-require 'Controller'
+require 'Libraries.Tools'
+require 'Models.Controller'

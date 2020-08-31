@@ -3,7 +3,8 @@
 --  @author zhiyuan <zhiyuan12@staff.weibo.com>
 -- 
 -- function list:
---  my_string (s)   转化为可以用下标的字符串 
+--  my_string (s)   转化为可以用下标的字符串
+--  deep_copy(orig, copies)     深拷贝元表 
 --  ucfirst(s)      首字母大写
 --  explode(symbol, s, limit)   拆分字符串为数组  
 --  implode(glue, pieces)   按指定分隔符聚合数组 
@@ -35,7 +36,7 @@
 --  max(value1,value2) or   max(table) 求最小值 注意只支持数字
 --  sha1(string)  计算string 的sha1
 --]]
-local ffi = require("FfiDefine")
+local ffi = require("Libraries.FfiDefine")
 local Json = require('cjson')
 local string_gsub = string.gsub
 local string_upper = string.upper
@@ -59,6 +60,7 @@ local pairs = pairs
 local next = next
 local tostring = tostring
 local getmetatable = getmetatable
+local setmetatable = setmetatable
 local newproxy = newproxy
 
 -- 转化为可以用下标的字符串
@@ -91,6 +93,28 @@ function my_string (s)
     mt.__len = function(_) return #ms end
     mt.__tostring = function(_) return ms end
     return u
+end
+-- Save copied tables in `copies`, indexed by original table.
+-- http://mosswang.com/2019/07/23/Lua/Lua%E4%B8%AD%E7%9A%84%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D/
+function deep_copy(orig, copies)
+    copies = copies or {}
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        if copies[orig] then
+            copy = copies[orig]
+        else
+            copy = {}
+            for orig_key, orig_value in next, orig, nil do
+                copy[deep_copy(orig_key, copies)] = deep_copy(orig_value, copies)
+            end
+            copies[orig] = copy
+            setmetatable(copy, deep_copy(getmetatable(orig), copies))
+        end
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
 end
 -- 首字母大写
 function ucfirst(s)

@@ -14,6 +14,6 @@ class Index extends Controller {
     }
     public function indexAction() {
         $lang = \Framework\Libraries\Tools::setLang('cn');
-        $this->getView()->assign(array("text" => _('hello %s', 'MicroMVC~')));
+        $this->getView()->assign(array("text" => __('hello %s', 'MicroMVC~')));
     }
 }

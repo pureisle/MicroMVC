@@ -140,8 +140,8 @@ abstract class ControllMysql {
         $values = '';
         $params = array();
         foreach ($data as $field => $value) {
-            $fields .= $this->_putFieldQuote($field) . ',';
-            $tmp = $this->_getFieldId();
+            $fields .= $this->putFieldQuote($field) . ',';
+            $tmp = $this->getFieldId();
             $values .= $tmp . ',';
             $params[$tmp] = $value;
         }
@@ -149,9 +149,9 @@ abstract class ControllMysql {
         $values = substr($values, 0, -1);
         $sql    = 'INSERT INTO ' . $this->getTableName() . ' (' . $fields . ') VALUE (' . $values . ')';
         if ( ! empty($duplicate)) {
-            $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->_buildSet($duplicate);
+            $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->buildSet($duplicate);
         }
-        $this->_addVar($params);
+        $this->addVar($params);
         $this->_last_sql = $sql;
         $this->_is_add   = true;
         return $this;
@@ -173,7 +173,7 @@ abstract class ControllMysql {
         $sql    = 'INSERT INTO ' . $this->getTableName() . ' (';
         $fields = '';
         foreach ($data_arr[0] as $field => $value) {
-            $fields .= $this->_putFieldQuote($field) . ',';
+            $fields .= $this->putFieldQuote($field) . ',';
         }
         $fields = substr($fields, 0, -1);
         $sql .= $fields . ') VALUES ';
@@ -181,7 +181,7 @@ abstract class ControllMysql {
         foreach ($data_arr as $data) {
             $one = '(';
             foreach ($data as $field => $value) {
-                $tmp = $this->_getFieldId();
+                $tmp = $this->getFieldId();
                 $one .= $tmp . ',';
                 $params[$tmp] = $value;
             }
@@ -190,9 +190,9 @@ abstract class ControllMysql {
         }
         $sql = substr($sql, 0, -1);
         if ( ! empty($duplicate)) {
-            $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->_buildSet($duplicate);
+            $sql .= ' ON DUPLICATE KEY UPDATE ' . $this->buildSet($duplicate);
         }
-        $this->_addVar($params);
+        $this->addVar($params);
         $this->_last_sql = $sql;
         return $this;
     }
@@ -216,7 +216,7 @@ abstract class ControllMysql {
         if ($count > 0) {
             $limit = ' LIMIT ' . $page * $count . ',' . $count;
         }
-        $sql             = 'SELECT ' . $fields . ' FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition) . $this->_buildGroupBy($group_by) . $this->_buildOrderBy($order_by) . $limit;
+        $sql             = 'SELECT ' . $fields . ' FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition) . $this->buildGroupBy($group_by) . $this->buildOrderBy($order_by) . $limit;
         $this->_last_sql = $sql;
         $this->_is_query = true;
         return $this;
@@ -237,7 +237,7 @@ abstract class ControllMysql {
         if (is_numeric($count) && $count > 0) {
             $limit = ' LIMIT ' . $count;
         }
-        $sql             = 'DELETE FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition) . $this->_buildOrderBy($order_by) . $limit;
+        $sql             = 'DELETE FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition) . $this->buildOrderBy($order_by) . $limit;
         $this->_last_sql = $sql;
         return $this;
     }
@@ -258,7 +258,7 @@ abstract class ControllMysql {
         if (is_numeric($count) && $count > 0) {
             $limit = ' LIMIT ' . $count;
         }
-        $sql             = 'UPDATE ' . $this->getTableName() . ' SET ' . $this->_buildSet($set_arr) . $this->_buildWhereCondition($where_condition) . $this->_buildOrderBy($order_by) . $limit;
+        $sql             = 'UPDATE ' . $this->getTableName() . ' SET ' . $this->buildSet($set_arr) . $this->_buildWhereCondition($where_condition) . $this->buildOrderBy($order_by) . $limit;
         $this->_last_sql = $sql;
         return $this;
     }
@@ -270,7 +270,7 @@ abstract class ControllMysql {
      * @return int
      */
     protected function count($where_condition = null, $group_by = null) {
-        $sql             = 'SELECT COUNT(*) as count FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition) . $this->_buildGroupBy($group_by);
+        $sql             = 'SELECT COUNT(*) as count FROM ' . $this->getTableName() . $this->_buildWhereCondition($where_condition) . $this->buildGroupBy($group_by);
         $this->_last_sql = $sql;
         $this->_is_query = true;
         return $this;
@@ -401,7 +401,7 @@ abstract class ControllMysql {
      * @param  mix      $set_arr
      * @return string
      */
-    private function _buildSet($set_arr) {
+    protected function buildSet($set_arr) {
         if (empty($set_arr)) {
             return '';
         }
@@ -414,12 +414,12 @@ abstract class ControllMysql {
             if (is_array($value)) {
                 $set_str .= $this->_buildArrayValue($field, $value) . ',';
             } else {
-                $tmp_key = $this->_getFieldId();
-                $set_str .= $this->_putFieldQuote($field) . '=' . $tmp_key . ',';
+                $tmp_key = $this->getFieldId();
+                $set_str .= $this->putFieldQuote($field) . '=' . $tmp_key . ',';
                 $params[$tmp_key] = $value;
             }
         }
-        $this->_addVar($params);
+        $this->addVar($params);
         $set_str = substr($set_str, 0, -1);
         return $set_str;
     }
@@ -427,21 +427,21 @@ abstract class ControllMysql {
         $ret = '';
         switch ($value['key']) {
             case 'inc':
-                $tmp_key          = $this->_getFieldId();
-                $ret              = $this->_putFieldQuote($field) . '=' . $this->_putFieldQuote($field) . '+' . $tmp_key;
+                $tmp_key          = $this->getFieldId();
+                $ret              = $this->putFieldQuote($field) . '=' . $this->putFieldQuote($field) . '+' . $tmp_key;
                 $params[$tmp_key] = $value['value'];
-                $this->_addVar($params);
+                $this->addVar($params);
                 break;
             case 'func':
                 $tmp_params = array();
                 $params     = array();
                 foreach ($value['params'] as $k => $v) {
-                    $tmp_key          = $this->_getFieldId();
+                    $tmp_key          = $this->getFieldId();
                     $tmp_params[$k]   = $tmp_key;
                     $params[$tmp_key] = $v;
                 }
-                $this->_addVar($params);
-                $ret = $this->_putFieldQuote($field) . '=' . strtr($value['func'], $tmp_params);
+                $this->addVar($params);
+                $ret = $this->putFieldQuote($field) . '=' . strtr($value['func'], $tmp_params);
                 break;
             default:
                 throw new ControllMysqlException(ControllMysqlException::PARAMS_ERROR_MESSAGE);
@@ -471,7 +471,7 @@ abstract class ControllMysql {
             if (empty($condition['operator'])) {
                 $condition['operator'] = '=';
             }
-            $result .= ' ' . $condition['logic'] . ' ' . $this->_putFieldQuote($condition['field']) . ' ' . $condition['operator'];
+            $result .= ' ' . $condition['logic'] . ' ' . $this->putFieldQuote($condition['field']) . ' ' . $condition['operator'];
             $condition['operator'] = strtoupper($condition['operator']);
             if ('IN' == $condition['operator'] || 'NOT IN' == $condition['operator']) {
                 if (is_array($condition['condition'])) {
@@ -481,29 +481,29 @@ abstract class ControllMysql {
                 }
                 $result .= ' (';
                 foreach ($t_field as $value) {
-                    $tt_field = $this->_getFieldId();
+                    $tt_field = $this->getFieldId();
                     $result .= $tt_field . ",";
                     $params[$tt_field] = $value;
                 }
                 $result = substr($result, 0, -1);
                 $result .= ')';
             } else {
-                $tmp_field = $this->_getFieldId();
+                $tmp_field = $this->getFieldId();
                 $result .= ' ' . $tmp_field;
                 $params[$tmp_field] = $condition['condition'];
             }
         }
-        $this->_addVar($params);
+        $this->addVar($params);
         return $result;
     }
-    private function _buildHavingBy($set_arr) {}
+    protected function buildHavingBy($set_arr) {}
     /**
      * 构建order by语句
      *
      * @param  array    $order_by_arr
      * @return string
      */
-    private function _buildOrderBy($order_by_arr) {
+    protected function buildOrderBy($order_by_arr) {
         if (empty($order_by_arr)) {
             return '';
         }
@@ -512,7 +512,7 @@ abstract class ControllMysql {
         }
         $order_by = ' ORDER BY ';
         foreach ($order_by_arr as $field => $value) {
-            $order_by .= $this->_putFieldQuote($field) . ' ' . $value . ',';
+            $order_by .= $this->putFieldQuote($field) . ' ' . $value . ',';
         }
         $order_by = substr($order_by, 0, -1);
         return $order_by;
@@ -523,7 +523,7 @@ abstract class ControllMysql {
      * @param  array    $group_by_arr
      * @return string
      */
-    private function _buildGroupBy($group_by_arr) {
+    protected function buildGroupBy($group_by_arr) {
         if (empty($group_by_arr)) {
             return '';
         }
@@ -532,7 +532,7 @@ abstract class ControllMysql {
         }
         $group_by = ' GROUP BY ';
         foreach ($group_by_arr as $field => $value) {
-            $group_by .= $this->_putFieldQuote($field) . ' ' . $value . ',';
+            $group_by .= $this->putFieldQuote($field) . ' ' . $value . ',';
         }
         $group_by = substr($group_by, 0, -1);
         if ( ! empty($group_by_arr['with_rollup'])) {
@@ -545,7 +545,7 @@ abstract class ControllMysql {
      * @param  string   $field
      * @return string
      */
-    private function _getFieldId() {
+    protected function getFieldId() {
         $tmp = $this->_placeholder_id++;
         return ':' . $tmp;
     }
@@ -555,14 +555,14 @@ abstract class ControllMysql {
      * @param  string   $field
      * @return string
      */
-    private function _putFieldQuote($field) {
+    protected function putFieldQuote($field) {
         return '`' . $field . '`';
     }
     /**
      * 增加变量
      * @param array $var
      */
-    private function _addVar(array $var) {
+    protected function addVar(array $var) {
         if ( ! empty($var)) {
             $this->_last_params = array_merge($this->_last_params, $var);
         }

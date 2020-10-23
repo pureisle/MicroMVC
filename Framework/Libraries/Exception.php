@@ -17,7 +17,7 @@ abstract class Exception extends \Exception {
         )
     );
     public function __construct($code = 0, $msg = null) {
-        $tmp = $this->ERROR_SET[$code]['message'];
+        $tmp = @$this->ERROR_SET[$code]['message'];
         if (isset($msg)) {
             $tmp = $msg;
         }
